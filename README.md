@@ -4,18 +4,12 @@ Multi-agent orchestration harness for [Claude Code](https://docs.anthropic.com/e
 
 > Delegate, orchestrate, verify — never implement directly.
 
-## Installation
+## Install
 
 ### macOS / Linux
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/teddynote-lab/oh-my-braincrew-release/main/install.sh | sh
-```
-
-Or with a custom install directory:
-
-```bash
-OMB_INSTALL_DIR=~/.local/bin curl -fsSL https://raw.githubusercontent.com/teddynote-lab/oh-my-braincrew-release/main/install.sh | sh
 ```
 
 ### Windows (PowerShell)
@@ -34,27 +28,53 @@ uv tool install oh-my-braincrew
 
 ### Manual Download
 
-Download the binary for your platform from the [latest release](https://github.com/teddynote-lab/oh-my-braincrew-release/releases/latest).
-
 | Platform | Architecture | Binary |
 |----------|-------------|--------|
-| macOS | Apple Silicon (arm64) | `omb-v0.2.6-darwin-arm64` |
-| macOS | Intel (amd64) | `omb-v0.2.6-darwin-amd64` |
-| Linux | x86_64 | `omb-v0.2.6-linux-amd64` |
-| Windows | x86_64 | `omb-v0.2.6-windows-amd64.exe` |
+| macOS | Apple Silicon (arm64) | [`omb-v0.2.6-darwin-arm64`](https://github.com/teddynote-lab/oh-my-braincrew-release/releases/latest) |
+| macOS | Intel (amd64) | [`omb-v0.2.6-darwin-amd64`](https://github.com/teddynote-lab/oh-my-braincrew-release/releases/latest) |
+| Linux | x86_64 | [`omb-v0.2.6-linux-amd64`](https://github.com/teddynote-lab/oh-my-braincrew-release/releases/latest) |
+| Windows | x86_64 | [`omb-v0.2.6-windows-amd64.exe`](https://github.com/teddynote-lab/oh-my-braincrew-release/releases/latest) |
 
-## Quick Start
+## Getting Started
+
+### 1. Initialize in your project
 
 ```bash
-# Initialize in your project
 cd /path/to/your/project
 omb init
+```
 
-# Start Claude Code with the harness
-claude --plugin-dir ~/.omb
+This will:
+- Create the `.omb/` directory structure (plans, sessions, verifications, etc.)
+- Download the plugin files from GitHub
+- Save the plugin path to `~/.omb/home`
 
-# Check version
-omb version
+### 2. Start Claude Code with the plugin
+
+```bash
+claude --plugin-dir ~/.omb/plugin
+```
+
+### 3. Run the setup wizard
+
+Inside Claude Code, run:
+
+```
+/omb setup
+```
+
+This interactive wizard will:
+- Configure your user profile
+- Scan your codebase
+- Generate `CLAUDE.md` and `PROJECT.md` tailored to your project
+
+### 4. Start using omb workflows
+
+```
+/omb plan       # Plan a feature before implementing
+/omb exec       # Execute the plan with TDD agents
+/omb verify     # Verify with evidence
+/omb pr         # Create a PR with plan traceability
 ```
 
 ## Update
@@ -63,7 +83,30 @@ omb version
 omb update
 ```
 
-The `omb update` command auto-detects your install method (binary, pip, uv tool) and updates accordingly.
+The `omb update` command auto-detects your install method:
+- **Binary install** — downloads the latest binary from GitHub Releases
+- **pip / uv tool** — runs `pip install --upgrade` or `uv tool upgrade`
+- **Source checkout** — advises `git pull && make setup`
+
+## Uninstall
+
+### Binary
+
+```bash
+# macOS / Linux
+sudo rm /usr/local/bin/omb
+rm -rf ~/.omb
+
+# Windows (PowerShell)
+Remove-Item "$env:LOCALAPPDATA\omb" -Recurse
+```
+
+### pip
+
+```bash
+pip uninstall oh-my-braincrew
+rm -rf ~/.omb
+```
 
 ## What is oh-my-braincrew?
 

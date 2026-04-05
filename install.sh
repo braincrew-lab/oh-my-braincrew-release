@@ -76,7 +76,12 @@ install() {
   echo ""
   echo "omb v${VERSION} installed to ${INSTALL_DIR}/${BINARY_NAME}"
   echo ""
-  echo "Run 'omb version' to verify."
+  echo "Next steps:"
+  echo "  1. Initialize in your project:  cd /path/to/project && omb init"
+  echo "  2. Start Claude Code:           claude --plugin-dir ~/.omb/plugin"
+  echo "  3. Run the setup wizard:        /omb setup"
+  echo ""
+  echo "Update anytime with:  omb update"
 }
 
 detect_platform
