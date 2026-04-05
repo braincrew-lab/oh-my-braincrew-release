@@ -93,10 +93,10 @@ grep -rl "$WORKTREE_BRANCH" .omb/sessions/finished/ 2>/dev/null
 grep -rl "$WORKTREE_BRANCH" .omb/sessions/ 2>/dev/null
 ```
 
-If no direct branch match, extract the worktree timestamp suffix (e.g., `wt-1774692357356` from `worktree/wt-1774692357356`) and search pipeline IDs:
+If no direct branch match, extract the session_id suffix (e.g., `202604041523-x7k2mq` from `worktree/202604041523-x7k2mq`) and search pipeline IDs:
 
 ```bash
-WT_ID=$(echo "$WORKTREE_BRANCH" | sed 's/worktree\/wt-//')
+WT_ID=$(echo "$WORKTREE_BRANCH" | sed 's|^worktree/||')
 grep -rl "$WT_ID" .omb/sessions/finished/ .omb/sessions/ 2>/dev/null
 ```
 
@@ -260,7 +260,7 @@ Print a summary of what was cleaned up:
 ## Cleanup Summary
 
 ### Worktree
-- [Removed worktree at worktrees/wt-XXXXX (branch: worktree/wt-XXXXX)]
+- [Removed worktree at worktrees/<session_id> (branch: worktree/<session_id>)]
 - [Associated plan: .omb/plans/<session_id>.md] OR [No plan file found]
 - [PR #N merged on YYYY-MM-DD] OR [PR #N still open] OR [No PR found]
   OR

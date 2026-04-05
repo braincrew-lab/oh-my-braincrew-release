@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.9] - 2026-04-05
+
+### Added
+- `omb progress` command for viewing pipeline execution status in the terminal
+- `omb sync` command to keep plugin files up to date
+
+### Fixed
+- Slack notifications now deliver correctly when configured
+- Pipeline plan mode no longer stalls on approval steps
+
+### Improved
+- Worktree naming uses session IDs for better organization and auto-archive support
+
 ## [0.2.8] - 2026-04-05
 
 ### Fixed

@@ -75,12 +75,14 @@ Tasks: <total> total, <done> done, <pending> pending
 
 If `--worktree` was provided:
 
-1. Create worktree:
+1. Create worktree using the `<session_id>` from STEP 0. If no `<session_id>` was provided, generate one using the same format (`YYYYmmddHHMM-XXXXXX`):
 ```bash
-WT_ID=$(date +%s%N | head -c 13)
+# WT_ID is the <session_id> parsed in STEP 0
+# If no session_id, generate: $(date -u +%Y%m%d%H%M)-$(cat /dev/urandom | LC_ALL=C tr -dc 'a-z0-9' | head -c 6)
+WT_ID="<session_id>"
 PROJECT_ROOT=$(git rev-parse --show-toplevel)
-git worktree add -b "worktree/wt-${WT_ID}" "${PROJECT_ROOT}/worktrees/wt-${WT_ID}"
-echo "WORKTREE_PATH=${PROJECT_ROOT}/worktrees/wt-${WT_ID}"
+git worktree add -b "worktree/${WT_ID}" "${PROJECT_ROOT}/worktrees/${WT_ID}"
+echo "WORKTREE_PATH=${PROJECT_ROOT}/worktrees/${WT_ID}"
 ```
 
 2. Store `WORKTREE_PATH` for subsequent operations.
@@ -93,8 +95,8 @@ cp "${PROJECT_ROOT}/.omb/sessions/<session_id>.json" "${WORKTREE_PATH}/.omb/sess
 
 4. Display:
 ```
-Worktree created: worktrees/wt-<WT_ID>
-Branch: worktree/wt-<WT_ID>
+Worktree created: worktrees/<session_id>
+Branch: worktree/<session_id>
 ```
 
 5. For all subsequent steps, read session files from `${PROJECT_ROOT}/.omb/sessions/` (the source of truth) but note that skills invoked will operate on worktree files if CWD is the worktree.
@@ -208,27 +210,13 @@ After advancing state in 3b:
 
 #### 3e. Display Progress
 
-Show progress after each task:
+Show progress after each task by running:
 
-```
---- Progress ---
-[DONE] user-prompt
-[DONE] create-plan
-[>>  ] review-plan  <-- current
-[    ] execute
-[    ] verify
-[    ] document
-[    ] create-pr
-----------------
-Completed: 2/7 | Active: 1 | Pending: 4
+```bash
+omb progress <session_id>
 ```
 
-Use these status indicators:
-- `[DONE]` — status `done`
-- `[>>  ]` — status `active`
-- `[FAIL]` — status `failed`
-- `[SKIP]` — status `skipped`
-- `[    ]` — status `pending`
+This renders an ANSI box-drawing table with color-coded rows (green=done, bold yellow=active, red=failed, dim=skipped). Implementation: `src/omb/commands/progress.py`.
 
 #### 3f. Loop Control
 
@@ -259,8 +247,8 @@ Summary: <done_count> completed, <failed_count> failed, <skipped_count> skipped
 
 If `--worktree` was used, also display:
 ```
-Worktree: worktrees/wt-<WT_ID>
-Branch: worktree/wt-<WT_ID>
+Worktree: worktrees/<session_id>
+Branch: worktree/<session_id>
 Run `/omb cleanup` to remove the worktree when done.
 ```
 

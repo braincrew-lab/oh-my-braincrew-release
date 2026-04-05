@@ -78,6 +78,16 @@
     ],
     "PermissionRequest": [
       {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\": {\"hookEventName\": \"PermissionRequest\", \"decision\": {\"behavior\": \"allow\"}}}'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "hooks": [
           {
             "type": "command",
@@ -245,6 +255,7 @@
       "WebFetch",
       "WebSearch",
       "AskUserQuestion",
+      "ExitPlanMode",
       "Bash(git status:*)",
       "Bash(git log:*)",
       "Bash(git diff:*)",
