@@ -38,10 +38,10 @@ Download the binary for your platform from the [latest release](https://github.c
 
 | Platform | Architecture | Binary |
 |----------|-------------|--------|
-| macOS | Apple Silicon (arm64) | `omb-v*-darwin-arm64` |
-| macOS | Intel (amd64) | `omb-v*-darwin-amd64` |
-| Linux | x86_64 | `omb-v*-linux-amd64` |
-| Windows | x86_64 | `omb-v*-windows-amd64.exe` |
+| macOS | Apple Silicon (arm64) | `omb-v0.2.6-darwin-arm64` |
+| macOS | Intel (amd64) | `omb-v0.2.6-darwin-amd64` |
+| Linux | x86_64 | `omb-v0.2.6-linux-amd64` |
+| Windows | x86_64 | `omb-v0.2.6-windows-amd64.exe` |
 
 ## Quick Start
 
