@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.8] - 2026-04-05
+
+### Fixed
+- Hook no longer incorrectly blocks edits to project configuration directories
+- `omb update` now properly syncs plugin files (skills, agents, hooks) alongside the package
+- Auto-update works correctly for source-based installations
+
+### Improved
+- Pipeline execution now skips unnecessary checkpoint prompts by default, with opt-in interactive selection
+
+
 ## [0.2.7] - 2026-04-05
 
 ### Added

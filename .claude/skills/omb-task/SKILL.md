@@ -97,9 +97,10 @@ List agent names from `.claude/agents/omb/*.md` (e.g., executor, critic, reviewe
 Use `AskUserQuestion` iteratively to gather:
 1. **Goal**: What is this pipeline for?
 2. **Steps**: Which steps are needed? (propose based on goal)
-3. **Checkpoints**: Any steps that need approval before continuing? (suggest review-plan)
-4. **Dependencies**: Sequential or parallel execution?
-5. **Branching**: Any conditional logic (SYSTEM_DECISION)?
+3. **Dependencies**: Sequential or parallel execution?
+4. **Branching**: Any conditional logic (SYSTEM_DECISION)?
+
+Note: Checkpoint configuration is handled in STEP 2D (after pipeline state is built).
 
 ### 2A-3. Propose and iterate
 
@@ -203,7 +204,7 @@ Construct the PipelineState JSON:
 | 0 | ask-user | ASK_USER | false | 0 |
 | 1 | interview | SKILL | false | 0 |
 | 2 | create-plan | SKILL | false | 0 |
-| 3 | review-plan | SKILL | true | 2 |
+| 3 | review-plan | SKILL | false | 2 |
 | 4 | execute | SKILL | false | 0 |
 | 5 | verify | SKILL | false | 0 |
 | 6 | document | SKILL | false | 0 |
@@ -214,7 +215,7 @@ Construct the PipelineState JSON:
 |-------|-----------|-----------|-----------|-------------|
 | 0 | ask-user | ASK_USER | false | 0 |
 | 1 | create-plan | SKILL | false | 0 |
-| 2 | review-plan | SKILL | true | 2 |
+| 2 | review-plan | SKILL | false | 2 |
 | 3 | execute | SKILL | false | 0 |
 | 4 | verify | SKILL | false | 0 |
 | 5 | document | SKILL | false | 0 |
@@ -225,7 +226,7 @@ Construct the PipelineState JSON:
 |-------|-----------|-----------|-----------|-------------|
 | 0 | ask-user | ASK_USER | false | 0 |
 | 1 | create-plan | SKILL | false | 0 |
-| 2 | review-plan | SKILL | true | 2 |
+| 2 | review-plan | SKILL | false | 2 |
 
 ### ASK_USER - Execute - Verify - Document - Create PR
 | Order | task_name | task_type | checkpoint | max_retries |
@@ -243,7 +244,7 @@ Construct the PipelineState JSON:
 | 1 | review-pr | SKILL | false | 0 |
 | 2 | judge | SYSTEM_DECISION | false | 0 |
 | 3 | create-plan | SKILL | false | 0 |
-| 4 | review-plan | SKILL | true | 2 |
+| 4 | review-plan | SKILL | false | 2 |
 | 5 | execute | SKILL | false | 0 |
 | 6 | verify | SKILL | false | 0 |
 | 7 | document | SKILL | false | 0 |
@@ -268,6 +269,42 @@ The `omb-run` skill handles SYSTEM_DECISION task execution by reading the previo
 Each task depends on the previous task in the template order:
 - Task at order 0: `depends_on: []` (no dependencies)
 - Task at order N (N > 0): `depends_on: ["<task_id of task at order N-1>"]`
+
+## STEP 2D — Checkpoint Configuration
+
+After building the pipeline state, ask the user about checkpoint (Human Review) preferences.
+
+### 2D-1. Collect SKILL task names
+
+From the constructed pipeline JSON, extract all tasks where `task_type` is `"SKILL"`. These are the eligible checkpoint candidates. Exclude `ASK_USER` and `SYSTEM_DECISION` tasks.
+
+### 2D-2. Ask checkpoint preference
+
+Use `AskUserQuestion` with the following format:
+
+> Pipeline 실행 중 중간에 멈추고 사람이 확인(Human Review)할 단계를 선택하세요.
+> Checkpoint가 설정된 단계에서는 pipeline이 일시 정지되고, 사용자 확인 후 다음 단계로 진행됩니다.
+
+Options (numbered list):
+1. **모두 자동으로 진행** (checkpoint 없음) — Pipeline이 처음부터 끝까지 자동으로 실행됩니다
+2. Each SKILL task_name from the pipeline (e.g., `interview`, `create-plan`, `review-plan`, `execute`, `verify`, `document`, `create-pr`)
+
+The user may select one or multiple step names (comma-separated).
+
+### 2D-3. Apply checkpoint settings
+
+- If the user selects **"모두 자동으로 진행"** (option 1):
+  - Verify all tasks have `checkpoint: false` (they should be by default)
+  - Proceed to STEP 3
+
+- If the user selects specific step(s):
+  - For each selected task_name, set `checkpoint: true` in the pipeline JSON
+  - Display the updated checkpoint configuration:
+    ```
+    Checkpoint enabled: review-plan, verify
+    Auto-advance: interview, create-plan, execute, document, create-pr
+    ```
+  - Proceed to STEP 3
 
 ## STEP 3 — Validate Schema
 
