@@ -172,15 +172,66 @@ The public release repo (`teddynote-lab/oh-my-braincrew-release`) serves binary 
    cp scripts/install.ps1 "$RELEASE_REPO_DIR/install.ps1"
    ```
 
-6. **Commit and push**:
+6. **Copy plugin operational files** (skills, agents, hooks, commands):
+   ```bash
+   # Plugin files — everything Claude Code needs
+   for dir in .claude .claude-plugin; do
+     rm -rf "$RELEASE_REPO_DIR/$dir"
+     cp -r "$dir" "$RELEASE_REPO_DIR/$dir"
+   done
+
+   # Hooks
+   if [ -d hooks ]; then
+     rm -rf "$RELEASE_REPO_DIR/hooks"
+     cp -r hooks "$RELEASE_REPO_DIR/hooks"
+   fi
+
+   # CLAUDE.md (top-level)
+   cp CLAUDE.md "$RELEASE_REPO_DIR/CLAUDE.md" 2>/dev/null || true
+   ```
+
+7. **Strip secrets and internal artifacts**:
+   ```bash
+   # Remove secrets from settings — use shell variable in unquoted heredoc for expansion
+   python3 << PYEOF
+   import json, pathlib
+   settings = pathlib.Path("${RELEASE_REPO_DIR}/.claude/settings.json")
+   if settings.exists():
+       data = json.loads(settings.read_text())
+       if "env" in data:
+           for k in list(data["env"]):
+               if any(s in k for s in ("KEY", "TOKEN", "SECRET", "PASSWORD")):
+                   del data["env"][k]
+       settings.write_text(json.dumps(data, indent=2) + "\n")
+   PYEOF
+   ```
+
+   ```bash
+   # Remove internal development artifacts
+   rm -rf "$RELEASE_REPO_DIR/.claude/agent-memory"
+   rm -rf "$RELEASE_REPO_DIR/.claude/plans"
+   rm -rf "$RELEASE_REPO_DIR/.claude/settings.local.json"
+   ```
+
+8. **Verify no secrets remain** before committing:
+   ```bash
+   # Abort if any known secret patterns are found
+   if grep -rqE "(KEY|TOKEN|SECRET|PASSWORD)" "$RELEASE_REPO_DIR/.claude/settings.json" 2>/dev/null; then
+     echo "ERROR: Secret stripping failed — aborting release repo push"
+     exit 1
+   fi
+   ```
+
+9. **Commit and push**:
    ```bash
    cd "$RELEASE_REPO_DIR"
    git add -A
-   git commit -m "release: vX.Y.Z — update changelog, README, and install scripts"
+   git pull --rebase origin main
+   git commit -m "release: vX.Y.Z — update plugin, changelog, README, and install scripts"
    git push
    ```
 
-7. **Note**: Binary builds and GitHub Release creation on the public repo happen automatically via the `release-binary.yml` CI workflow triggered by the tag push in Step 9. The CI also generates checksums and attaches binaries as release assets.
+10. **Note**: Binary builds and GitHub Release creation on the public repo happen automatically via the `release-binary.yml` CI workflow triggered by the tag push in Step 9. The CI also copies the same plugin files as a redundant safety net.
 
 ### Step 13: Report
 
@@ -195,6 +246,6 @@ Release complete:
   Push:           pushed
   PyPI:           published oh-my-braincrew vX.Y.Z
   GitHub:         release created at <URL> (private repo)
-  Public repo:    CHANGELOG.md + README.md updated
+  Public repo:    plugin files + CHANGELOG.md + README.md updated
   Binary builds:  triggered via CI → teddynote-lab/oh-my-braincrew-release
 ```
