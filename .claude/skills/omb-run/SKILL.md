@@ -73,16 +73,18 @@ Tasks: <total> total, <done> done, <pending> pending
 ```bash
 python3 -c "
 import json, os
+from datetime import datetime, timezone
 path = '${PROJECT_ROOT}/.omb/sessions/<session_id>.json'
 with open(path) as f:
     data = json.load(f)
 data['driver'] = 'omb-run'
+data['driver_heartbeat'] = datetime.now(timezone.utc).isoformat()
 claude_uuid = os.environ.get('CLAUDE_SESSION_ID', '')
 if claude_uuid and not data.get('claude_session_id'):
     data['claude_session_id'] = claude_uuid
 with open(path, 'w') as f:
     json.dump(data, f, indent=2)
-print('driver set to omb-run')
+print('driver set to omb-run with heartbeat')
 "
 ```
 

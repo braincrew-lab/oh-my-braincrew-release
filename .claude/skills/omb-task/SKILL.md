@@ -210,7 +210,12 @@ The user may select one or multiple step names (comma-separated).
 ### 2D-3. Apply checkpoint settings via CLI
 
 - If the user selects **"모두 자동으로 진행"** (option 1):
-  - No action needed. Proceed to STEP 3.
+  - Run via Bash:
+    ```bash
+    omb task checkpoint <session_id> --clear
+    ```
+  - Display the CLI output confirming all checkpoints cleared.
+  - Proceed to STEP 3.
 
 - If the user selects specific step(s):
   - Run via Bash:
