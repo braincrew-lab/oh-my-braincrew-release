@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.15] - 2026-04-07
+
+### Fixed
+- Pipeline no longer stalls when the driver process exits unexpectedly mid-task — automatic recovery kicks in
+- Late pipeline advance calls are safely ignored, preventing tasks from being skipped
+- Status line version display fixed on systems without `pip index` support
+
+### Improved
+- Pipeline driver loop is now more resilient with stricter state tracking
+
 ## [0.2.14] - 2026-04-06
 
 ### Added

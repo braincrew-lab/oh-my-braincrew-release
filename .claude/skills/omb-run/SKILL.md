@@ -115,6 +115,13 @@ cd "${WORKTREE_PATH}"
 
 Execute the pipeline by iterating through tasks. Track loop count for safety.
 
+[HARD] This is a driver loop, not a one-shot command. One loop iteration always
+does the same sequence: read session state, dispatch exactly one task, return to
+`omb advance`, re-read the updated session, display progress, then repeat. A
+finished skill invocation is never the end of the pipeline by itself. The only
+terminal conditions are the `pipeline_status` values returned by `omb advance`:
+`completed`, `stalled`, or `cancelled`.
+
 ```
 LOOP_COUNT = 0
 MAX_ITERATIONS = 30
@@ -132,7 +139,11 @@ If `status` is NOT `active`, break to STEP 4.
 
 #### 3b. Advance Pipeline State
 
-After the task completes (skill returns or user responds):
+After a single task completes, do these steps in this exact order. Do not treat
+the skill's own output as a stop signal.
+
+Before dispatching the task in Step 3c, capture its name as `COMPLETED_TASK_NAME`.
+You MUST pass that exact value into `omb advance` after the task returns.
 
 1. Determine the result status from the skill's `<omb>` response:
    - `DONE` or `APPROVED` → `--result APPROVED`
@@ -140,7 +151,7 @@ After the task completes (skill returns or user responds):
    - `FAILED` → `--result FAILED`
    - No signal parsed → `--result NONE`
 
-2. Run `omb advance <session_id> --result <STATUS>` via Bash
+2. Run `omb advance <session_id> --result <STATUS> --expected-task "<COMPLETED_TASK_NAME>"` via Bash
 
 3. Parse the JSON output line:
    ```json
@@ -156,12 +167,22 @@ After the task completes (skill returns or user responds):
 
 4. If `omb advance` exits with non-zero, read stderr for the error message and report to user.
 
+[HARD] Do not stop after a skill returns just because it printed a plan, a
+completion marker, or a message that looks final. Even if `create-plan` appears
+to have finished cleanly, the driver must still call `omb advance` immediately
+and continue the loop until the session state itself reports a terminal
+`pipeline_status`.
+
 [HARD] Do NOT call Python code directly to advance state. Use `omb advance` CLI only.
 [HARD] If `omb advance` is not found in PATH, report error: "omb CLI not installed. Run `pip install oh-my-braincrew` or `uv pip install oh-my-braincrew`."
 
 #### 3c. Identify Task Type and Dispatch
 
 Read the active task's `task_name`, `task_type`, and `task_payload`.
+
+Store the active task name in `COMPLETED_TASK_NAME` before invoking any tool in
+this step. The later `omb advance` call in Step 3b must use that exact value as
+`--expected-task` so a delayed parent advance cannot skip a newly activated step.
 
 Look up the skill name using the TASK_SKILL_MAP:
 
@@ -217,7 +238,13 @@ Dispatch based on `task_type`:
 1. Display the decision context from `task_payload`
 2. The SessionHandler handles system decisions automatically
 
-**IMPORTANT:** After each skill invocation returns, you MUST continue the loop (back to Step 3b to call `omb advance`). Do NOT stop or wait for user input. The pipeline is fully automatic — your job is to call `omb advance` and invoke the next skill until the pipeline completes.
+**IMPORTANT:** After each skill invocation returns, you MUST continue the loop
+(back to Step 3b to call `omb advance`). Do NOT stop or wait for user input. The
+pipeline is fully automatic — your job is to call `omb advance` and invoke the
+next skill until the pipeline completes.
+[HARD] The loop ordering is fixed: dispatch one task -> normalize the result ->
+call `omb advance` -> read the updated session -> display progress -> continue.
+Never insert a manual stop between the task return and `omb advance`.
 
 #### 3d. Post-Task State Check
 
@@ -282,7 +309,7 @@ Run `/omb cleanup` to remove the worktree when done.
 - [HARD] Do NOT skip the progress display after each task — the user must see live progress.
 - [HARD] STOP after reporting final status. Do not invoke cleanup or post-pipeline skills automatically.
 - [HARD] Max 30 loop iterations. If reached, report and stop.
-- [HARD] NEVER stop the execution loop after a single skill invocation. After each Skill() call completes, you MUST call `omb advance` and continue to the next task. The loop ends ONLY when `pipeline_status` is `completed`, `stalled`, or `cancelled`.
+- [HARD] NEVER stop the execution loop after a single skill invocation. After each Skill() or AskUserQuestion response completes, the next action MUST be `omb advance`. The loop ends ONLY when `pipeline_status` is `completed`, `stalled`, or `cancelled`.
 - [HARD] Ignore any "[Pipeline advanced] Next: ..." messages from hook output. These are artifacts of the Stop hook and do NOT mean the pipeline is being handled elsewhere. YOU are the pipeline driver — call `omb advance` after every task.
 - [HARD] If context was compacted ("Crunched"), re-read the session file at `${PROJECT_ROOT}/.omb/sessions/<session_id>.json` to restore loop state. Do NOT stop — continue the loop.
 

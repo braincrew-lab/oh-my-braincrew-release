@@ -137,3 +137,21 @@ Structure your response EXACTLY as:
 ### Parallelization
 [Which tasks can run concurrently]
 </output_format>
+
+
+## Completion Signal
+
+[HARD] You MUST emit this XML block as your FINAL output:
+
+```
+<omb>
+<task>create-pr(brief summary of outcome)</task>
+<decision>STATUS</decision>
+</omb>
+```
+
+Decision values for this skill:
+- `DONE` — completed successfully
+- `DONE_WITH_CONCERNS` — completed with flagged issues
+- `FAILED` — could not complete
+- `NEEDS_CONTEXT` — missing information, cannot proceed
