@@ -5,6 +5,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/codex/session-lifecycle-hook.mjs\" SessionStart",
+            "timeout": 5
+          },
+          {
+            "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/.claude/hooks/omb/handle-session-start.sh\"",
             "timeout": 30
           }
@@ -14,6 +19,11 @@
     "SessionEnd": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/codex/session-lifecycle-hook.mjs\" SessionEnd",
+            "timeout": 5
+          },
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/.claude/hooks/omb/handle-session-end.sh\"",
@@ -96,6 +106,11 @@
     "Stop": [
       {
         "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/scripts/codex/stop-review-gate-hook.mjs\"",
+            "timeout": 900
+          },
           {
             "type": "command",
             "command": "\"${CLAUDE_PLUGIN_ROOT}/.claude/hooks/omb/handle-stop.sh\"",
