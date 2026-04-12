@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # install.sh — Download and install the latest oh-my-braincrew binary from GitHub Releases
-# Usage: curl -fsSL https://raw.githubusercontent.com/teddynote-lab/oh-my-braincrew-release/main/scripts/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/teddynote-lab/oh-my-braincrew-release/main/install.sh | bash
 set -euo pipefail
 
 REPO="teddynote-lab/oh-my-braincrew-release"
@@ -123,8 +123,8 @@ main() {
   tag=$(fetch_latest_tag)
   info "Latest release: ${tag}"
 
-  # Expected asset names follow the pattern: oh-my-braincrew_linux_amd64
-  local asset_name="${BINARY_NAME}_${os}_${arch}"
+  # Expected asset names follow the pattern: oh-my-braincrew-v0.1.4-linux-amd64
+  local asset_name="${BINARY_NAME}-${tag}-${os}-${arch}"
   local base_url="https://github.com/${REPO}/releases/download/${tag}"
   local binary_url="${base_url}/${asset_name}"
   local checksum_url="${base_url}/checksums-sha256.txt"

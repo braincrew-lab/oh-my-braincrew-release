@@ -190,115 +190,23 @@ gh release create "v${NEW_VERSION}" \
 
 Uses `GITHUB_TOKEN` (default environment variable). If the release creation fails, note the error in the summary but continue to Step 11 — the tag is already pushed.
 
-### Step 11: Update Public Release Repo
+### Step 11: CI Pipeline Verification
 
-The public release repository is `teddynote-lab/oh-my-braincrew-release`.
+The tag push from Step 9 triggers the `release-binary.yml` CI workflow which automatically:
+- Builds platform binaries (linux/darwin/windows, amd64/arm64)
+- Generates harness tarball with all `.claude/` content (skills, rules, agents, hooks, statusline)
+- Copies install scripts, sanitized settings.json, CLAUDE.md to the public release repo
+- Updates CHANGELOG.md and README.md version references in the public repo
+- Creates the public GitHub Release with all assets attached
 
-```bash
-RELEASE_REPO_DIR=$(mktemp -d)
-```
-
-**11.1 Clone the public repo** (using gh for auth):
-
-```bash
-gh repo clone teddynote-lab/oh-my-braincrew-release "${RELEASE_REPO_DIR}"
-```
-
-**11.2 Generate public-facing changelog**
-
-Write a user-facing version of the changelog entry — omit any internal implementation details, hook names, or architecture references. Focus on what users of the harness can do now that they couldn't before.
-
-**11.3 Update CHANGELOG.md in release repo**
-
-Prepend the public changelog entry to `${RELEASE_REPO_DIR}/CHANGELOG.md`. Create the file with the standard header if it does not exist.
-
-**11.4 Update README.md version references**
-
-Replace occurrences of the previous version string `X.Y.Z` with `NEW_VERSION` in `${RELEASE_REPO_DIR}/README.md`. If README does not exist, skip silently.
-
-**11.5 Copy install scripts**
+Monitor CI progress:
 
 ```bash
-cp scripts/install.sh "${RELEASE_REPO_DIR}/scripts/install.sh" 2>/dev/null || true
-cp scripts/install.ps1 "${RELEASE_REPO_DIR}/scripts/install.ps1" 2>/dev/null || true
+gh run list --workflow=release-binary.yml --limit=1
 ```
 
-**11.6 Copy .claude/ directory (allowlist only)**
-
-Only the directories listed below are copied. Everything else is excluded.
-
-```bash
-rm -rf "${RELEASE_REPO_DIR}/.claude"
-mkdir -p "${RELEASE_REPO_DIR}/.claude"
-for dir in skills rules agents; do
-  if [ -d ".claude/${dir}" ]; then
-    cp -r ".claude/${dir}" "${RELEASE_REPO_DIR}/.claude/${dir}"
-  fi
-done
-```
-
-**Explicitly excluded from .claude/**: `agent-memory/`, `settings.local.json`, any plans or internal-only config.
-
-**11.7 Copy CLAUDE.md**
-
-```bash
-cp CLAUDE.md "${RELEASE_REPO_DIR}/CLAUDE.md"
-```
-
-**11.8 Run sanitize script on settings.json**
-
-Copy `settings.json` and run the sanitize script:
-
-```bash
-cp .claude/settings.json "${RELEASE_REPO_DIR}/.claude/settings.json"
-bash "${CLAUDE_PROJECT_DIR}/.claude/skills/omb-release/scripts/sanitize-settings.sh" "${RELEASE_REPO_DIR}"
-```
-
-**11.9 Sanitize verification gate**
-
-Before pushing, verify no secrets leaked through:
-
-```bash
-if grep -riE 'KEY|TOKEN|SECRET|PASSWORD' "${RELEASE_REPO_DIR}/.claude/settings.json" 2>/dev/null; then
-  echo "ERROR: Secret stripping failed — aborting release repo push"
-  exit 1
-fi
-```
-
-If this check fails: do NOT push. Report BLOCKED with the matched lines so the user can investigate the sanitize script.
-
-**11.10 Remove internal artifacts**
-
-```bash
-rm -rf "${RELEASE_REPO_DIR}/.claude/agent-memory"
-rm -f "${RELEASE_REPO_DIR}/.claude/settings.local.json"
-```
-
-**11.11 Commit and push to public repo**
-
-```bash
-cd "${RELEASE_REPO_DIR}"
-git config user.email "release-bot@oh-my-braincrew.dev"
-git config user.name "OMB Release Bot"
-git add -A
-git commit -m "chore(release): v${NEW_VERSION}"
-git push
-```
-
-**11.12 Create GitHub Release on public repo**
-
-```bash
-gh release create "v${NEW_VERSION}" \
-  --repo "teddynote-lab/oh-my-braincrew-release" \
-  --title "v${NEW_VERSION}" \
-  --notes "${PUBLIC_CHANGELOG_ENTRY}"
-```
-
-**11.13 Cleanup temp directory**
-
-```bash
-rm -rf "${RELEASE_REPO_DIR}"
-```
+Wait for the CI run to complete successfully before reporting the final summary.
+If CI fails, report the failure and link the run URL — do NOT manually update the public repo.
 
 </execution_order>
 
@@ -317,8 +225,7 @@ Print a final release summary:
 | Git commit | {commit_hash} |
 | Git tag | v{NEW_VERSION} (pushed) |
 | GitHub Release (private) | {release_url} |
-| Public repo update | {public_repo_release_url} |
-| Binary builds | Triggered via CI (no action needed) |
+| CI pipeline | {run_url} — builds binaries, tarball, updates public repo |
 
 ### Changelog
 {CHANGELOG_ENTRY}
@@ -335,9 +242,8 @@ Print a final release summary:
 | `__version__` line missing/malformed | BLOCKED with actual file content |
 | Tag already exists | BLOCKED — use explicit version or bump differently |
 | `uv build` fails | Abort with last 20 lines of output |
-| Sanitize verification fails | BLOCKED — do NOT push public repo |
 | GitHub Release creation fails | Log error, continue to Step 11 |
-| Public repo push fails | Report error in summary (private release is complete) |
+| CI pipeline fails | Report failure with run URL — do NOT manually update public repo |
 
 ## Authentication
 
