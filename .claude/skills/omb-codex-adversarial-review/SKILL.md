@@ -1,105 +1,76 @@
 ---
 name: omb-codex-adversarial-review
-description: >
-  Use when running an adversarial Codex review that challenges the implementation approach,
-  design choices, tradeoffs, and assumptions. Not just stricter bug detection.
+description: "Run adversarial Codex review — challenges assumptions, finds failure modes, and pressure-tests implementation choices. Core Codex feature for deep code analysis."
 user-invocable: true
-argument-hint: "[--wait|--background] [--base <ref>] [--scope auto|working-tree|branch] [focus ...]"
-allowed-tools: Read, Glob, Grep, Bash, AskUserQuestion
+argument-hint: "[--base <ref>] [focus-text]"
+allowed-tools: Bash, Read, Grep, Glob
 ---
 
 # Codex Adversarial Review
 
-Run an adversarial Codex review through the shared built-in reviewer. Position this as a
-challenge review that questions the chosen implementation, design choices, tradeoffs, and
-assumptions — not just a stricter pass over implementation defects.
+Run an adversarial code review using the Codex CLI. Unlike standard review, this mode actively challenges the implementation — finding failure modes, security risks, race conditions, and design weaknesses.
 
-Unlike `/omb codex-review`, this skill supports extra focus text after the flags to direct
-the adversarial framing toward a specific concern.
+## Pre-execution Check
 
-Raw slash-command arguments:
-`$ARGUMENTS`
+!`which codex 2>/dev/null || echo "NOT_FOUND"`
 
-## Core Constraint
+If `codex` is not found, stop and tell the user:
+```
+Codex CLI is not installed. Run: npm install -g @openai/codex
+```
 
-- This skill is **review-only**.
-- Do not fix issues, apply patches, or suggest that you are about to make changes.
-- Your only job is to run the adversarial review and return Codex's output verbatim to the user.
-- Keep the framing focused on whether the current approach is the right one, what assumptions
-  it depends on, and where the design could fail under real-world conditions.
-- Do not weaken the adversarial framing or rewrite the user's focus text.
+## Arguments
 
-## Execution Mode Rules
+$ARGUMENTS
 
-Determine how to run the review before proceeding:
+## Execution
 
-1. If `$ARGUMENTS` includes `--wait` — do not ask. Run the review in the foreground immediately.
-2. If `$ARGUMENTS` includes `--background` — do not ask. Run the review as a background task immediately.
-3. Otherwise, estimate the review size first, then ask:
+1. Determine the review scope:
+   - `--base <ref>` — review changes against a base branch
+   - No base flag — defaults to uncommitted changes
+   - Any remaining text after flags is treated as **focus text** (directs Codex to challenge specific areas)
 
-### Size Estimation Logic
+2. Build the adversarial review command. The `codex review` CLI does not have a `--adversarial` flag. Instead, pass adversarial review instructions as the prompt argument:
+   - If `$ARGUMENTS` contains `--base <ref>`: extract the base flag and combine with adversarial prompt
+   - If `$ARGUMENTS` has focus text: incorporate it into the adversarial prompt
+   - Default (no args): use `--uncommitted` with the adversarial prompt
 
-- For working-tree review: run `git status --short --untracked-files=all`.
-- For working-tree review: also inspect both `git diff --shortstat --cached` and `git diff --shortstat`.
-- For base-branch review (when `--base <ref>` is present): run `git diff --shortstat <base>...HEAD`.
-- Treat untracked files or directories as reviewable work even when `git diff --shortstat` is empty.
-- Only conclude there is nothing to review when the relevant working-tree status is empty **or** the explicit branch diff is empty.
-- Recommend **foreground (wait)** only when the review is clearly tiny — roughly 1–2 files total and no sign of a broader directory-sized change.
-- In every other case, including unclear size, recommend **background**.
-- When in doubt, run the review instead of declaring that there is nothing to review.
-
-### AskUserQuestion (exactly once)
-
-After estimating size, use `AskUserQuestion` exactly once with two options. Put the recommended option first and suffix its label with `(Recommended)`:
-
-- `Wait for results`
-- `Run in background`
-
-## Argument Handling Rules
-
-- Preserve the user's arguments exactly — pass `$ARGUMENTS` as-is to the companion script.
-- Do not strip `--wait` or `--background` yourself; the companion script parses these flags.
-- Do not add extra review instructions or rewrite the user's intent.
-- Claude Code's `Bash(..., run_in_background: true)` is what actually detaches the run — the companion script does not handle detachment.
-- This skill does **not** support `--scope staged` or `--scope unstaged`.
-- Unlike `/omb codex-review`, focus text after the flags is supported and preserved verbatim.
-
-## Foreground Flow
-
-Run the adversarial review synchronously:
+**Important:** `--uncommitted` and `[PROMPT]` are mutually exclusive in the codex CLI. When providing adversarial instructions as a prompt, do NOT add `--uncommitted` — the prompt implicitly reviews uncommitted changes.
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/codex/codex-companion.mjs" adversarial-review "$ARGUMENTS"
+# Default: adversarial review of uncommitted changes (prompt-only, no --uncommitted)
+codex review "Act as an adversarial reviewer. Challenge assumptions, find failure modes, race conditions, auth bypass, data loss scenarios, and rollback safety issues. Report only material findings with evidence."
+
+# With base branch (--base is compatible with PROMPT)
+codex review --base main "Act as an adversarial reviewer. Challenge assumptions, find failure modes, race conditions, auth bypass, data loss scenarios, and rollback safety issues. Report only material findings with evidence."
+
+# With user focus text (e.g., user said "challenge the caching design")
+codex review "Act as an adversarial reviewer. Focus on: challenge the caching design. Find failure modes, race conditions, auth bypass, data loss scenarios, and rollback safety issues."
 ```
 
-- Return the command stdout **verbatim**, exactly as-is.
-- Do not paraphrase, summarize, or add commentary before or after the output.
-- Do not fix any issues mentioned in the review output.
+3. Return the Codex output **verbatim**. Do not paraphrase, summarize, or add commentary.
 
-## Background Flow
+4. After presenting findings, **STOP**. Do not auto-apply fixes unless the user explicitly asks.
 
-Launch the adversarial review detached:
+## Focus Text Examples
 
-```typescript
-Bash({
-  command: `node "${CLAUDE_PLUGIN_ROOT}/scripts/codex/codex-companion.mjs" adversarial-review "$ARGUMENTS"`,
-  description: "Codex adversarial review",
-  run_in_background: true
-})
-```
+- `adversarial-review --base main challenge the caching design` — pressure-test caching choices
+- `adversarial-review check for race conditions in auth flow` — find concurrency issues
+- `adversarial-review` — general adversarial review of all changes
 
-- Do not call `BashOutput` or wait for completion in this turn.
-- After launching, tell the user: "Codex adversarial review started in the background. Check `/omb codex-status` for progress."
+## Attack Surface
 
-## Completion Signal
+Codex adversarial review focuses on:
+- Auth/permissions bypass
+- Data loss scenarios
+- Race conditions and concurrency bugs
+- Rollback safety
+- Observability gaps
+- Error handling completeness
 
-When this skill completes, report your result clearly in the final output:
+## Rules
 
-- On success: State "DONE" with a brief summary of what was accomplished
-- On completion with concerns: State "DONE_WITH_CONCERNS" listing the concerns
-- On failure: State "FAILED" with the reason
-- On needing more context: State "NEEDS_CONTEXT" with what is missing
-
-The session handler will read your output and advance the pipeline automatically.
-
-**[HARD] STOP AFTER REPORTING**: After reporting your result, you MUST stop immediately. Do NOT invoke the next skill or output additional commentary. The pipeline system handles step transitions.
+- This command is review-only. Do not fix issues.
+- Preserve all file paths, line numbers, and confidence scores exactly as reported.
+- If Codex reports no material findings, say so and stop.
+- If the review fails (non-zero exit), report the error and stop.

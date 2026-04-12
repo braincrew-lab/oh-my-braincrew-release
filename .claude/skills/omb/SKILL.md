@@ -2,144 +2,197 @@
 name: omb
 description: >
   OMB orchestrator — unified dispatcher for the oh-my-braincrew workflow.
-  Routes subcommands (plan, review, exec, verify, doc, pr, interview,
-  prompt-guide, react, design, setup, codex-review, codex-adversarial-review,
-  codex-rescue, codex-setup, codex-status, codex-result, codex-cancel)
-  to specialized sub-skills.
-  Use for any omb workflow step from planning to PR creation.
-allowed-tools: Skill, AskUserQuestion, TaskCreate, TaskUpdate, TaskList, TaskGet, Bash, Read, Write, Edit, Glob, Grep
+  Routes subcommands (interview, plan, plan-review, run, verify, document, pr, release,
+  prompt-guide, prompt-review, lint-check, brainstorming, mermaid, harness, setup,
+  codex) to specialized omb-* sub-skills.
+allowed-tools: Skill, AskUserQuestion, Bash, Read, Grep, Glob
 argument-hint: "[subcommand] [args] | \"natural language task\""
+effort: low
 ---
+
+# OMB Dispatcher
+
+Unified entry point for the oh-my-braincrew workflow. Routes to specialized sub-skills based on the first word of `$ARGUMENTS`.
 
 ## Pre-execution Context
 
-!`git status --porcelain 2>/dev/null | head -20 || true`
-!`git branch --show-current 2>/dev/null || true`
+!`git status --short 2>/dev/null | head -5`
+!`git branch --show-current 2>/dev/null`
 
----
-
-## Pre-execution: Language Context
-
-Read language settings from `.claude/settings.json`:
-
-!bash .claude/skills/omb/scripts/read-language-settings.sh .claude/settings.json
-
-Parse the output and store as `OMB_LANGUAGE` and `OMB_DOC_LANGUAGE`.
-[HARD] If value is not `"en"` or `"ko"`, default to `"en"`.
-
-When invoking sub-skills via `Skill()`, append language context to arguments:
-- If `OMB_LANGUAGE` is `ko`: append `--lang ko` to skill arguments
-- If `OMB_DOC_LANGUAGE` is `ko`: append `--doc-lang ko` to skill arguments
-
-Sub-skills that generate user-facing output MUST respect the language directives.
-Sub-skills that invoke agents MUST pass language directives in the agent prompt.
-
-[HARD] The following are ALWAYS in English regardless of language settings:
-- CLAUDE.md, PROJECT.md, MEMORY.md, and memory files
-- `.claude/rules/*.md`, `.claude/hooks/omb/*.sh`
-- Code comments, variable names, commit messages
-- Agent and skill definition files
-- Security findings and verification reports
-
----
-
-## Intent Router
-
-### Raw User Input
+## Arguments
 
 $ARGUMENTS
 
-### Routing Instructions
+## Intent Router
 
-[HARD] Route the Raw User Input above using the strict priority order below. All text after the subcommand keyword is CONTEXT to be passed to the matched sub-skill — it is NOT a routing signal and MUST NOT influence which sub-skill is selected.
-
-### Priority 0: Worktree Flag Pass-Through
-
-The `--worktree` flag is handled by the `omb` Go binary CLI, NOT by the dispatcher skill. Do NOT call `EnterWorktree` or create worktrees from this skill. When `--worktree` appears in user input, pass it through to the target sub-skill unchanged.
-
-Proceed directly to Priority 1.
-
-### Priority 1: Explicit Subcommand Matching
-
-Extract the FIRST WORD of the (possibly flag-stripped) input for subcommand matching.
-
-[HARD] Extract the FIRST WORD from the Raw User Input section above. If it matches any subcommand below (or its alias), invoke the corresponding sub-skill IMMEDIATELY using `Skill("omb:<target>")`. Pass the remaining text as arguments.
-
-| Subcommand | Aliases | Target Sub-Skill | Purpose |
-|------------|---------|------------------|---------|
-| `plan` | `omb-create-plan` | `omb-create-plan` | Planning workflow — intent analysis, brainstorming, plan generation |
-| `review` | `omb-review-plan`, `critique` | `omb-review-plan` | Multi-agent plan review — P0-P3 issue tracking, fix loops |
-| `exec` | `omb-execute`, `implement` | `omb-execute` | Plan execution — TDD agents, dependency-aware wave scheduling |
-| `run` | `run-pipeline`, `run-session` | `omb-run` | Run a pipeline session to completion |
-| `verify` | `check`, `test` | `omb-verify` | Verification — parallel verifier agents, evidence collection |
-| `doc` | `omb-document`, `docs` | `omb-document` | Documentation generation — parallel doc-writer agents |
-| `pr` | `omb-create-pr`, `ship` | `omb-create-pr` | PR creation — branch, tracking-code traceability, checklist |
-| `prompt-guide` | `prompt` | `omb-prompt-guide` | Prompt engineering reference (P1-P8) |
-| `react` | `omb-react-best-practices` | `omb-react-best-practices` | React quality checklist — hooks, a11y, performance, TypeScript |
-| `design` | `web-design`, `omb-web-design-guidelines` | `omb-web-design-guidelines` | Design system reference — visual identity, typography, color, motion |
-| `task` | `init-pipeline`, `create-pipeline`, `new-pipeline`, `new-session` | `omb-task` | Initialize a new pipeline session with validated schema |
-| `interview` | `requirements`, `gather` | `omb-interview` | Requirements gathering via multi-round AskUserQuestion |
-| `feedback` | `report`, `issue` | `omb-feedback` | Feedback submission — GitHub issues via gh CLI or browser URL |
-| `loop` | `run-loop` | `omb-loop` | Recurring task loop — run a task at a fixed interval |
-| `release` | `publish`, `tag`, `version` | `omb-release` | Release pipeline — version bump, changelog, tag, build, push |
-| `setup` | `init`, `initialize`, `configure`, `init-survey`, `init-project`, `setup-project`, `setup-claude`, `survey` | `omb-setup` | First-time setup — user profile, Slack config, CLAUDE.md + PROJECT.md generation |
-| `cleanup` | `clean`, `tidy` | `omb-cleanup` | Clean up stale session state and exit worktrees safely |
-| `resolve-issue` | `fix-issues`, `auto-fix` | `omb-resolve-issue` | Resolve open GitHub issues via parallel worktree pipelines |
-| `review-pr` | `pr-review` | `omb-review-pr` | Review a PR with multi-agent analysis |
-| `technical-report` | `tech-report`, `codebase-report`, `project-report` | `omb-technical-report` | Analyze target project and generate per-domain technical reports |
-| `codex-review` | `cr` | `omb-codex-review` | Run Codex code review against local git state |
-| `codex-adversarial-review` | `car` | `omb-codex-adversarial-review` | Run adversarial Codex review challenging approach and design |
-| `codex-rescue` | `rescue` | `omb-codex-rescue` | Delegate investigation or fix work to Codex rescue subagent |
-| `codex-setup` | `codex-init` | `omb-codex-setup` | Check Codex CLI readiness and toggle review gate |
-| `codex-status` | `codex-jobs` | `omb-codex-status` | Show active and recent Codex jobs |
-| `codex-result` | — | `omb-codex-result` | Show stored output for finished Codex job |
-| `codex-cancel` | — | `omb-codex-cancel` | Cancel active background Codex job |
-
-### Priority 2: Workflow Keyword Detection
-
-Only if Priority 1 did not match: Check if the Raw User Input contains workflow-related keywords:
-
-- Planning language (plan, design, spec, requirements, feature) routes to **plan**
-- Review language (review, critique, check plan) routes to **review**
-- Implementation language (execute, implement, build, run plan) routes to **exec**
-- Pipeline run language (run pipeline, run session, start session) routes to **run**
-- Verification language (verify, test, check, evidence) routes to **verify**
-- Documentation language (document, docs, readme, adr) routes to **doc**
-- PR language (pr, pull request, ship, merge) routes to **pr**
-- Feedback language (feedback, report, issue) routes to **feedback**
-- Release language (release, publish, tag, version bump) routes to **release**
-- Setup language (setup, init, initialize, configure, survey, profile) routes to **setup**
-- Issue resolution language (resolve-issue, resolve issues, fix issues, auto-fix) routes to **resolve-issue**
-- Technical report language (technical report, codebase analysis, project analysis, architecture report, generate report) routes to **technical-report**
-- Codex language (codex review, codex check, codex rescue, codex fix, ask codex, delegate to codex) routes to **codex-review** or **codex-rescue** based on intent
-- Codex management language (codex status, codex jobs, codex result, codex cancel) routes to **codex-status**
-
-### Priority 3: Default Behavior
-
-If the intent remains ambiguous after all priority checks, use AskUserQuestion to present the top 2-3 matching sub-skills and let the user choose.
+Parse `$ARGUMENTS`:
+1. Extract the **first word** as the subcommand.
+2. Strip the subcommand from the string; the remainder is the arguments to pass to the target skill.
+3. Apply routing in priority order: **Priority 1 → Priority 2 → Priority 3**.
 
 ---
 
-## Quick Reference
+### Priority 1: Explicit Subcommand Matching
+
+Match the first word (case-insensitive) against the table below. If matched, invoke `Skill("{target}")` with the remaining argument string.
+
+| Subcommand | Aliases | Target Skill | Purpose |
+|------------|---------|-------------|---------|
+| `interview` | `requirements` | `omb-interview` | Requirements gathering via structured questioning |
+| `plan` | — | `omb-plan` | Implementation plan creation with evaluate-improve loop |
+| `plan-review` | `review`, `critique` | `omb-plan-review` | Multi-agent plan review and scoring |
+| `run` | `exec`, `execute` | `omb-run` | Plan execution with domain agent delegation |
+| `verify` | `check-impl`, `validate` | `omb-verify` | Post-implementation verification |
+| `document` | `doc`, `docs` | `omb-document` | Documentation generation and updates |
+| `pr` | `ship` | `omb-pr` | GitHub PR creation with lint gate |
+| `prompt-guide` | `prompt` | `omb-prompt-guide` | Prompt engineering reference |
+| `prompt-review` | — | `omb-prompt-review` | Iterative prompt scoring and improvement |
+| `lint-check` | `lint`, `check` | `omb-lint-check` | Stack-aware linter execution |
+| `brainstorming` | `brainstorm` | `omb-brainstorming` | Collaborative idea exploration |
+| `mermaid` | `diagram` | `omb-mermaid` | Mermaid diagram generation |
+| `harness` | `config` | `omb-harness` | Harness configuration management |
+| `setup` | `init`, `initialize` | `omb-setup` | Project scaffolding and configuration |
+| `release` | — | `omb-release` | Version release with changelog and binary builds |
+| `codex` | — | `omb-codex` | Codex CLI code review and task delegation |
+| `worktree` | `wt` | `omb-worktree` | Worktree management (create, status, clean, resume) |
+| `clean` | — | `omb-clean` | Worktree cleanup and completion |
+
+**Example:**
+- `omb interview add OAuth login` → `Skill("omb-interview") "add OAuth login"`
+- `omb run 2026-04-11-auth-plan.md` → `Skill("omb-run") "2026-04-11-auth-plan.md"`
+- `omb ship` → `Skill("omb-pr")`
+
+---
+
+### Priority 2: Workflow Keyword Detection
+
+If the first word does not match Priority 1, scan the full argument string for workflow keywords.
+
+| Keywords | Target Skill |
+|----------|-------------|
+| `requirements`, `gather`, `questions`, `scope`, `define feature` | `omb-interview` |
+| `implement plan`, `execute plan`, `run plan`, `start implementation` | `omb-run` |
+| `verify implementation`, `check implementation`, `validate code`, `post-implementation check` | `omb-verify` |
+| `create plan`, `write plan`, `planning` | `omb-plan` |
+| `score plan`, `evaluate plan`, `review plan`, `critique plan` | `omb-plan-review` |
+| `update docs`, `write docs`, `generate documentation`, `document` | `omb-document` |
+| `create pr`, `open pr`, `submit pr`, `pull request`, `push changes` | `omb-pr` |
+| `prompt tips`, `prompt best practices`, `how to prompt` | `omb-prompt-guide` |
+| `improve prompt`, `score prompt`, `review prompt` | `omb-prompt-review` |
+| `lint`, `check code`, `run linter` | `omb-lint-check` |
+| `brainstorm`, `explore idea`, `think through`, `ideate` | `omb-brainstorming` |
+| `diagram`, `flowchart`, `sequence diagram`, `mermaid` | `omb-mermaid` |
+| `configure harness`, `update agents`, `update hooks`, `update rules`, `update settings` | `omb-harness` |
+| `initialize`, `scaffold`, `first run`, `set up project`, `configure project` | `omb-setup` |
+| `release`, `publish`, `ship version`, `bump version and release` | `omb-release` |
+| `codex review`, `adversarial review`, `code review with codex`, `delegate to codex` | `omb-codex` |
+| `worktree`, `switch worktree`, `create worktree`, `worktree status` | `omb-worktree` |
+| `clean worktree`, `remove worktree`, `cleanup` | `omb-clean` |
+
+If a keyword match is found, invoke `Skill("{target}")` passing the full original `$ARGUMENTS` string.
+
+---
+
+### Priority 3: Ambiguous — Ask the User
+
+If neither Priority 1 nor Priority 2 produces a match, use `AskUserQuestion` to let the user pick:
 
 ```
-/omb plan [description]        — Create a plan
-/omb review [plan-file]        — Review a plan
-/omb exec [plan-file]          — Execute a plan (TDD)
-/omb run <session_id> [--worktree] — Run pipeline session to completion
-/omb verify [plan-file]        — Verify implementation
-/omb doc [plan-file]           — Generate documentation
-/omb pr [plan-file]            — Create PR
-omb tracking next <TYPE>        — Allocate the next tracking code
-/omb prompt-guide              — Prompt engineering reference
-/omb react                     — React best practices checklist
-/omb design                    — Web design guidelines
-/omb interview [description]   — Gather requirements before planning
-/omb feedback [message]        — Submit feedback as GitHub issue
-/omb loop <interval> "<task>"  — Run a task at a fixed interval
-/omb release [major|minor|patch] [comment] — Release new version
-/omb setup [--force] [description] — First-time setup (profile + Slack + CLAUDE.md + PROJECT.md)
-/omb technical-report [path]  — Generate per-domain technical reports for a target project
+AskUserQuestion:
+  question: "Which omb workflow should I run for this request?"
+  header: "Workflow selection"
+  options:
+    - label: "interview — gather requirements"
+      description: "Ask structured questions to define scope, tech stack, and constraints."
+    - label: "plan — create implementation plan"
+      description: "Author a multi-phase plan with agent delegation."
+    - label: "run — execute a plan"
+      description: "Run an existing .omb/plans/ file through domain agents."
+    - label: "brainstorming — explore the idea first"
+      description: "Open-ended collaborative dialogue before committing to a direction."
 ```
 
-<!-- Tracking: OMB-PLAN-000041 -->
+Show only the 2-3 most likely workflows based on the original argument string. After the user selects, invoke the corresponding skill with the original `$ARGUMENTS`.
+
+---
+
+## Routing Logic Summary
+
+```
+First word of $ARGUMENTS
+  ├── Matches Priority 1 subcommand/alias?
+  │     YES → Skill("{target}") with remaining args
+  │
+  └── No match
+        ├── Full string matches Priority 2 keyword?
+        │     YES → Skill("{target}") with full $ARGUMENTS
+        │
+        └── No match
+              → AskUserQuestion (Priority 3): present top 2-3 workflows
+                → Skill("{chosen target}") with $ARGUMENTS
+```
+
+---
+
+## Workflow Quick Reference
+
+Recommended execution order for a complete development cycle:
+
+| # | Subcommand | Description | Supports --worktree |
+|---|-----------|-------------|---------------------|
+| 1 | `interview` | Requirements gathering | Yes |
+| 2 | `plan` | Implementation plan | Yes |
+| 3 | `plan-review` | Review and score plan | No |
+| 4 | `run` | Execute plan | Yes |
+| 5 | `verify` | Post-implementation verification | Yes |
+| 6 | `document` | Generate/update docs | Yes |
+| 7 | `pr` | Create GitHub PR | Yes |
+| 8 | `release` | Version release with changelog and binary builds | No |
+
+### Utility subcommands (invoke anytime):
+
+| Subcommand | Description |
+|-----------|-------------|
+| `prompt-guide` | Prompt engineering reference |
+| `prompt-review` | Iterative prompt scoring |
+| `lint-check` | Stack-aware linter (required before PR) |
+| `brainstorming` | Collaborative idea exploration |
+| `mermaid` | Mermaid diagram generation |
+| `harness` | Harness configuration management |
+| `setup` | Project scaffolding and configuration |
+| `worktree` | Worktree management (create, status, clean, resume) |
+| `clean` | Worktree cleanup and completion |
+
+---
+
+## Output Contract
+
+On successful routing (skill invoked):
+
+<omb>DONE</omb>
+
+```result
+summary: "Routed to {target-skill} with args: {args}"
+artifacts:
+  - "{target-skill}"
+changed_files: []
+concerns: []
+blockers: []
+retryable: false
+next_step_hint: "Check the output of {target-skill} for next steps"
+```
+
+On ambiguous input where the user declined to choose:
+
+<omb>BLOCKED</omb>
+
+```result
+summary: "Could not determine target workflow from input: {$ARGUMENTS}"
+artifacts: []
+changed_files: []
+concerns: []
+blockers:
+  - "No matching subcommand or keyword found and user declined to select"
+retryable: true
+next_step_hint: "Re-invoke with an explicit subcommand, e.g.: omb interview, omb plan, omb run"
+```

@@ -1,74 +1,57 @@
 ---
 name: omb-codex-setup
-description: >
-  Use when checking Codex CLI readiness, installing Codex, toggling the review gate,
-  or when another codex skill reports Codex is missing.
+description: "Verify Codex CLI installation, authentication status, and run a quick connectivity test."
 user-invocable: true
-argument-hint: "[--enable-review-gate|--disable-review-gate]"
-allowed-tools: Bash, AskUserQuestion
+allowed-tools: Bash, Read, AskUserQuestion
 ---
 
-# Codex Setup Skill
+# Codex CLI Setup
 
-Checks whether the local Codex CLI is ready and optionally toggles the stop-time review gate.
+Verify that the Codex CLI is installed, authenticated, and functioning.
 
-## Step 1: Run Setup Companion
-
-```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/codex/codex-companion.mjs" setup --json $ARGUMENTS
-```
-
-Parse the JSON output to determine the current Codex readiness state.
-
-## Step 2: Handle Codex Unavailable + npm Available
-
-If the result indicates Codex is unavailable **and** npm is available:
-
-- Use `AskUserQuestion` exactly once to ask whether Claude should install Codex now.
-- Put the install option first and suffix it with `(Recommended)`.
-- Use these two options:
-  - `Install Codex (Recommended)`
-  - `Skip for now`
-
-If the user chooses **Install Codex**:
+## Step 1: Check Installation
 
 ```bash
-npm install -g @openai/codex
+which codex 2>/dev/null && codex --version 2>&1
 ```
 
-Then rerun:
+If `codex` is not found:
+1. Ask: "Codex CLI is not installed. Install it now?"
+2. If yes: run `npm install -g @openai/codex`
+3. Verify: `which codex && codex --version`
+
+## Step 2: Check Authentication
 
 ```bash
-node "${CLAUDE_PLUGIN_ROOT}/scripts/codex/codex-companion.mjs" setup --json $ARGUMENTS
+codex login status 2>&1 || echo "AUTH_CHECK_FAILED"
 ```
 
-Use the rerun output as the final setup result.
+If not authenticated:
+1. Check if `OPENAI_API_KEY` is set: `printenv OPENAI_API_KEY | head -c4`
+2. If set, inform the user that Codex will use the API key.
+3. If not set, tell the user:
+   ```
+   Set your OpenAI API key:
+     export OPENAI_API_KEY="sk-..."
+   Or run: codex login
+   ```
 
-If the user chooses **Skip for now**: use the original setup output as the final result.
+## Step 3: Quick Connectivity Test
 
-## Step 3: Skip Installation Prompt When Not Applicable
+Run a minimal test to verify Codex responds:
 
-If Codex is already installed **or** npm is unavailable: do not ask about installation. Proceed directly to Step 4.
-
-## Step 4: Present Final Output
-
-Present the final setup output to the user:
-
-- If Codex is installed but not authenticated, preserve the guidance to run `!codex login`.
-- If the review gate was toggled (via `--enable-review-gate` or `--disable-review-gate`), confirm the new gate state.
-- If installation was skipped, present the original setup output.
-
-## Completion Signal
-
-[HARD] You MUST emit this XML block as your FINAL output:
-
-```
-<omb>
-<task>codex-setup(brief summary of outcome)</task>
-<decision>DONE|BLOCKED</decision>
-</omb>
+```bash
+codex review --help 2>&1 | head -5
 ```
 
-Decision values for this skill:
-- `DONE` — Codex is ready, or user acknowledged the current state
-- `BLOCKED` — Codex unavailable and user chose to skip installation (cannot proceed with codex-dependent skills)
+If the command succeeds, report:
+```
+Codex CLI setup complete:
+  Version: <version>
+  Auth: <status>
+  Test: passed
+```
+
+## Step 4: Summary
+
+Report the overall status. If all checks pass, confirm Codex is ready to use with `/omb codex review` and `/omb codex exec`.

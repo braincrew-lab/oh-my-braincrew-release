@@ -1,590 +1,637 @@
-# OMB-PLAN-000028: restructured into 5-phase verification
 ---
 name: omb-verify
+description: "Post-implementation verification — assembles 3-12 parallel verifiers (domain *-verify agents + @core-critique), runs static analysis, synthesizes consensus with 7-topic framework, auto-fixes P0/P1, and delivers DONE/RETRY/BLOCKED verdict."
 user-invocable: true
-description: >
-  Use when verifying completed work, running tests, collecting evidence, or
-  running Step 4 of the omb workflow. Triggers on: "verify", "run tests",
-  "check implementation", "collect evidence", "verification", "Step 4",
-  "is it working", "prove it works", "verify it", "test it", "check it",
-  "run verification", "did it pass". Spawns parallel verifier agents per stack
-  layer with bounded fix loops. Do NOT use for planning (use
-  omb-create-plan) or executing code (use omb-execute).
-argument-hint: "[plan-file-path]"
-allowed-tools: Read, Write, Bash, Grep, Glob, Agent, AskUserQuestion
+argument-hint: "[plan file path] [--domain <filter>]"
 ---
 
-# Verification Workflow
+# Implementation Verification (Multi-Agent Consensus)
 
-Verify completed work by detecting stack layers, spawning parallel verifier agents, running 5 verification phases, and producing a verification record with evidence.
+Orchestrates a multi-agent verification team to validate implementation results against the original plan. Uses parallel domain-specific verifiers plus architectural intent checking, then synthesizes consensus findings using the 7-topic framework. Auto-fixes P0/P1 issues with up to 3 iteration rounds.
 
-<references>
-- `${CLAUDE_SKILL_DIR}/reference.md` § 1 — verifier agent templates. Read in STEP 4 to build per-layer verifier prompts.
-- `${CLAUDE_SKILL_DIR}/reference.md` § 2 — stack layer detection rules. Read in STEP 1 if `detect-stack-layers.sh` output needs manual interpretation.
-- `${CLAUDE_SKILL_DIR}/reference.md` § 3 — evidence format and examples. Read in STEP 4 when processing verifier output.
-- `${CLAUDE_SKILL_DIR}/reference.md` § 4 — fix loop policy and agent routing table. Read in STEP 9 to route failures to fix agents.
-- `${CLAUDE_SKILL_DIR}/reference.md` § 5 — verification record template. Read in STEP 10 to write the record.
-- `${CLAUDE_SKILL_DIR}/reference.md` § 6 — verification state JSON schema. Read in STEP 2 to initialize state.
-- `${CLAUDE_SKILL_DIR}/reference.md` § 7 — tiered verification (LIGHT/STANDARD/THOROUGH). Read in STEP 1 when determining tier scope.
-- `${CLAUDE_SKILL_DIR}/reference.md` § 8 — regression check patterns. Read in STEP 9 during fix-verify cycles.
-- `${CLAUDE_SKILL_DIR}/reference.md` § 9 — quality analysis template. Read in STEP 6.
-- `${CLAUDE_SKILL_DIR}/reference.md` § 10 — side-effect team definitions. Read in STEP 7.
-- `${CLAUDE_SKILL_DIR}/reference.md` § 11 — coverage enforcement rules. Read in STEP 5.
-- `${CLAUDE_SKILL_DIR}/reference.md` § 12 — harsh critic gate template. Read in STEP 8.
-- `${CLAUDE_SKILL_DIR}/reference.md` § 13 — enhanced fix loop policy. Read in STEP 9.
-- `.claude/rules/04-verify.md` — iron law, evidence requirements, recovery path
-</references>
+This skill runs after `omb-run` has completed. It is the quality gate between implementation and documentation/PR creation.
 
-<completion_criteria>
-The verification is complete when ALL of these hold:
-- Every detected stack layer has been verified (PASS, FAIL, PARTIAL, or BLOCKED)
-- Every phase (1-5) has a final status (PASS, FAIL, PARTIAL, BLOCKED, or SKIPPED)
-- Fix loops completed or exhausted (max 3 cycles)
-- Critic approved or max 3 iterations reached (MoAI compliant)
-- Coverage data generated in Phase 1 and consumed by Phase 2
-- Verification record written to `.omb/verifications/`
-- Verification state updated with final status
-- User presented with status report and next step recommendation
+Output language follows `$OMB_DOCUMENTATION_LANGUAGE` (`en` default, `ko` for Korean).
 
-Status codes: PASS | FAIL | PARTIAL
-</completion_criteria>
+## Architecture
 
-<ambiguity_policy>
-- Plan has no Verification Criteria section: fall back to layer-default checks (pytest for Python, vitest for TypeScript, tsc --noEmit for types) — log "No explicit criteria; using layer defaults"
-- Verification criterion is prose-only ("auth works correctly"): map to runnable commands using layer detection + keyword heuristics (e.g., "auth" + python layer → `pytest tests/auth/ -v` + `curl`)
-- Test infrastructure unavailable (no pytest, no vitest, no Docker): mark layer as BLOCKED with reason "tool not found", continue other layers — never silently skip
-- Execution state file not found: warn user "No execution state found. Run `/omb exec` first or provide a plan file path." via AskUserQuestion
-- Flaky test detected (passes sometimes, fails sometimes): report as FAIL with flaky flag — never silently retry until green
-- Verifier agent returns non-standard output (no STATUS line): extract what you can, mark layer PARTIAL, log "non-standard output from verifier on layer [name]"
-- Fix agent introduces regression (previously passing test now fails): count as a new failure, do NOT reset the fix loop counter — regressions compound
-- Quality analyzer returns SUBOPTIMAL but all tests pass: still FAIL — quality analysis failure is a real failure
-- Side-effect team finds P0 but critic says APPROVE: REJECT — P0 issues override critic verdict
-- Coverage tool unavailable: report BLOCKED for coverage phase, do NOT fail overall — continue with remaining phases
-</ambiguity_policy>
+```mermaid
+%% Title: omb-verify Parallel Verification Workflow
+flowchart TD
+    S0["Step 0: Worktree Context"]
+    S1["Step 1: Parse Args<br/>+ Gather Context<br/>(plan, TODO, git diff)"]
+    S2["Step 2: Domain Detection<br/>+ Team Assembly (3-12)"]
+    S3["Step 3: Static Analysis<br/>Baseline<br/>Skill('omb-lint-check')"]
 
-<scope_boundaries>
-This skill verifies implementations — it does NOT:
-- Create or modify plans (use omb-create-plan)
-- Execute code or implement features (use omb-execute)
-- Generate documentation (use `/omb doc`)
-- Create PRs (Step 6)
-- Make architecture decisions
-- Fix code directly — it routes failures to appropriate fix agents
+    S0 --> S1 --> S2 --> S3
 
-This skill NOW includes quality analysis and side-effect detection in addition to test verification.
-Fix loop fixes are scoped to verification failures only — no feature additions.
-</scope_boundaries>
+    subgraph ParallelVerification["Step 4: Parallel Verification (ONE message)"]
+        direction LR
+        CC["@core-critique<br/>(opus)<br/>intent alignment<br/>+ omb-evaluation-impl"]
+        V1["@{domain}-verify-1<br/>(sonnet)<br/>domain checks"]
+        VN["@{domain}-verify-N<br/>(sonnet)<br/>domain checks"]
+    end
 
-<anti_patterns>
-- Claiming "tests pass" without running them — verification without evidence is just assertion; downstream steps trust your claim and ship broken code
-- Checking exit codes only without reading output — exit code 0 does not mean all tests passed (some frameworks exit 0 with skipped tests)
-- Verifying only one stack layer when changes span multiple — partial verification creates false confidence; untested layers fail in production
-- Silently retrying flaky tests until they pass — masks real intermittent failures that will bite users; report flakiness as FAIL with evidence
-- Running fix loops without regression re-verification — fixes that break previously-passing tests compound failures instead of resolving them
-- Skipping verification because "the code looks right" — code review is not verification; only runnable evidence counts
-- Verifying FAILED/SKIPPED tasks from execution — there is no implementation to verify; note them in the record for completeness but do not spawn verifiers
-- Spawning verifier agents sequentially when they can run in parallel — wastes time without quality gain; all layers are independent
-- Running only Phase 1 and skipping other phases when tier is STANDARD or THOROUGH — partial phase execution misses quality and side-effect issues
-- Letting the critic agent fix code directly instead of routing to fix agents — critic gate is read-only; fixes must go through executor or domain specialists
-- Running phases sequentially when 2-4 can run in parallel — Phases 2, 3, and 4 are independent; spawn all three in one batch
-- Running tests twice — Phase 1 generates coverage data, Phase 2 reads it; never re-run tests for coverage
-</anti_patterns>
+    S3 --> ParallelVerification
 
-<examples>
-<example type="positive" label="Full verification with fix loop">
-Plan: BCRW-PLAN-000042 (auth middleware). Layers detected: python, typescript.
-STEP 4 spawns 2 verifier agents in parallel (one per layer) with --cov flags.
-Python verifier: runs `pytest --cov --cov-report=json tests/auth/ -v` → 8 passed, 1 failed (test_refresh_expired). Coverage JSON written.
-TypeScript verifier: runs `npx vitest run --coverage --coverage.reporter=json tests/auth/` → 5 passed, `tsc --noEmit` → 0 errors. STATUS: PASS.
-STEP 5 (Phase 2): coverage enforcement at 85% threshold — python: 91% PASS, typescript: 88% PASS.
-STEP 6 (Phase 3): quality analyzer spawned — SUBOPTIMAL on error handling pattern.
-STEP 7 (Phase 4): V1 (general) and V3 (security) teams spawned in parallel — V1 finds no issues, V3 flags missing rate limiting (P1).
-STEP 8 (Phase 5): critic reviews all phases — REJECT (python test failure + quality SUBOPTIMAL).
-STEP 9 fix loop: routes python failure to `executor` (sonnet). Fix applied. Re-run all phases: 9 passed, quality PASS.
-Final: PASS. Record written to `.omb/verifications/2026-03-20-auth-middleware.md`.
-</example>
-<example type="negative" label="Bad: exit-code-only checking">
-Plan: BCRW-PLAN-000042. Verifier runs `pytest tests/auth/` and checks `$?` = 0.
-Reports "PASS" without reading actual output. In reality, 3 tests were skipped and 1 was xfail.
-Fix: Always read full command output. Report actual pass/fail/skip counts.
-</example>
-<example type="negative" label="Bad: single-layer verification on cross-stack change">
-Plan touches Python backend + React frontend. Verifier only runs `pytest`.
-Reports "PASS" even though React components have type errors caught by `tsc --noEmit`.
-Fix: Detect ALL affected layers and verify each one.
-</example>
-<example type="positive" label="Partial: environment-blocked layers handled correctly">
-Plan: BCRW-PLAN-000099. Layers detected: python, typescript, redis.
-STEP 4 spawns 3 verifier agents in parallel with coverage flags.
-Python verifier: `pytest --cov --cov-report=json tests/ -v` → 15 passed. `pyright` → 0 errors. STATUS: PASS.
-TypeScript verifier: `npx vitest run --coverage --coverage.reporter=json` → 8 passed. `tsc --noEmit` → 0 errors. STATUS: PASS.
-Redis verifier: `redis-cli PING` → BLOCKED (redis-cli not found). STATUS: BLOCKED with reason.
-STEP 5 (Phase 2): coverage tool available for python/typescript — both pass. Redis coverage BLOCKED (not applicable).
-STEP 6-8 (Phases 3-5): STANDARD tier, quality and side-effect analysis run. Critic APPROVE.
-Final: PARTIAL — ENVIRONMENT_BLOCKED (redis layer). Record notes which layers verified, which blocked and why.
-Next step: proceed to documentation noting partial verification.
-</example>
-</examples>
+    S5["Step 5: Consensus Synthesis<br/>(main session — NOT an agent)<br/>7-topic vote aggregation<br/>EV/CV-tickets"]
+    ParallelVerification --> S5
 
----
+    S6["Step 6: Generate Fix TODO<br/>(structured checklist<br/>from P0/P1 findings)"]
+    S5 -->|"P0/P1 exist"| S6
 
-## STEP 0 — Locate and Load Execution Context
+    S7["Step 7: Execute Fix TODO<br/>(sequential implementation)"]
+    S6 --> S7
 
-1. Parse `$ARGUMENTS` for plan file path.
+    S8["Step 8: Re-verify<br/>(affected domains only)<br/>max 3 iterations"]
+    S7 --> S8
+    S8 -->|"Still P0/P1<br/>iteration < 3"| S6
 
-2. If no path provided:
-   ```bash
-   ls -t .omb/plans/*.md 2>/dev/null | head -5
-   ```
-   Also check for execution state:
-   ```bash
-   ls -t .omb/executions/state/*.json 2>/dev/null | head -5
-   ```
-   Ask the user which plan to verify via `AskUserQuestion`.
+    S9["Step 9: Final Report<br/>+ Verdict"]
+    S5 -->|"No P0/P1"| S9
+    S8 -->|"Clean or<br/>max iterations"| S9
 
-3. Locate the execution state file at `.omb/executions/state/{plan-filename}.json`.
-   - If not found: warn user "No execution state found for this plan. Run `/omb exec` first or verify manually." via `AskUserQuestion`. If user wants to proceed without execution state, continue with plan-only mode (extract file paths from plan's Deliverable column).
+    S9 -->|"DONE"| Next["Skill('omb-document')"]
+    S9 -->|"RETRY"| Stop["End — user must fix"]
 
-4. Read the plan file. Extract:
-   - Tracking code (pattern: `[A-Z]{2,6}-PLAN-\d{6}`)
-   - Verification Criteria section
-   - Tasks table (to identify deliverables)
+    classDef mandatory fill:#4a90d9,color:#fff,stroke:#2c5f8a
+    classDef domain fill:#7cb342,color:#fff,stroke:#4a7c1b
+    classDef main fill:#ff8f00,color:#fff,stroke:#c66900
+    classDef decision fill:#ab47bc,color:#fff,stroke:#7b1fa2
+    classDef fix fill:#e53935,color:#fff,stroke:#b71c1c
 
-5. Read the execution state file (if exists). Extract:
-   - Tasks with status DONE — these are the tasks to verify
-   - Files created and modified per task
-   - Tasks with status FAILED/SKIPPED — note for the record but do not verify
-
-6. Ensure verification directories exist:
-   ```bash
-   mkdir -p .omb/verifications/state
-   ```
-
-**Step output:** Execution state loaded. Tracking code extracted: `{TRACKING_CODE}`. DONE task file lists collected. Plan verification criteria captured. FAILED/SKIPPED tasks noted for record.
-
----
-
-## STEP 1 — Detect Stack Layers and Determine Tier
-
-1. Run the detection script:
-   ```bash
-   bash ${CLAUDE_SKILL_DIR}/scripts/detect-stack-layers.sh <execution-state-path-or-plan-path>
-   ```
-   Capture the JSON output.
-
-2. Parse the JSON result. The script outputs:
-   - `layers`: array of detected layers (e.g., `["python", "typescript", "redis"]`)
-   - `tier`: suggested tier (`LIGHT`, `STANDARD`, or `THOROUGH`)
-   - `totalFiles`: count of files to verify
-   - `securityRelated`: boolean (true if auth/security files detected)
-
-3. Present detected layers and tier to user:
-   ```
-   Stack layers detected: python, typescript
-   Suggested verification tier: STANDARD (12 files, no security layer)
-
-   Tiers:
-   - LIGHT: basic checks only (pytest/vitest pass, tsc clean)
-   - STANDARD: full test suites + type checks + endpoint verification
-   - THOROUGH: all of STANDARD + security audit + load testing + manual checks
-
-   Phase coverage per tier:
-   | Tier     | Phase 1      | Phase 2       | Phase 3  | Phase 4                 | Phase 5           |
-   |----------|--------------|---------------|----------|-------------------------|-------------------|
-   | LIGHT    | Run (+cov)   | Run (75%)     | Skip     | Skip                    | Skip (auto-PASS)  |
-   | STANDARD | Run (+cov)   | Run (85%)     | Run      | Run                     | Run (critic sonnet) |
-   | THOROUGH | Run (+cov)   | Run (90%)     | Run      | Run (+security audit)   | Run (critic opus) |
-
-   Proceed with STANDARD? Override? [y/light/thorough]
-   ```
-   Use `AskUserQuestion` for confirmation.
-
-4. Apply user override if any.
-
-**Step output:** `{layers: [...], tier: "STANDARD", totalFiles: N}` confirmed by user. Tier selection gates model cost and verification depth — wrong tier wastes resources (THOROUGH on trivial change) or misses issues (LIGHT on security change).
-
----
-
-## STEP 2 — Initialize Verification State
-
-1. Check for existing state file at `.omb/verifications/state/{plan-filename}.json`.
-
-2. If exists:
-   | Existing Status | Prompt via AskUserQuestion | Options |
-   |---|---|---|
-   | `IN_PROGRESS` | "Previous verification incomplete." | resume / restart |
-   | `PASS` | "Plan already verified." | re-verify / abort |
-   | `PARTIAL` | "Previous verification partially complete." | resume / restart |
-   | `FAIL` | "Previous verification failed." | retry / restart |
-
-3. Create or update state file (schema in `${CLAUDE_SKILL_DIR}/reference.md` § 6):
-   ```json
-   {
-     "planFile": "<relative-path>",
-     "trackingCode": "<extracted-code>",
-     "startedAt": "<ISO-8601>",
-     "completedAt": null,
-     "status": "IN_PROGRESS",
-     "tier": "STANDARD",
-     "layers": {
-       "python": {"status": "PENDING", "checks": [], "evidence": []},
-       "typescript": {"status": "PENDING", "checks": [], "evidence": []}
-     },
-     "fixLoops": 0,
-     "maxFixLoops": 3,
-     "masterLoop": {"iteration": 0, "maxIterations": 3, "history": []},
-     "phases": {
-       "testAndType": {"status": "PENDING", "completedAt": null},
-       "coverage": {"status": "PENDING", "completedAt": null},
-       "qualityAnalysis": {"status": "PENDING", "completedAt": null},
-       "sideEffectAnalysis": {"status": "PENDING", "completedAt": null},
-       "criticGate": {"status": "PENDING", "completedAt": null}
-     },
-     "criteria": []
-   }
-   ```
-
-**Step output:** State file written to `.omb/verifications/state/{plan-filename}.json` with status `IN_PROGRESS`. All layers initialized as `PENDING`.
-
----
-
-## STEP 3 — Build Verification Plan from Plan Criteria
-
-1. Read the plan's Verification Criteria section.
-
-2. For each criterion, classify:
-   - **Runnable** — contains a command (e.g., `pytest tests/ -v`, `grep -c "verify" README.md`)
-   - **Prose** — descriptive only (e.g., "JWT refresh works correctly")
-
-3. Map each criterion to a layer and check — prose criteria ("auth works correctly") cannot be verified directly; without translation to runnable commands they remain unverifiable claims:
-   - Runnable criteria: use the command directly
-   - Prose criteria: translate using layer defaults and keyword heuristics:
-     | Keyword Pattern | Layer | Generated Check |
-     |---|---|---|
-     | auth, jwt, token | python | `pytest tests/auth/ -v` + `curl` endpoint checks |
-     | component, render, UI | typescript | `npx vitest run` + `tsc --noEmit` |
-     | schema, migration, table | db | `alembic current` + schema verification |
-     | redis, cache, TTL | redis | `redis-cli PING` + key pattern checks |
-     | endpoint, API, route | python/node | `curl` with expected status codes |
-
-4. Add layer-default checks not covered by criteria (see `${CLAUDE_SKILL_DIR}/reference.md` § 2):
-   - Python layer: `pytest -v`, `pyright` or `mypy --strict`
-   - TypeScript layer: `npx vitest run`, `tsc --noEmit`
-   - Node.js layer: `npx jest` or `npx vitest run`, `tsc --noEmit`
-   - DB layer: migration status, schema verification
-   - Redis layer: connection check, key pattern verification
-
-5. For THOROUGH tier: add security checks, endpoint stress tests, manual verification items.
-
-**Step output:** Checks array per layer, each with `{command, expectedOutcome, source}`. Source is either "plan-criteria" or "layer-default".
-
----
-
-## STEP 4 — Phase 1: Test & Type Verification + Coverage Data Generation
-
-For each detected layer, build a verifier agent prompt using templates from `${CLAUDE_SKILL_DIR}/reference.md` § 1.
-
-1. Fill placeholders:
-   - `{LAYER}` — the stack layer name
-   - `{TRACKING_CODE}` — from plan
-   - `{CHECKS}` — the checks array for this layer from STEP 3
-   - `{FILES}` — files to verify from execution state (filtered by layer)
-   - `{TIER}` — verification tier (LIGHT/STANDARD/THOROUGH)
-   - `{CRITERIA}` — relevant plan criteria for this layer
-
-2. Set model tier based on verification tier:
-   - LIGHT: haiku
-   - STANDARD: sonnet
-   - THOROUGH: opus (for security layer), sonnet (for others)
-
-3. **Coverage flags are mandatory** — include coverage collection in all test commands:
-   - Python: `pytest --cov --cov-report=json {test_paths} -v`
-   - TypeScript: `npx vitest run --coverage --coverage.reporter=json {test_paths}`
-   - Node.js: `npx jest --coverage --coverageReporters=json {test_paths}`
-
-4. Invoke the `Agent` tool for all verifier agents in a single parallel batch (one call per layer, all in the same response) — set `subagent_type: "verifier"` and `model` per the tier table above. Layers are independent and sequential spawning wastes time without quality gain.
-
-5. After all verifier agents complete:
-   - Parse output for STATUS (PASS / FAIL / PARTIAL / BLOCKED)
-   - Record evidence table (check name, result, evidence text) per layer
-   - Record coverage data file paths for each layer (e.g., `.coverage/coverage-summary.json`, `coverage/coverage-summary.json`)
-   - Update verification state per layer in disk
-
-**Phase 1 status**: Aggregate per-layer results. Any FAIL means Phase 1 = FAIL.
-
-**Step output:** All verifier agents launched (one per layer) with coverage flags. Phase 1 status determined. Coverage data file paths recorded for Phase 2.
-
----
-
-## STEP 5 — Phase 2: Coverage Enforcement
-
-Read `${CLAUDE_SKILL_DIR}/reference.md` § 11 for tier thresholds before running.
-
-Tier thresholds:
-- LIGHT: 75%
-- STANDARD: 85%
-- THOROUGH: 90%
-
-For each detected layer that produced coverage data in Phase 1:
-
-1. Run the coverage enforcement script:
-   ```bash
-   bash ${CLAUDE_SKILL_DIR}/scripts/run-coverage.sh <layer> <coverage-file-path>
-   ```
-
-2. Interpret results:
-   - **PASS**: coverage meets or exceeds threshold — record percentage
-   - **FAIL**: coverage below threshold — list files below threshold with their percentages
-   - **BLOCKED**: coverage tool not found or coverage file missing — mark phase BLOCKED for this layer, do NOT fail overall
-
-3. Aggregate Phase 2 status:
-   - All layers PASS → Phase 2 = PASS
-   - Any layer FAIL → Phase 2 = FAIL (list failing files)
-   - Any layer BLOCKED but no FAIL → Phase 2 = PARTIAL
-
-NOTE: Phase 2 does NOT re-run tests. It reads the coverage data files produced in Phase 1. If coverage data is missing for a layer, report BLOCKED for that layer.
-
-**Step output:** Per-layer coverage percentages and PASS/FAIL/BLOCKED status. Phase 2 overall status.
-
----
-
-## STEP 6 — Phase 3: Implementation Quality Analysis
-
-**Tier guard**: if tier == LIGHT, mark Phase 3 as SKIPPED and proceed to STEP 10 (collect results from all phases).
-
-Read `${CLAUDE_SKILL_DIR}/reference.md` § 9 for the quality analysis template before spawning.
-
-1. Read plan context and architecture decisions from the plan file.
-
-2. Invoke the `Agent` tool with `subagent_type: "reviewer"` using the template from reference.md § 9:
-   - Model: sonnet for STANDARD, opus for THOROUGH
-   - Provide: plan context, architecture decisions, list of changed files, tier
-
-3. Quality analyzer evaluates:
-   - Code structure adherence to plan's architecture decisions
-   - Error handling completeness at system boundaries
-   - Type safety (no `any` without justification, no missing type hints)
-   - Naming consistency (follows code-conventions.md)
-   - Dead code or unreachable branches introduced
-
-4. Quality analyzer returns one of (per reference.md §9 output contract):
-   - **PASS**: implementation meets quality standards
-   - **CONCERNS**: implementation works but has quality issues — any SUBOPTIMAL/BLOATED/DEVIATES/VIOLATES dimension (treated as FAIL)
-   - **FAIL**: critical quality problems found
-   - **BLOCKED**: cannot analyze (missing files, tool error)
-
-5. Phase 3 status: PASS maps to PASS; CONCERNS maps to FAIL (functionally blocking); FAIL maps to FAIL; BLOCKED maps to BLOCKED.
-
-**Step output:** Quality analysis complete. Phase 3 status. List of quality issues found (if any).
-
----
-
-## STEP 7 — Phase 4: Side-Effect Analysis
-
-**Tier guard**: if tier == LIGHT, mark Phase 4 as SKIPPED and proceed to STEP 10.
-
-Read `${CLAUDE_SKILL_DIR}/reference.md` § 10 for V-team definitions before spawning.
-
-1. Reuse the `detect-stack-layers.sh` output from STEP 1 to determine which V-teams to spawn.
-
-2. V-team spawning rules:
-   - **V1 (General Impact)**: ALWAYS spawns for every verification run
-   - **V2 (API Contract)**: spawns if API files changed (api-specialist, sonnet)
-   - **V3 (Data Integrity)**: spawns if `database` or `redis` layer detected (db-specialist, sonnet)
-   - **V4 (Security Regression)**: spawns if `securityRelated == true` or tier == THOROUGH (security-reviewer, opus)
-   - **V5 (Frontend Regression)**: spawns if `typescript` layer with UI files detected (frontend-engineer, sonnet)
-   - **V6 (Async/Concurrency)**: spawns if async/concurrent code changed (async-coder, sonnet)
-
-3. Invoke the `Agent` tool for ALL applicable V-teams in a single parallel batch (one call per V-team). Set `subagent_type` per the V-team table (e.g., V2 → `subagent_type: "api-specialist"`, V4 → `subagent_type: "security-reviewer"`).
-
-4. Collect findings from all V-teams:
-   - Assign VER-NNN IDs sequentially to each finding
-   - Deduplicate: same file + same line + same issue type → keep highest severity
-   - Tag each finding with: team, severity (P0/P1/P2/P3), file, description
-
-5. For THOROUGH tier: V3 additionally runs a security audit using OWASP patterns.
-
-6. Phase 4 status:
-   - No P0 findings → PASS
-   - P1+ findings only → PASS with warnings listed
-   - Any P0 findings → FAIL (P0 issues are blocking)
-   - BLOCKED → tool errors prevented analysis
-
-**Step output:** V-teams spawned in parallel. Findings collected, deduplicated, and tagged. Phase 4 status.
-
----
-
-**PARALLELIZATION NOTE**: Phases 2, 3, and 4 (STEPs 5, 6, 7) are INDEPENDENT of each other. After Phase 1 (STEP 4) completes, spawn all agents for Phases 2, 3, and 4 in a single batch. Phase 5 (STEP 8) waits for all three to complete before running.
-
----
-
-## STEP 8 — Phase 5: Harsh Critic Gate
-
-**Tier guard**: if tier == LIGHT, mark Phase 5 as SKIPPED (auto-PASS) and proceed to STEP 10.
-
-Read `${CLAUDE_SKILL_DIR}/reference.md` § 12 for the harsh critic gate template before spawning.
-
-1. **P0 override check**: If any phase (1-4) has unresolved P0 issues, set Phase 5 = REJECT immediately without spawning critic. P0 issues override critic verdict.
-
-2. Spawn critic agent using the template from reference.md § 12:
-   - Model: sonnet for STANDARD, opus for THOROUGH
-   - Provide: all phase results, evidence tables, quality findings, side-effect findings, plan criteria
-
-3. Critic evaluates holistically:
-   - Are all plan verification criteria met?
-   - Do quality issues block delivery?
-   - Are side-effect findings acceptable at this tier?
-   - Is coverage adequate for the change size?
-
-4. Critic verdict:
-   - **APPROVE**: proceed to STEP 10 (write record)
-   - **REJECT**: enter STEP 9 (fix loop)
-
-5. Phase 5 status = critic verdict (APPROVE → PASS, REJECT → FAIL).
-
-**Step output:** Critic verdict. Phase 5 status. If REJECT, list of issues the critic flagged.
-
----
-
-## STEP 9 — Fix Loop
-
-Read `${CLAUDE_SKILL_DIR}/reference.md` § 13 for the enhanced fix loop routing table before routing.
-
-If Phase 5 = REJECT or any phase = FAIL:
-
-1. **Diagnose**: for each failure across ALL phases, determine the fix agent using the routing table:
-   | Failure Type | Fix Agent | Model |
-   |---|---|---|
-   | Python test failure | executor | sonnet |
-   | TypeScript test failure | executor | sonnet |
-   | Type check error | executor | sonnet |
-   | API endpoint error | api-specialist | sonnet |
-   | DB migration failure | db-specialist | sonnet |
-   | Redis connection/state | db-specialist | sonnet |
-   | Security vulnerability (P0) | security-reviewer | opus |
-   | Build/compile error | executor | sonnet |
-   | Coverage below threshold | executor | sonnet |
-   | Quality analysis FAIL | executor | sonnet |
-   | Side-effect P0 finding | security-reviewer or db-specialist | opus |
-
-2. **Fix**: spawn fix agent(s) with failure context. Fix scope is limited to resolving verification failures — no feature additions.
-
-3. **Re-run ALL phases**: after fix, loop back to STEP 4 (full master loop). This ensures Phase 1 regenerates coverage data and all downstream phases receive fresh results.
-
-4. **Master loop tracking**:
-   - Increment `masterLoop.iteration` each cycle
-   - Record which fixes were attempted per iteration
-   - Same-failure-3-times rule: if the identical failure appears in 3 consecutive iterations, mark it as unresolvable (do NOT continue fixing)
-
-5. **Master loop gate**:
-   - Fix successful + all phases PASS → proceed to STEP 10
-   - `masterLoop.iteration >= 3` → stop fix loop, escalate via `AskUserQuestion`:
-     ```
-     Verification fix loop exhausted (3 master iterations).
-     Unresolved failures:
-     - [list each unresolved failure with VER-NNN ID]
-
-     Options: [abort] [skip and document] [manual fix then re-verify]
-     ```
-
-**Step output:** Fix loop complete. Master iteration count recorded. Unresolved failures listed (if any). State updated.
-
----
-
-## STEP 10 — Write Verification Record
-
-Write the verification record to `.omb/verifications/{plan-filename}.md` using the template from `${CLAUDE_SKILL_DIR}/reference.md` § 5.
-
-The record includes:
-- **Metadata**: plan file, tracking code, timestamps, tier, duration
-- **Plan Criteria Mapping**: each plan criterion → check command → result (PASS/FAIL)
-- **Phase Results Summary**: per-phase status table (Phase 1-5)
-- **Layer Evidence**: per-layer evidence table with actual command output
-- **Coverage Results**: per-layer coverage percentage vs threshold (Phase 2)
-- **Quality Analysis**: findings from Phase 3 quality analyzer (if run)
-- **Side-Effect Findings**: VER-NNN tagged findings from Phase 4 V-teams (if run)
-- **Critic Verdict**: Phase 5 critic decision with rationale (if run)
-- **Fix History**: fix attempts, agents used, outcomes (if any fix loops ran)
-- **Unverified Tasks**: FAILED/SKIPPED tasks from execution (noted for completeness)
-- **Environment Limitations**: any checks skipped due to missing tools/services
-
-Use the `Write` tool to create the record file.
-
-**Step output:** Record file written to `.omb/verifications/{plan-filename}.md` with full evidence trail including all 5 phase results.
-
----
-
-## STEP 11 — Report to User
-
-1. Update verification state:
-   - Determine final status:
-     - **PASS** — all phases passed (or passed after fix loops)
-     - **FAIL** — one or more phases failed after fix loops exhausted
-     - **PARTIAL** — some layers/phases passed, some blocked due to environment limitations
-   - Set `completedAt` to current ISO timestamp
-   - Write final state to disk
-
-2. Present the verification summary with per-phase status:
-
-### If PASS:
-```
-**Verification PASS**
-- Layers verified: {N}/{N} passed
-- Phase 1 (Tests):    PASS ({N} passed, {N} failed)
-- Phase 2 (Coverage): PASS ({N}% avg, threshold {T}%)
-- Phase 3 (Quality):  PASS | SKIPPED (tier: LIGHT)
-- Phase 4 (Side-FX):  PASS | SKIPPED (tier: LIGHT)
-- Phase 5 (Critic):   APPROVE | SKIPPED (tier: LIGHT)
-- Fix loops: {N} master iterations
-- Evidence: .omb/verifications/{filename}.md
-
-Next step: Proceed to Step 5: Document (`/omb doc`)
+    class CC mandatory
+    class V1,VN domain
+    class S5 main
+    class S8 decision
+    class S6 fix
 ```
 
-### If FAIL:
-```
-**Verification FAIL**
-- Layers: {passed}/{total} passed, {failed} failed
-- Phase 1 (Tests):    {STATUS}
-- Phase 2 (Coverage): {STATUS}
-- Phase 3 (Quality):  {STATUS}
-- Phase 4 (Side-FX):  {STATUS}
-- Phase 5 (Critic):   {VERDICT}
-- Unresolved failures: {list with VER-NNN IDs}
-- Fix loops: {N}/{max} master iterations exhausted
-- Evidence: .omb/verifications/{filename}.md
+**Legend:** Blue = mandatory verifier, Green = domain verifiers, Orange = main session consensus, Purple = verdict decision, Red = fix loop.
 
-{failed} phases need attention. Review the verification record for details.
-Recommended: fix failures manually, then re-run `/omb verify`
-```
+## When to Apply
 
-### If PARTIAL:
-```
-**Verification PARTIAL**
-- Layers: {passed}/{total} passed, {blocked} blocked (environment)
-- Phase 2 (Coverage): BLOCKED ({list} — coverage tool not found)
-- Blocked layers: {list with reasons}
-- Evidence: .omb/verifications/{filename}.md
+- After `omb-run` has completed execution of a plan
+- When the user says "verify", "check implementation", "validate results", "verify plan results"
+- Before creating a PR (`omb-pr`) to ensure quality gates pass
+- When the user wants multi-agent consensus on implementation quality
 
-Environment limitations prevented full verification. Blocked checks noted in record.
-Next step: Proceed to Step 5: Document (`/omb doc`) — note partial verification in docs
-```
+## Write Permissions
 
-**Step output:** User receives summary with per-phase status + next step recommendation. State file finalized.
+**WRITE:** Source code files ONLY via `@{domain}-implement` agents in Step 6 (fix loop)
+**READ:** Entire codebase, `.omb/plans/`, `.omb/todo/`, `.claude/agents/`, `.claude/rules/`
 
-## Completion Signal
+## Step 0: Worktree Context
 
-[HARD] You MUST emit this XML block as your FINAL output:
+Invoke `Skill("omb-worktree")` with argument `"context"`:
+- **Single active worktree** -> cd into it, proceed
+- **No active worktree** -> work on main
+- **Multiple active worktrees** -> ask user to choose via AskUserQuestion
+
+## Step 1: Parse Arguments + Gather Context
+
+### Argument Parsing
 
 ```
-<omb>
-<task>verify(brief summary of outcome)</task>
-<decision>STATUS</decision>
-</omb>
+omb-verify [plan-file-path] [--domain <filter>]
 ```
 
-Decision values for this skill:
-- `DONE` — completed successfully
-- `DONE_WITH_CONCERNS` — completed with flagged issues
-- `FAILED` — could not complete
-- `NEEDS_CONTEXT` — missing information, cannot proceed
+1. **Plan file resolution:**
+   - If argument provided: verify the file exists at `.omb/plans/{argument}` (or as an absolute path)
+   - If no argument: list files in `.omb/plans/` and ask user to select one via AskUserQuestion
+   - If file does not exist: report error and list available plans
+
+2. **TODO tracker resolution:**
+   - Look for matching TODO file in `.omb/todo/` by matching the plan filename
+   - If not found: report BLOCKED — `omb-run` must complete first
+   - If found but status is not COMPLETE: warn the user that verification is on incomplete work
+
+3. **Changed files collection:**
+   - Parse `changed_files` from the TODO tracker task log (all `Artifacts:` entries)
+   - Run `git diff --name-only` against the base branch as a cross-check
+   - Union both file lists for comprehensive coverage
+
+4. **Plan context extraction:**
+   - Read Section 1.4 (acceptance criteria) — these are the primary verification targets
+   - Read Section 3 (TODO checklist) — for completeness checking
+   - Read Section 4 (implementation details) — for deliverables list
+   - Read Section 6 (TDD plan) — for test coverage expectations
+
+5. **Optional domain filter:**
+   - If `--domain <filter>` specified: restrict verification to that domain's files only
+   - Valid filters: `api`, `db`, `ui`, `ai`, `electron`, `infra`, `harness`
+
+## Step 2: Domain Detection + Team Assembly
+
+### File Pattern to Domain Mapping
+
+Scan the changed files list and classify each file into a domain:
+
+| File Pattern | Domain | Verifier |
+|-------------|--------|----------|
+| `*.py` in `apps/api/`, `src/api/` | API | @api-verify |
+| `*.py` in `apps/ai/`, `src/ai/` | AI | @ai-verify |
+| `*.ts`, `*.tsx` in `apps/web/`, `src/components/`, `src/pages/` | UI | @ui-verify |
+| `alembic/`, `migrations/`, `**/models.py`, `**/models/` | DB | @db-verify |
+| `Dockerfile*`, `docker-compose*`, `*.tf`, `.github/workflows/`, `infra/` | Infra | @infra-verify |
+| Electron-related: `src/main/`, `src/renderer/`, `src/preload/` | Electron | @electron-verify |
+| `.claude/`, `CLAUDE.md`, `.claude/agents/`, `.claude/skills/`, `.claude/rules/` | Harness | @harness-verify |
+
+### Team Composition Rules
+
+1. **@core-critique is ALWAYS included** — mandatory intent alignment checker (loads `omb-evaluation-impl` skill)
+2. **Add domain verifiers** based on detected file patterns above
+3. **Minimum team size: 3** — @core-critique + at least 2 domain verifiers. If fewer than 2 domains detected, add @code-review and @security-audit as defaults
+4. **Maximum team size: 12** — do not exceed this
+5. **Add @security-audit** if: security-sensitive files changed (auth/, middleware/, crypto/) OR >10 files changed
+6. **Add @code-review** if: fewer than 3 domain verifiers selected (ensures minimum review breadth)
+7. **All verifiers run in parallel** — spawn all in a single message
+8. **Never include implement agents** — verification team is read-only only
+9. **If `--domain` filter active**: only include matching verifier(s) + @core-critique (skip team minimum)
+
+### Team Announcement
+
+Before spawning verifiers, announce the assembled team:
+
+```
+## Verification Team Assembled
+
+**Plan:** .omb/plans/{file}.md
+**TODO:** .omb/todo/{file}.md
+**Changed files:** {N} files across {M} domains
+**Team size:** {T} verifiers
+
+| # | Verifier | Role | Trigger |
+|---|---------|------|---------|
+| 1 | @core-critique | Intent alignment + architecture | Always included |
+| 2 | @api-verify | API type check, lint, tests | {N} API files changed |
+| 3 | @db-verify | Schema, migration, query check | {N} DB files changed |
+| ... | ... | ... | ... |
+
+Proceeding with static analysis baseline followed by parallel verification.
+```
+
+## Step 3: Static Analysis Baseline
+
+Run `Skill("omb-lint-check")` in the main session before spawning verifiers:
+
+1. Invoke `Skill("omb-lint-check")` targeting the changed files from Step 1
+2. Record results: PASS/FAIL with specific file:line issues
+3. Store lint results to pass to each verifier as context (prevents redundant lint work)
+
+**If lint FAIL:** Do NOT stop. Continue to Step 4 — lint failures will be included in consensus synthesis as automatic EV-P1 minimum tickets.
+
+## Step 4: Parallel Verification Team
+
+Spawn ALL verifiers **in parallel** using multiple Agent() calls in a single message. Each verifier receives the same context package independently.
+
+### Context Package (passed to every verifier)
+
+```
+<verification_context>
+Plan: .omb/plans/{file}.md
+Acceptance Criteria (Section 1.4):
+{acceptance criteria list}
+
+TODO Tracker: .omb/todo/{file}.md
+Task Completion: {completed}/{total} tasks
+
+Changed Files:
+{list of changed files}
+
+Lint Baseline:
+{lint results from Step 3 — PASS/FAIL with file:line details}
+</verification_context>
+```
+
+### @core-critique Prompt
+
+```
+Agent({
+  subagent_type: "core-critique",
+  model: "opus",
+  prompt: "<verification_context>
+{context package}
+</verification_context>
+
+<role>
+You are verifying that the implementation matches the plan's INTENT, not just its letter.
+Load Skill('omb-evaluation-impl') for the quantitative rubric.
+
+Your responsibilities:
+1. Score the implementation against the omb-evaluation-impl rubric (6 dimensions, ~30 items)
+2. Verify every acceptance criterion (Section 1.4) is satisfied in actual code
+3. Check that architecture decisions (Section 2.1) were followed
+4. Identify scope creep (work done outside plan)
+5. Identify missing work (plan items not implemented)
+6. Read the actual code files — do not rely on TODO tracker status alone
+</role>
+
+<verification_topics>
+Provide assessment on ALL 7 topics. For each finding, cite file:line evidence and assign severity (BLOCKING / NON-BLOCKING).
+
+### 1. KEEP — What was implemented correctly (matches plan intent)
+### 2. REMOVE — What was added beyond plan scope (scope creep)
+### 3. MISSING — What plan items were not implemented
+### 4. AMBIGUOUS — Where implementation diverges from plan in unclear ways
+### 5. VIOLATIONS — .claude/rules/ conventions broken in new code
+### 6. RISKS — Runtime risks (error handling gaps, perf issues, security holes)
+### 7. TDD — Test coverage gaps, missing edge cases, test quality issues
+</verification_topics>
+
+<output_format>
+Section 1: omb-evaluation-impl score sheet (all 6 dimensions)
+Section 2: 7-topic findings table: | # | Finding | Severity | Evidence (file:line) |
+Section 3: Standard omb output envelope
+</output_format>"
+})
+```
+
+### Domain Verifier Prompt Template
+
+```
+Agent({
+  subagent_type: "{domain}-verify",  // e.g., "api-verify"
+  prompt: "<verification_context>
+{context package}
+</verification_context>
+
+<role>
+You are {domain} verification specialist. Run your full check suite on the changed files in your domain.
+Your primary checks: {domain-specific checks from agent definition}
+Stay within your domain — do not review files outside your scope.
+</role>
+
+<changed_files_in_domain>
+{filtered list of changed files matching this domain}
+</changed_files_in_domain>
+
+<verification_topics>
+Provide assessment on ALL 7 topics. For each finding, cite file:line evidence and assign severity (BLOCKING / NON-BLOCKING).
+If a topic is not relevant to your domain, state 'No findings from my perspective.'
+
+### 1. KEEP — Correctly implemented code (good patterns, proper usage)
+### 2. REMOVE — Unnecessary code (dead code, redundant logic, over-engineering)
+### 3. MISSING — Missing implementations (error handling, validation, edge cases)
+### 4. AMBIGUOUS — Unclear behavior (implicit assumptions, undocumented logic)
+### 5. VIOLATIONS — Convention/rule violations in new code
+### 6. RISKS — Runtime risks (perf, security, reliability)
+### 7. TDD — Test gaps (missing tests, weak assertions, inadequate coverage)
+</verification_topics>
+
+<output_format>
+For each topic, use: | # | Finding | Severity | Evidence (file:line) |
+End with the standard omb output envelope (verdict: PASS/FAIL/BLOCKED).
+</output_format>"
+})
+
+// ... additional domain verifiers, all in the SAME message
+```
+
+**Wait for:** `<omb>DONE</omb>` from **all** verifiers. All run simultaneously.
+
+### Independence Constraint
+
+**[HARD] Each verifier assesses independently.** Parallel execution naturally guarantees this. No verifier can see another's output.
+
+## Step 5: Synthesize Consensus
+
+After all individual verifications complete, the **main session** (NOT a sub-agent) synthesizes findings.
+
+### Consensus Building Process
+
+For each of the 7 verification topics:
+
+1. **Collect** — Gather all findings from all verifiers for this topic
+2. **Deduplicate** — Merge findings that reference the same file:line or concern
+3. **Count votes** — For each unique finding, count how many verifiers flagged it
+4. **Classify by consensus level:**
+
+| Consensus Level | Criterion | Priority |
+|----------------|-----------|----------|
+| **Unanimous** | All verifiers agree | EV-P0 (critical) |
+| **Supermajority** | >=75% of verifiers agree | EV-P0 (critical) |
+| **Majority** | >50% of verifiers agree | EV-P0 (critical) |
+| **Strong minority** | 33-50% of verifiers agree | EV-P1 (high) |
+| **Minority** | <33% of verifiers agree | EV-P2 (medium) |
+| **Single voice** | Only 1 verifier flags | EV-P3 (low) |
+
+### Veto Power
+
+Even without majority agreement, certain agents can escalate findings:
+
+- **@core-critique BLOCKING** -> minimum EV-P1 (architectural/intent integrity)
+- **@security-audit BLOCKING** -> minimum EV-P1 (security posture)
+
+### Lint Failure Escalation
+
+Lint failures from Step 3 are automatically classified as EV-P1 minimum, regardless of consensus voting. Lint PASS is a hard quality gate.
+
+### Merging with Evaluation Tickets
+
+- @core-critique produces omb-evaluation-impl tickets (EV-P0 through EV-P3 prefix)
+- Consensus findings use `CV-P{N}-{NNN}` prefix (C for consensus, V for verify)
+- If a consensus finding overlaps with an evaluation ticket, merge them (use the higher priority)
+
+### Conflict Resolution
+
+When verifiers disagree on the same code element:
+- Document both perspectives with file:line evidence
+- The majority position becomes the recommendation
+- The minority position is recorded as a **dissenting view** with rationale
+- If the split is exactly 50/50: escalate to user in the report (do NOT auto-resolve)
+
+### Synthesis Output Structure
+
+For each topic:
+
+```
+### Topic N: {TOPIC NAME}
+
+**Consensus findings ({count} items):**
+
+| # | Finding | Flagged By | Consensus | Priority | Evidence |
+|---|---------|-----------|-----------|----------|----------|
+| 1 | {finding} | @agent1, @agent2 | Majority (3/5) | EV-P0 | `src/api/routes.py:42` |
+| 2 | {finding} | @agent1 | Single voice | EV-P3 | `src/utils.py:15` |
+
+**Dissenting views (if any):**
+- @agent2 disagrees with finding #1 because: {rationale}
+```
+
+## Step 6: Generate Fix TODO
+
+If consensus findings include EV-P0 or EV-P1 items, generate a structured Fix TODO before any implementation.
+
+### TODO Generation Process
+
+1. **Collect** all EV-P0 and EV-P1 tickets from both sources:
+   - Evaluation tickets: `EV-P{N}-{NNN}` (from @core-critique's omb-evaluation-impl scoring)
+   - Consensus tickets: `CV-P{N}-{NNN}` (from Step 5 consensus synthesis)
+
+2. **Order** by: priority (EV-P0 first), then dependency (if fix B depends on fix A, A comes first)
+
+3. **Group** by domain for parallel execution where tasks are independent
+
+4. **Generate** the Fix TODO checklist:
+
+```markdown
+## Verification Fix TODO
+
+**Source:** Verification consensus from {plan-file}
+**Generated:** {timestamp}
+**Total:** {N} fixes ({P0-count} EV-P0, {P1-count} EV-P1)
+
+### Fix Tasks
+
+- [ ] #1 [EV-P0] {ticket-id}: {finding description} → @{domain}-implement
+  - File: `{file:line}`
+  - Evidence: {quoted evidence}
+  - Scope: {specific fix constraint}
+
+- [ ] #2 [EV-P0] {ticket-id}: {finding description} → @{domain}-implement
+  - File: `{file:line}`
+  - Evidence: {quoted evidence}
+  - Scope: {specific fix constraint}
+
+- [ ] #3 [EV-P1] {ticket-id}: {finding description} → @{domain}-implement
+  - File: `{file:line}`
+  - Evidence: {quoted evidence}
+  - Scope: {specific fix constraint}
+```
+
+5. **Display** the Fix TODO to the user before proceeding to execution
+
+### Skip Fix TODO If
+
+- All EV-P0/EV-P1 items are BLOCKED (environment issue, not code issue)
+- The finding requires user decision (50/50 split)
+- 0 EV-P0 and 0 EV-P1 findings (proceed directly to Step 9)
+
+## Step 7: Execute Fix TODO
+
+Execute the Fix TODO sequentially, marking each item as it completes.
+
+### Execution Process
+
+For each TODO item (in order):
+
+1. **Spawn** the matching `@{domain}-implement` agent:
+
+```
+Agent({
+  subagent_type: "{domain}-implement",
+  prompt: "Fix the following verification issue:
+
+Issue: {ticket ID} — {finding description}
+File: {file:line}
+Priority: {EV-P0 or EV-P1}
+Evidence: {quoted evidence}
+
+SCOPE CONSTRAINT: Fix ONLY this specific issue. Do not refactor surrounding code,
+add features, or make any changes beyond what is needed to resolve this finding.
+
+After fixing, run the relevant check to confirm the fix:
+- Type error -> run type checker on the file
+- Lint error -> run linter on the file
+- Test failure -> run the failing test
+- Missing test -> write the test, run it"
+})
+```
+
+2. **Mark** the TODO item: `[x]` for DONE or `[!]` for FAILED
+3. **Run** `Skill("omb-lint-check")` on the fixed files to confirm no regressions
+
+### Parallel Execution
+
+Group fixes by domain. If multiple EV-P0/EV-P1 issues are in different domains, spawn implement agents in parallel (one per domain, all in one message). If multiple issues are in the same domain, include them all in one agent prompt.
+
+### Execution Summary
+
+After all items are processed, report:
+
+```
+Fix TODO Execution Summary:
+- Total: {N} items
+- Done: {count}
+- Failed: {count}
+- Skipped: {count} (BLOCKED or user-decision items)
+```
+
+## Step 8: Re-verify (Max 3 Iterations)
+
+After executing the Fix TODO in Step 7:
+
+1. **Re-run only affected verifiers** — only the domain verifiers whose domain had EV-P0/EV-P1 fixes
+2. **Always re-run @core-critique** — to confirm fixes maintain intent alignment
+3. **Re-synthesize consensus** on the re-verified topics only
+4. **Compare** findings against the Fix TODO to verify each item was resolved
+5. **Check results:**
+   - If 0 EV-P0 and 0 EV-P1: proceed to Step 9
+   - If EV-P0/EV-P1 remain AND iteration < 3: go back to Step 6 (regenerate Fix TODO for remaining issues)
+   - If iteration = 3 AND EV-P0/EV-P1 remain: proceed to final report with RETRY verdict
+
+### Iteration Tracking
+
+```
+Iteration {N}/3:
+- Fix TODO: {count} items attempted
+- Done: {count}, Failed: {count}
+- Remaining: EV-P0: {count}, EV-P1: {count}
+- Re-verified: {@agent1, @agent2}
+- Result: {CLEAN / RETRY}
+```
+
+### Plateau Detection
+
+If the same issues persist across 2 iterations with no improvement, stop early:
+- Report the persistent issues
+- Set verdict to RETRY
+- Recommend manual investigation
+
+## Step 9: Final Report + Verdict
+
+### Verdict Rules
+
+| Status Tag | verdict: field | Condition | Next Step |
+|------------|---------------|-----------|-----------|
+| `<omb>DONE</omb>` | `APPROVED` | 0 EV-P0, 0 EV-P1, all acceptance criteria met | Offer `Skill("omb-document")` |
+| `<omb>RETRY</omb>` | `FAIL` | EV-P0 or EV-P1 remain after max iterations | End — user must fix manually |
+| `<omb>BLOCKED</omb>` | `BLOCKED` | Cannot verify (missing deps, env issues, no TODO tracker) | End — user must resolve blockers |
+
+### Report Format
+
+```markdown
+## Verification Report
+
+**Plan:** .omb/plans/{file}.md
+**TODO:** .omb/todo/{file}.md
+**Team:** {N} verifiers ({@agent1, @agent2, ...})
+**Iterations:** {N}/3
+**Evaluation Score:** {score}% (Grade {grade})
+
+### Static Analysis
+| Check | Result | Details |
+|-------|--------|---------|
+| Lint (ruff/eslint) | PASS/FAIL | {error count} errors |
+| Type check (pyright/tsc) | PASS/FAIL | {error count} errors |
+
+### Implementation Evaluation (omb-evaluation-impl)
+{Abbreviated score sheet from @core-critique}
+
+### Team Consensus
+
+#### 1. KEEP (Correctly Implemented)
+{Consensus strengths with vote counts}
+
+#### 2. REMOVE (Scope Creep)
+{Consensus scope creep findings}
+
+#### 3. MISSING (Unimplemented)
+{Consensus missing items with priority}
+
+#### 4. AMBIGUOUS (Divergences)
+{Consensus ambiguities with priority}
+
+#### 5. VIOLATIONS (Rule Breaks)
+{Consensus violations with priority}
+
+#### 6. RISKS (Runtime Issues)
+{Consensus risks with priority}
+
+#### 7. TDD (Test Gaps)
+{Consensus test gaps with priority}
+
+### Dissenting Views
+{Any 50/50 splits requiring user decision}
+
+### Issue Resolution Summary
+
+| Ticket | Source | Priority | Status | Resolution |
+|--------|--------|----------|--------|------------|
+| EV-P0-001 | Evaluation | EV-P0 | RESOLVED | {fix description} |
+| CV-P1-001 | Consensus | EV-P1 | RESOLVED | {fix description} |
+| CV-P2-001 | Consensus | EV-P2 | OPEN | {deferred — not auto-fixed} |
+
+### Verdict: {DONE / RETRY / BLOCKED}
+{1-2 sentence justification}
+```
+
+### Post-Verdict Actions
+
+- **DONE (verdict: APPROVED):** Ask user if they want to proceed with `Skill("omb-document")` followed by `Skill("omb-pr")`
+- **RETRY (verdict: FAIL):** List specific remaining issues the user must address manually. Do NOT offer to proceed.
+- **BLOCKED (verdict: BLOCKED):** Explain what is blocking and how to resolve (e.g., "install pyright", "start dev server").
+
+## Context Passing Rules
+
+| Agent | Receives |
+|-------|----------|
+| @core-critique (Step 4) | Plan acceptance criteria + TODO tracker + lint baseline + all changed files |
+| Each domain verifier (Step 4) | Plan acceptance criteria + TODO tracker + lint baseline + domain-filtered changed files |
+| @{domain}-implement (Step 7) | Fix TODO item with ticket ID, file:line, evidence + fix scope constraint |
+| Re-verify agents (Step 8) | Previous issues + Fix TODO status + fix changed_files + lint re-check results |
+
+**[HARD] Each verifier receives context independently. Do NOT pass one verifier's output to another.**
+
+## Agent Inventory
+
+### Verification Team Candidates
+
+| Agent | Model | Domain | When Included |
+|-------|-------|--------|--------------|
+| @core-critique | opus | Intent alignment, architecture | Always (mandatory) |
+| @api-verify | sonnet | API type check, lint, tests, smoke | If API files changed |
+| @db-verify | sonnet | Schema, migration, query, ORM | If DB files changed |
+| @ui-verify | sonnet | TSC, eslint, vitest, a11y, perf | If UI files changed |
+| @ai-verify | sonnet | Type check, LangGraph state, prompts | If AI files changed |
+| @electron-verify | sonnet | Type check, IPC, security config | If Electron files changed |
+| @infra-verify | sonnet | Terraform, hadolint, actionlint | If infra files changed |
+| @harness-verify | sonnet | Frontmatter, hooks, permissions | If harness files changed |
+| @security-audit | sonnet | OWASP, auth, secrets | If security-sensitive or >10 files |
+| @code-review | sonnet | Quality, conventions, patterns | Default if <3 domain verifiers |
+
+### Fix Agents (Step 6 only)
+
+| Agent | Model | Domain | Purpose |
+|-------|-------|--------|---------|
+| @api-implement | sonnet | API | Fix API verification failures |
+| @db-implement | sonnet | DB | Fix DB verification failures |
+| @ui-implement | sonnet | UI | Fix UI verification failures |
+| @ai-implement | sonnet | AI | Fix AI verification failures |
+| @electron-implement | sonnet | Electron | Fix Electron verification failures |
+| @infra-implement | sonnet | Infra | Fix infra verification failures |
+| @harness-implement | sonnet | Harness | Fix harness verification failures |
+| @security-implement | sonnet | Security | Fix security verification failures |
+| @code-test | sonnet | Tests | Write missing tests |
+
+## Anti-Patterns
+
+- **Verifying without a plan** — This skill requires a plan file and TODO tracker. Redirect to `omb-run` if neither exists.
+- **Skipping lint baseline** — Always run `Skill("omb-lint-check")` in Step 3 before spawning verifiers. Prevents each verifier from re-running lint independently.
+- **Sequential verifier spawning** — Spawn all verifiers in ONE message for parallel execution. **Why:** Sequential spawning wastes time and provides no quality benefit since verifiers must be independent.
+- **Passing results between verifiers** — Each verifier must assess independently. Parallel execution enforces this.
+- **Spawning agents from agents** — Per CLAUDE.md rule #2, only the main session spawns agents.
+- **Running full team on re-verify** — Only re-run affected domain verifiers + @core-critique. Not the full team.
+- **Auto-fixing P2/P3** — Only auto-fix EV-P0 and EV-P1. Report EV-P2/EV-P3 in the report but do not fix them.
+- **Auto-resolving 50/50 splits** — When verifiers are evenly split, escalate to user. Do not pick a side.
+- **Over-staffing the team** — Only include verifiers for domains with changed files. Do not include all 10 for a single-domain change.
+- **Offering next step on RETRY** — Never offer to proceed when EV-P0/EV-P1 remain. The user must fix first.
+- **Fixing without a TODO plan** — Always generate a Fix TODO (Step 6) before spawning implement agents. Never jump directly from findings to fixes.
+
+## Rules
+
+- **Parallel verifier spawning** — Spawn all verifiers in a single message. Wait for all `<omb>DONE</omb>` responses before proceeding to Step 5.
+- **Independent verification** — Each verifier assesses independently. Parallel execution naturally enforces this.
+- **Main-session consensus** — Step 5 synthesis is performed by the main session, not a sub-agent.
+- **Majority = EV-P0** — Any finding flagged by >50% of verifiers is automatically EV-P0.
+- **@core-critique veto** — BLOCKING finding from @core-critique is minimum EV-P1 even without majority.
+- **@security-audit veto** — BLOCKING finding from @security-audit is minimum EV-P1 even without majority.
+- **Lint failures = EV-P1** — Lint failures from Step 3 are automatic EV-P1 minimum, regardless of consensus.
+- **Fix TODO required** — Always generate a structured Fix TODO (Step 6) before spawning implement agents. No ad-hoc fixes.
+- **Max 3 fix iterations** — Steps 6-8 loop at most 3 times. After 3, verdict is RETRY.
+- **Scope-constrained fixes** — Implement agents in Step 7 may ONLY fix the specific issue cited. No other changes.
+- **Language follows $OMB_DOCUMENTATION_LANGUAGE** — Report language follows this env var. Skill content stays English.
+- **Ticket ID prefixes** — Evaluation: `EV-P{N}-{NNN}`. Consensus: `CV-P{N}-{NNN}`. See `.claude/rules/workflow/09-ticket-schema.md` for canonical schema.
+- **Write through implement agents only** — Only Step 7 modifies code, and only through domain implement agents.
+- **Step 9 gate** — Only offer next steps when verdict is DONE. RETRY and BLOCKED skip the offer.

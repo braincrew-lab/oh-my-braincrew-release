@@ -1,71 +1,36 @@
 ---
-description: "Redis standards: cache patterns, pub/sub, connection pooling, key naming"
-paths: ["**/cache/**", "**/redis/**", "**/workers/**/*.py", "**/workers/**/*.ts"]
+paths: ["src/cache/**", "src/redis/**", "src/**/redis*"]
 ---
 
-# Redis Standards
+# Redis Conventions
 
 ## Key Naming
+- Format: `service:entity:id` (e.g. `auth:session:abc123`)
+- Use colons as separators — they enable Redis namespace browsing
+- Prefix all keys with the service name to avoid collisions
+- Keep keys short but descriptive — avoid long serialized values in keys
 
-- Use colon-separated namespaces: `{service}:{entity}:{id}`.
-- Examples: `auth:session:abc123`, `cache:user:42`, `rate:login:192.168.1.1`.
-- Keep keys short but descriptive — Redis stores keys in memory.
-- Document key patterns in a central reference.
+## TTL Strategy
+- ALWAYS set a TTL — never store keys indefinitely without justification
+- Session tokens: 24h
+- Cache entries: 5m to 1h depending on staleness tolerance
+- Rate limit counters: match the rate limit window
+- Use `EXPIREAT` for time-of-day expiration, `EXPIRE` for duration
 
-## TTL Policy
-
-- EVERY cache key MUST have a TTL — no indefinite keys.
-- Sessions: match JWT expiry (e.g., 24 hours).
-- Cache: based on data freshness requirements (minutes to hours).
-- Rate limiting: match the rate window (e.g., 60 seconds).
-- Set TTL at write time, not after: `SET key value EX seconds`.
-
-## Cache Patterns
-
-### Cache-Aside (most common)
-```python
-async def get_user(user_id: str) -> User:
-    cached = await redis.get(f"cache:user:{user_id}")
-    if cached:
-        return User.model_validate_json(cached)
-    user = await db.get(user_id)
-    await redis.set(f"cache:user:{user_id}", user.model_dump_json(), ex=3600)
-    return user
-```
-
-### Cache Invalidation
-- Invalidate on write: when data changes, delete the cache key.
-- Use tags for bulk invalidation when related data changes.
-- Prefer explicit invalidation over short TTLs for consistency.
+## Data Patterns
+- Cache-aside: check cache, miss -> fetch from DB, set cache
+- Write-through: update DB and cache atomically
+- Use `SETNX` or `SET ... NX` for distributed locks
+- Use sorted sets for leaderboards, rate limiting windows
 
 ## Pub/Sub
+- Channel naming: `service:event` (e.g. `orders:created`)
+- Keep message payloads small — publish IDs, not full objects
+- Consumers must handle missed messages (pub/sub has no persistence)
+- Use Redis Streams for durable message processing
 
-- Use for real-time notifications, not for reliable message delivery.
-- Channel naming: `{service}:{event}` (e.g., `users:created`, `alerts:critical`).
-- Subscribers must handle reconnection — pub/sub messages are not persisted.
-- For reliable messaging, use Redis Streams instead.
-
-## Connection Pooling
-
-- Use `redis.asyncio.ConnectionPool` for async Python.
-- Pool size: match expected concurrent operations.
-- Close pool on application shutdown.
-- Handle connection errors with retry logic.
-
-## Security
-
-- Use Redis ACLs in production — don't use the default user.
-- Bind to localhost or internal network only — never expose to public internet.
-- Enable TLS for connections over untrusted networks.
-- Use `READONLY` commands where possible to prevent accidental writes.
-
-## Anti-Patterns
-
-- Keys without TTL (memory leak over time).
-- Storing large values (>1MB) — Redis is for small, fast data.
-- Using `KEYS *` in production — use `SCAN` instead.
-- Relying on pub/sub for critical message delivery.
-
-## Related Rules
-
-- For related Postgres patterns, see `.claude/rules/db/postgres.md`.
+## Connection Management
+- Use connection pooling (`redis.asyncio.ConnectionPool`)
+- Set `decode_responses=True` for string-based workloads
+- Handle `ConnectionError` and `TimeoutError` with retries
+- Close connections on application shutdown

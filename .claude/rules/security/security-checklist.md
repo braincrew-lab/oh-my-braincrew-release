@@ -1,75 +1,44 @@
 ---
-description: "Security checklist: OWASP for FastAPI/Node.js, Electron RCE, React XSS, data layer security"
-paths: ["**/auth/**", "**/middleware/**", "**/security/**", "**/api/**/*.py", "**/routes/**/*.ts", "**/electron/**/*"]
+paths: ["src/**"]
 ---
 
-# Security Checklist
+# Security Checklist (OWASP Top 10)
+
+## SQL Injection
+- NEVER concatenate user input into SQL queries
+- Use parameterized queries or ORM query builders exclusively
+- Validate and sanitize all input before database operations
+
+## Cross-Site Scripting (XSS)
+- Escape all user-generated content before rendering in HTML
+- Use framework auto-escaping (React JSX, Jinja2 autoescape)
+- Set `Content-Security-Policy` headers to restrict script sources
+- Sanitize HTML input with allowlist-based sanitizers
+
+## Cross-Site Request Forgery (CSRF)
+- Use CSRF tokens for all state-changing operations
+- Validate `Origin` and `Referer` headers
+- Use `SameSite=Strict` or `Lax` for session cookies
 
 ## Authentication and Authorization
+- Hash passwords with bcrypt/argon2 — never store plaintext
+- Implement rate limiting on login endpoints
+- Use short-lived JWTs with refresh token rotation
+- Check authorization on every request, not just at the route level
 
-- [ ] Auth on every protected route — no route without explicit auth check.
-- [ ] JWT validation: verify signature, issuer, audience, and expiration.
-- [ ] Token storage: httpOnly cookies preferred over localStorage (XSS protection).
-- [ ] Role-based access control (RBAC) at the route level.
-- [ ] Session invalidation: revoke tokens on logout, password change.
+## Secret Exposure
+- NEVER commit secrets, API keys, or credentials to source control
+- Use environment variables or secret managers (Vault, AWS SSM)
+- Add `.env`, `*.pem`, `*.key` to `.gitignore`
+- Rotate exposed secrets immediately
 
-## Injection Prevention
+## Dependency Vulnerabilities
+- Run `npm audit` / `pip audit` / `safety check` in CI
+- Pin dependency versions in lockfiles
+- Update dependencies regularly — automate with Dependabot/Renovate
 
-### SQL Injection
-- [ ] All database queries use parameterized queries or ORM expressions.
-- [ ] No string concatenation or f-strings in SQL.
-- [ ] Input validation before database operations.
-
-### XSS (Cross-Site Scripting)
-- [ ] React: never use `dangerouslySetInnerHTML` without sanitization.
-- [ ] Escape user-generated content in templates.
-- [ ] CSP headers configured: `Content-Security-Policy`.
-
-### Command Injection
-- [ ] No `subprocess.shell=True` with user input.
-- [ ] No `eval()`, `exec()`, or `Function()` with dynamic input.
-- [ ] Whitelist allowed commands if shell execution is necessary.
-
-## Electron Security
-
-- [ ] `nodeIntegration: false` in all renderer processes.
-- [ ] `contextIsolation: true` — always.
-- [ ] Validate ALL IPC inputs — treat renderer as untrusted.
-- [ ] No `shell.openExternal()` with unvalidated URLs.
-- [ ] CSP in renderer HTML: no `unsafe-inline`, no `unsafe-eval`.
-- [ ] Disable `remote` module entirely.
-
-## Data Layer
-
-### Postgres
-- [ ] Row-Level Security (RLS) for multi-tenant data.
-- [ ] Least-privilege database users — app user cannot DROP tables.
-- [ ] Encrypted connections (TLS) in production.
-- [ ] Sensitive data encrypted at rest (PII columns).
-
-### Redis
-- [ ] ACLs configured — no default user in production.
-- [ ] Bound to internal network only.
-- [ ] TLS for connections over untrusted networks.
-- [ ] No `FLUSHALL` or `FLUSHDB` permissions for app user.
-
-## API Security
-
-- [ ] Rate limiting on auth endpoints (login, register, password reset).
-- [ ] Request size limits configured.
-- [ ] CORS configured for specific origins — no wildcard in production.
-- [ ] Security headers: HSTS, X-Content-Type-Options, X-Frame-Options.
-- [ ] No secrets in error responses or logs.
-
-## Dependencies
-
-- [ ] Regular dependency audit: `uv pip audit`, `npm audit`.
-- [ ] Pin dependency versions — no floating ranges for security-critical packages.
-- [ ] Review new dependencies before adding — check maintenance status and known CVEs.
-
-## Secrets
-
-- [ ] No secrets in source code, Dockerfiles, or CI config files.
-- [ ] All secrets in environment variables or secrets management.
-- [ ] Rotate secrets on schedule and after any potential exposure.
-- [ ] `.env` files in `.gitignore`.
+## Input Validation
+- Validate type, length, format, and range of all inputs
+- Reject unexpected fields (use strict schema validation)
+- Validate file uploads: type, size, content (not just extension)
+- Never trust client-side validation alone

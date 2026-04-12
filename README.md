@@ -30,10 +30,10 @@ uv tool install oh-my-braincrew
 
 | Platform | Architecture | Binary |
 |----------|-------------|--------|
-| macOS | Apple Silicon (arm64) | [`omb-v0.2.17-darwin-arm64`](https://github.com/teddynote-lab/oh-my-braincrew-release/releases/latest) |
-| macOS | Intel (amd64) | [`omb-v0.2.17-darwin-amd64`](https://github.com/teddynote-lab/oh-my-braincrew-release/releases/latest) |
-| Linux | x86_64 | [`omb-v0.2.17-linux-amd64`](https://github.com/teddynote-lab/oh-my-braincrew-release/releases/latest) |
-| Windows | x86_64 | [`omb-v0.2.17-windows-amd64.exe`](https://github.com/teddynote-lab/oh-my-braincrew-release/releases/latest) |
+| macOS | Apple Silicon (arm64) | [`omb-v0.1.1-darwin-arm64`](https://github.com/teddynote-lab/oh-my-braincrew-release/releases/latest) |
+| macOS | Intel (amd64) | [`omb-v0.1.1-darwin-amd64`](https://github.com/teddynote-lab/oh-my-braincrew-release/releases/latest) |
+| Linux | x86_64 | [`omb-v0.1.1-linux-amd64`](https://github.com/teddynote-lab/oh-my-braincrew-release/releases/latest) |
+| Windows | x86_64 | [`omb-v0.1.1-windows-amd64.exe`](https://github.com/teddynote-lab/oh-my-braincrew-release/releases/latest) |
 
 ## Getting Started
 

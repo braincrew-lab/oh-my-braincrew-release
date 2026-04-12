@@ -1,64 +1,32 @@
----
-description: "Cross-language code conventions for the oh-my-braincrew tech stack"
----
+# Project Stack Conventions
 
-# Code Conventions
+Language-specific rules (tooling, MUST/MUST NOT, file conventions, testing) are in `.claude/rules/languages/`. This file covers project-specific stack choices only.
 
-## Language
+## Python / Backend
+- FastAPI with async endpoints
+- Pydantic v2 for request/response models
+- SQLAlchemy 2.0 async + Alembic for migrations
 
-- All comments, docstrings, variable names, commit messages, and documentation MUST be in English.
+## TypeScript / Frontend
+- React functional components with hooks
+- Tailwind CSS for styling, no inline styles
+- Path aliases via tsconfig
+- Test framework: vitest + @testing-library/react
 
-## Naming
+## Node.js
+- Express or Fastify with TypeScript
+- Structured error handling middleware
 
-| Language | Variables/Functions | Classes/Types | Constants | Files |
-|----------|-------------------|---------------|-----------|-------|
-| Python | `snake_case` | `PascalCase` | `UPPER_SNAKE` | `snake_case.py` |
-| TypeScript | `camelCase` | `PascalCase` | `UPPER_SNAKE` | `camelCase.ts` / `PascalCase.tsx` |
-| React Components | — | `PascalCase` | — | `PascalCase.tsx` |
+## Electron
+- Context isolation enabled, nodeIntegration disabled
+- IPC via preload scripts only
+- Main/renderer separation enforced
 
-## Secrets and Configuration
-
-- Never hardcode secrets, tokens, API keys, or connection strings.
-- Use environment variables for all configuration that varies by environment.
-- Use `.env` files for local development only — never commit them.
-- Validate env vars at startup, not at first use.
-
-## Error Handling
-
-- Handle errors explicitly at system boundaries (API routes, IPC handlers, external calls).
-- Never swallow errors silently — log or propagate.
-- Use structured error responses with consistent shape:
-  - Python/FastAPI: `HTTPException` with `detail` dict containing `code` and `message`.
-  - Node.js: error middleware with `{ error: { code, message } }` JSON response.
-  - React: error boundaries for component trees, try/catch for async operations.
-
-## Import Organization
-
-- Python: stdlib → third-party → local (enforced by isort/ruff).
-- TypeScript: node builtins → external packages → internal aliases → relative imports.
-- No circular imports — if detected, refactor to break the cycle.
-
-## Type Safety
-
-- Python: type hints on all function signatures. Use `mypy --strict` or Pyright.
-- TypeScript: `strict: true` in tsconfig. No `any` unless explicitly justified with a comment.
-- Prefer explicit types at function boundaries; infer within function bodies.
-
-## Code Style
-
-- Python: follow ruff defaults (PEP8 superset). Max line length: 120.
-- TypeScript: follow ESLint + Prettier defaults. Max line length: 120.
-- Prefer early returns over deep nesting.
-- One concept per function — if a function does two things, split it.
-
-## Comments
-
-- Write comments only where the logic is non-obvious.
-- Prefer self-documenting code (clear names, small functions) over comments.
-- TODO comments must include author and issue reference: `# TODO(author): description [#issue]`.
-
-## Dependencies
-
-- Pin major versions in package.json / pyproject.toml.
-- No unused dependencies — audit periodically.
-- Prefer well-maintained packages with active security patching.
+## General
+- No secrets in code — use environment variables
+- Prefer composition over inheritance
+- Prefer immutable data structures — use `const`/`final`/`frozen`/`readonly` by default, mutate only when performance requires it
+- Small, focused functions (< 50 lines)
+- Small, focused files — 200-400 lines typical, 800 lines absolute maximum. Split before you exceed
+- Meaningful names — no abbreviations except well-known ones (db, api, auth, config)
+- Error messages must be actionable

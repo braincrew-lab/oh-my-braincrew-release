@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
-# Remove sensitive env keys from .claude/settings.json before release packaging.
+# sanitize-settings.sh — Remove sensitive env var keys from settings.json before release
 # Usage: sanitize-settings.sh <repo_dir>
-# Output: Reports removed keys to stderr for audit trail; exits 0 if clean or skipped
-# Exit: 0 on success or skip, 1 on failure
-# OMB-PLAN-000082
+# Exit codes: 0 = success or skipped, 1 = failure
 set -euo pipefail
 
 REPO_DIR="${1:?Usage: sanitize-settings.sh <repo_dir>}"
@@ -18,13 +16,17 @@ python3 << PYEOF
 import json, pathlib, sys
 
 settings_path = pathlib.Path("${SETTINGS_FILE}")
-data = json.loads(settings_path.read_text())
+try:
+    data = json.loads(settings_path.read_text())
+except json.JSONDecodeError as e:
+    print(f"[sanitize-settings] ERROR: failed to parse settings.json: {e}", file=sys.stderr)
+    sys.exit(1)
 
 removed_keys = []
 if "env" in data:
-    sensitive_patterns = ("KEY", "TOKEN", "SECRET", "PASSWORD")
+    sensitive_patterns = ("KEY", "TOKEN", "SECRET", "PASSWORD", "CREDENTIAL", "AUTH")
     for k in list(data["env"]):
-        if any(s in k for s in sensitive_patterns):
+        if any(s in k.upper() for s in sensitive_patterns):
             del data["env"][k]
             removed_keys.append(k)
 

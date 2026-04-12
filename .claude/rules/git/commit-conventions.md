@@ -1,87 +1,56 @@
----
-description: "Conventional commit format with structured trailers for decision context preservation"
----
-
 # Commit Conventions
 
 ## Format
-
 ```
 type(scope): description
 
-[optional body — what and why, not how]
+[optional body — explain WHY, not WHAT]
 
-[trailers]
-
-Co-Authored-By: Braincrew(dev@brain-crew.com)
+[optional footer — BREAKING CHANGE: description]
 ```
+
+For detailed commit message structure with What Changed, Root Cause, Solution Approach, and Test Plan sections, see `git/commit-template.md`.
 
 ## Types
-
-| Type | When |
-|------|------|
-| `feat` | New feature or capability |
-| `fix` | Bug fix |
-| `refactor` | Code restructuring without behavior change |
-| `docs` | Documentation only |
-| `test` | Adding or updating tests |
-| `chore` | Tooling, config, dependency updates |
-| `perf` | Performance improvement |
-| `ci` | CI/CD pipeline changes |
+- `feat`: new feature
+- `fix`: bug fix
+- `refactor`: code change that neither fixes a bug nor adds a feature
+- `test`: adding or updating tests
+- `docs`: documentation only
+- `chore`: tooling, deps, config changes
+- `ci`: CI/CD pipeline changes
+- `perf`: performance improvement
+- `style`: formatting, whitespace (no code change)
+- `build`: build system or dependency changes
 
 ## Scope
-
-Use the primary affected module: `api`, `auth`, `db`, `ui`, `electron`, `infra`, `langraph`, `slack`, `redis`.
-For cross-cutting changes, use the most impacted scope.
-
-## Trailers
-
-Include when applicable — skip for trivial commits:
-
-| Trailer | Purpose | Example |
-|---------|---------|---------|
-| `Constraint:` | Active constraint that shaped this decision | `Constraint: Redis TTL must match JWT exp` |
-| `Rejected:` | Alternative considered and why rejected | `Rejected: Background timer \| race condition` |
-| `Directive:` | Warning for future modifiers | `Directive: Do not cache without TTL` |
-| `Confidence:` | How sure we are | `Confidence: high` |
-| `Scope-risk:` | Blast radius | `Scope-risk: narrow` |
-| `Not-tested:` | Known untested edge cases | `Not-tested: concurrent token refresh` |
-| `Co-Authored-By:` | Always include | `Co-Authored-By: Braincrew(dev@brain-crew.com)` |
+Use the domain or module name: `api`, `db`, `ui`, `electron`, `ai`, `infra`, `auth`, `ci`, `config`
 
 ## Rules
+- Subject line: imperative mood, lowercase, no period, max 72 chars
+- Body: wrap at 72 chars, separated from subject by blank line
+- Reference issues: `Closes #123` or `Refs #456` in footer
+- Breaking changes: `BREAKING CHANGE:` footer with migration path
+- One logical change per commit
+- Never commit secrets, .env files, or generated artifacts
+- Branch name must follow the branch naming convention (see `git/branch-naming.md`)
+- Run lint checks on changed files before committing (see `omb-lint-check` skill)
 
-- Subject line: imperative mood, lowercase, no period, max 72 characters.
-- Body: wrap at 72 characters. Explain what and why, not how.
-- One logical change per commit — don't mix features with refactors.
-- Trailers separated from body by a blank line.
-- [HARD] Never include "Generated with Claude Code" or any variation in commit messages. The only attribution is the `Co-Authored-By: Braincrew(dev@brain-crew.com)` trailer.
+## Pre-Commit Security Gate
 
-## Examples
+Before ANY commit, verify all of the following:
+- [ ] No secrets, API keys, or tokens in the diff
+- [ ] No `console.log` / `console.debug` / `print()` debug statements
+- [ ] No hardcoded URLs or IP addresses (use config or env vars)
+- [ ] No TODO/FIXME without a linked issue
+- [ ] No commented-out code blocks
+- [ ] No untyped escapes: `any` (TS) or bare `except:` (Python)
+- [ ] `.env` and credential files listed in `.gitignore`
+- [ ] Error messages do not leak internal paths, stack traces, or secrets
 
-```
-feat(api): add JWT refresh endpoint
+## See Also
 
-Adds POST /api/auth/refresh that accepts a valid refresh token
-and returns a new access/refresh token pair.
-
-Constraint: Redis TTL must match JWT exp claim
-Rejected: Cookie-based refresh | XSS risk in Electron renderer
-Confidence: high
-Scope-risk: narrow
-
-Co-Authored-By: Braincrew(dev@brain-crew.com)
-```
-
-```
-fix(db): prevent connection pool exhaustion under load
-
-Reduces max pool size from 50 to 20 and adds connection timeout.
-Pool exhaustion was causing 503s under sustained concurrent requests.
-
-Constraint: asyncpg pool must not exceed Postgres max_connections
-Not-tested: behavior under 1000+ concurrent connections
-Confidence: medium
-Scope-risk: moderate
-
-Co-Authored-By: Braincrew(dev@brain-crew.com)
-```
+- Branch naming convention: `git/branch-naming.md`
+- Detailed commit message template: `git/commit-template.md`
+- Git collaboration best practices: `git/collaboration.md`
+- PR creation rules: `workflow/06-create-pr.md`

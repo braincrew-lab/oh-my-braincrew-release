@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.1] - 2026-04-12
+
+### Breaking Changes
+- Version reset from 0.2.x to 0.1.x — project restructured as a Claude Code harness with new architecture
+
+### Added
+- CLI commands: `omb init`, `omb update`, and `omb version` for harness installation and management
+- SQLite-based worktree state management with persistent tracking across sessions
+- Verification skill (`omb:verify`) with parallel verifier pool
+- Codex CLI integration for code review, adversarial review, and task delegation
+- Release pipeline for automated version bumping, changelog, and publishing
+- Plan review parallelization across multiple reviewer agents
+- Evidence-anchored prompt evaluation with binary rubric scoring
+- Fullstack AI project template with environment configuration
+
+### Changed
+- Renamed CLI binary to `oh-my-braincrew` with `omb` as primary command
+- Unified ticket schema for all evaluation, review, and verification workflows
+- Standardized agent documentation with scope definitions and execution policies
+- TDD practices integrated across all implementation and verification agents
+
+### Fixed
+- Git branch name display in statusline
+- Hook fallback for manual invocations
+
+### Documentation
+- Added README with usage examples and reference documentation
+- Added no-attribution rule for PR and commit messages
+
 ## [0.2.17] - 2026-04-09
 
 ### Fixed

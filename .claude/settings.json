@@ -1,7 +1,84 @@
 {
+  "statusLine": {
+    "type": "command",
+    "command": "\"$CLAUDE_PROJECT_DIR/.claude/statusline-omb.sh\"",
+    "padding": 1
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/omb/omb-hook.sh\" SessionStart",
+            "timeout": 30,
+            "type": "command"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/omb/omb-hook.sh\" PreToolUse",
+            "timeout": 10,
+            "type": "command"
+          }
+        ],
+        "matcher": "Bash"
+      },
+      {
+        "hooks": [
+          {
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/omb/omb-hook.sh\" PreToolUse",
+            "timeout": 10,
+            "type": "command"
+          }
+        ],
+        "matcher": "Write|Edit"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/omb/omb-hook.sh\" PostToolUse",
+            "timeout": 30,
+            "type": "command"
+          }
+        ],
+        "matcher": "Write|Edit"
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/omb/omb-hook.sh\" Stop",
+            "timeout": 10,
+            "type": "command"
+          }
+        ],
+        "matcher": "Agent"
+      }
+    ]
+  },
+  "permissions": {
+    "defaultMode": "bypassPermissions",
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash",
+      "Skill",
+      "Write",
+      "Edit",
+      "Agent"
+    ]
+  },
+  "respectGitignore": true,
   "env": {
     "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
-    "OMB_LANGUAGE": "en",
-    "OMB_DOC_LANGUAGE": "en"
+    "OMB_DOCUMENTATION_LANGUAGE": "ko"
   }
 }

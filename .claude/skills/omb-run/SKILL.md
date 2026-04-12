@@ -1,320 +1,425 @@
 ---
 name: omb-run
+description: "Execute implementation plans — parse TODO checklist, delegate to domain agents, enforce TDD, track progress in .omb/todo/, incremental lint checks. Supports --worktree isolation and session recovery."
 user-invocable: true
-description: >
-  Use when running a pipeline session to completion. Loads session file,
-  iterates through all tasks by invoking mapped skills, shows progress
-  after each step. Supports --worktree for isolated execution.
-  Triggers on: "run pipeline", "run session", "start session".
-argument-hint: "<session_id> [--worktree]"
-allowed-tools: Read, Bash, Glob, Grep, Skill, AskUserQuestion
+argument-hint: "[--worktree] [plan file path]"
 ---
 
-# Run Pipeline Session
+# Plan Executor
 
-<!-- BCRW-PLAN-000087 -->
+Reads an `omb-plan` output file (`.omb/plans/*.md`), tracks progress in `.omb/todo/`, and executes each task by delegating to domain-specific agents. Enforces TDD and runs lint checks after every implementation task.
 
-Drive a pipeline session to completion by iterating through all tasks sequentially.
+## Architecture
 
-<references>
-The following files are for harness development only (not used at skill runtime):
-- `src/omb/pipeline/types.py` — PipelineState and TaskState models
-- `src/omb/pipeline/definitions.py` — TASK_SKILL_MAP
-- `src/omb/session/handler.py` — SessionHandler STOP hook (advances pipeline state)
-- `src/omb/session/runner.py` — Task dispatch logic
-</references>
+```
+Skill("omb-run") orchestrates:
 
-<completion_criteria>
-- Pipeline runs to completion (status `completed`) or stalls with report
-- Progress displayed after each task
-- Final summary table shown
-</completion_criteria>
+  Step 0: Resolve Plan File
+    |
+  Step 1: Worktree Setup (if --worktree)
+    |
+  Step 2: Create or Resume TODO Tracker (.omb/todo/)
+    |
+  Step 3: Parse Plan (Section 3 + Section 4)
+    |
+  Step 4: Execute Task Loop
+    |--- 4a: Dependency check
+    |--- 4b: Resolve domain + agent from plan annotation
+    |--- 4c: Delegate via orchestration skill or direct Agent()
+    |--- 4d: TDD enforcement (RED -> GREEN -> IMPROVE)
+    |--- 4e: Skill("omb-lint-check") after implementation
+    |--- 4f: Update TODO tracker
+    |--- 4g: Handle RETRY / BLOCKED
+    |
+  Step 5: Final Verification
+    |
+  Step 6: Worktree Merge (if --worktree, with user approval)
+    |
+  Step 7: Summary Report
+```
+
+## When to Apply
+
+- After `omb-plan` has produced a plan file in `.omb/plans/`
+- User says "run", "execute", "implement the plan", or references a plan file
+- When resuming interrupted implementation (todo file already exists)
+
+## Write Permissions
+
+```
+WRITE: .omb/todo/*.md (todo tracking files)
+WRITE: All source files via delegated Agent() calls
+READ:  .omb/plans/*.md, entire codebase
+```
 
 ---
 
-## STEP 0 — Parse Arguments
+## Step 0: Resolve Plan File
 
-Parse `$ARGUMENTS` for:
-- `<session_id>` (positional): the pipeline session identifier (format: `YYYYmmddHHMM-XXXXXX`)
-- `--worktree` (optional flag): run in an isolated git worktree
+Parse the skill argument to extract the plan file path and flags.
 
-If no `session_id` provided, list available sessions:
-
-```bash
-ls .omb/sessions/*.json 2>/dev/null | sed 's|.*/||;s|\.json$||'
-```
-
-If no sessions exist, report and stop. If multiple exist, use `AskUserQuestion` to let the user pick.
-
-## STEP 1 — Validate Session
-
-1. Capture project root:
-```bash
-git rev-parse --show-toplevel
-```
-Store as `PROJECT_ROOT`.
-
-2. Read the session file at `${PROJECT_ROOT}/.omb/sessions/<session_id>.json`.
-
-3. Parse the JSON. Check `status` field:
-   - `active` — proceed to STEP 2
-   - `completed` — report "Pipeline already completed" and STOP
-   - `stalled` — report "Pipeline is stalled — manual intervention needed" and STOP
-   - `cancelled` — report "Pipeline was cancelled" and STOP
-
-4. Display pipeline summary:
-```
-Pipeline: <name> (<session_id>)
-Status: active
-Tasks: <total> total, <done> done, <pending> pending
-```
-
-5. Set driver flag and bind Claude session UUID to prevent Stop hook from advancing pipeline state:
-```bash
-bash /Users/teddy/Dev/github/20-Claude-Code/braincrew-harness/.claude/skills/omb-run/scripts/set-driver.sh "<session_id>" "${PROJECT_ROOT}"
-```
-
-[HARD] This MUST run before the main execution loop. Without it, the Stop hook will double-advance and skip tasks.
-
-## STEP 2 — Worktree Setup (conditional)
-
-**Skip this step** if `--worktree` was NOT provided.
-
-If `--worktree` was provided:
-
-1. Run the worktree setup script:
-```bash
-PROJECT_ROOT=$(git rev-parse --show-toplevel)
-WORKTREE_OUTPUT=$(bash "${PROJECT_ROOT}/.claude/skills/omb-run/scripts/setup-worktree.sh" "<session_id>" "${PROJECT_ROOT}" 2>&1)
-WORKTREE_PATH=$(echo "$WORKTREE_OUTPUT" | grep "^WORKTREE_PATH=" | cut -d= -f2-)
-```
-
-2. If the script exits non-zero, report the error and stop.
-
-3. Pin `OMB_PROJECT_ROOT` to prevent `resolve_project_root()` from finding worktree's `.omb/`:
-```bash
-export OMB_PROJECT_ROOT="${PROJECT_ROOT}"
-```
-
-4. Display:
-```
-Worktree created: worktrees/<session_id>
-Branch: worktree/<session_id>
-```
-
-5. Change Bash working directory to worktree for all subsequent operations:
-```bash
-cd "${WORKTREE_PATH}"
-```
-
-6. For all subsequent steps, read session files from `${PROJECT_ROOT}/.omb/sessions/` (the source of truth). All Bash commands and skill invocations operate within the worktree directory.
-
-[HARD] Do NOT call `EnterWorktree`. Worktrees are created via `git worktree add` only.
-
-## STEP 3 — Main Execution Loop
-
-Execute the pipeline by iterating through tasks. Track loop count for safety.
-
-[HARD] This is a driver loop, not a one-shot command. One loop iteration always
-does the same sequence: read session state, dispatch exactly one task, return to
-`omb advance`, re-read the updated session, display progress, then repeat. A
-finished skill invocation is never the end of the pipeline by itself. The only
-terminal conditions are the `pipeline_status` values returned by `omb advance`:
-`completed`, `stalled`, or `cancelled`.
+### Argument Parsing
 
 ```
-LOOP_COUNT = 0
-MAX_ITERATIONS = 30
+omb-run [--worktree] [plan-file-path]
 ```
 
-### Loop Body
+- `--worktree`: Optional flag. If present, set `worktree_mode = true`.
+- `plan-file-path`: Path to the plan `.md` file. Can be:
+  - Absolute path: `/path/to/.omb/plans/2026-04-11-name.md`
+  - Relative path: `.omb/plans/2026-04-11-name.md`
+  - Filename only: `2026-04-11-name.md` (resolve under `.omb/plans/`)
 
-Repeat the following until the pipeline completes, stalls, or hits MAX_ITERATIONS:
+### Resolution Rules
 
-#### 3a. Read Session State
+1. **Explicit path**: Validate the file exists. If not found at the given path, try prepending `.omb/plans/`.
+2. **No path provided**: List `.omb/plans/*.md` and pick the most recent by filename date prefix. If multiple plans share the same date, use `AskUserQuestion` to let the user choose.
+3. **Validation**: Confirm the plan has **Section 3** (TODO checklist) and **Section 4** (implementation details). If either is missing, report BLOCKED with the specific missing section.
 
-Read `${PROJECT_ROOT}/.omb/sessions/<session_id>.json` and parse the JSON.
+---
 
-If `status` is NOT `active`, break to STEP 4.
+## Step 1: Worktree Setup (conditional)
 
-#### 3b. Advance Pipeline State
+**Only execute when `worktree_mode = true`.** Follow `.claude/rules/workflow/07-worktree-protocol.md`.
 
-After a single task completes, do these steps in this exact order. Do not treat
-the skill's own output as a stop signal.
-
-Before dispatching the task in Step 3c, capture its name as `COMPLETED_TASK_NAME`.
-You MUST pass that exact value into `omb advance` after the task returns.
-
-1. Determine the result status from the skill's `<omb>` response:
-   - `DONE` or `APPROVED` → `--result APPROVED`
-   - `NEEDS_REVISION` → `--result REJECT`
-   - `FAILED` → `--result FAILED`
-   - No signal parsed → `--result NONE`
-
-2. Run `omb advance <session_id> --result <STATUS> --expected-task "<COMPLETED_TASK_NAME>"` via Bash
-
-3. Parse the JSON output line:
-   ```json
-   {"pipeline_status": "active|completed|stalled", "active_task": "task-name|null", "message": "...", "worktree_path": "path|null"}
-   ```
-   - `pipeline_status == "completed"` or `"stalled"` → break to STEP 4
-   - If `worktree_path` is not null, ensure CWD is still the worktree:
-     ```bash
-     if [ -n "<worktree_path>" ] && [ "<worktree_path>" != "null" ]; then cd "<worktree_path>"; fi
-     ```
-   - `active_task != null` → continue to 3c with the new active task
-   - `active_task == null` but `pipeline_status == "active"` → re-read session JSON
-
-4. If `omb advance` exits with non-zero, read stderr for the error message and report to user.
-
-[HARD] Do not stop after a skill returns just because it printed a plan, a
-completion marker, or a message that looks final. Even if `create-plan` appears
-to have finished cleanly, the driver must still call `omb advance` immediately
-and continue the loop until the session state itself reports a terminal
-`pipeline_status`.
-
-[HARD] Do NOT call Python code directly to advance state. Use `omb advance` CLI only.
-[HARD] If `omb advance` is not found in PATH, report error: "omb CLI not installed. Run `pip install oh-my-braincrew` or `uv pip install oh-my-braincrew`."
-
-#### 3c. Identify Task Type and Dispatch
-
-Read the active task's `task_name`, `task_type`, and `task_payload`.
-
-Store the active task name in `COMPLETED_TASK_NAME` before invoking any tool in
-this step. The later `omb advance` call in Step 3b must use that exact value as
-`--expected-task` so a delayed parent advance cannot skip a newly activated step.
-
-Look up the skill name using the TASK_SKILL_MAP:
-
-<task_skill_map>
-
-| task_name | skill |
-|-----------|-------|
-| interview | omb-interview |
-| create-plan | omb-create-plan |
-| review-plan | omb-review-plan |
-| execute | omb-execute |
-| verify | omb-verify |
-| document | omb-document |
-| create-pr | omb-create-pr |
-| review-pr | omb-review-pr |
-| commit-to-pr | omb-commit-to-pr |
-
-</task_skill_map>
-
-Dispatch based on `task_type`:
-
-**ASK_USER tasks:**
-1. Display: `Collecting user intent: <task_name>`
-2. Use `AskUserQuestion` to ask the user the question from `task_payload`
-3. The user's response becomes context for subsequent tasks
-4. The SessionHandler STOP hook will auto-approve ASK_USER tasks and advance the pipeline
-
-**USER_PROMPT tasks (legacy — backward compat):**
-1. Display the `task_payload` to the user as context
-2. The SessionHandler STOP hook will auto-approve USER_PROMPT tasks and advance the pipeline
-
-**SKILL tasks:**
-1. Display: `Running task: <task_name> (invoking <skill_name>)`
-2. If worktree is active, ensure Bash CWD is the worktree path before invoking the skill:
+<execution_order>
+1. Derive branch name from plan filename: `{type}/{plan-kebab-name}` (e.g., `feat/user-auth-flow` from `2026-04-11-user-auth-flow.md`). Infer `{type}` from plan content (feature → `feat`, bug fix → `fix`, refactor → `refactor`). Default to `feat` if ambiguous.
+2. Run the worktree setup script:
    ```bash
-   if [ -n "${WORKTREE_PATH}" ]; then cd "${WORKTREE_PATH}"; fi
+   bash .claude/hooks/omb/omb-hook.sh WorktreeSetup {type}/{plan-kebab-name}
    ```
-3. Invoke `Skill("<skill_name>")` with `task_payload` as arguments (if present)
-4. The skill runs to completion
-4. Verify the skill emitted the `<omb>` response schema. If not visible in the output, emit it yourself based on the skill's outcome:
+3. Enter the worktree and verify `pwd`:
+   ```bash
+   cd worktrees/{type}/{plan-kebab-name} && pwd
    ```
-   <omb>
-   <task>TASK_NAME(brief summary)</task>
-   <decision>DONE|APPROVED|NEEDS_REVISION|FAILED</decision>
-   </omb>
+   Confirm the output matches `{project-root}/worktrees/{type}/{plan-kebab-name}`.
+4. Confirm the plan file is accessible from the worktree
+5. If the setup script exits non-zero or `pwd` mismatches: report BLOCKED and stop — do NOT proceed in the main tree
+</execution_order>
+
+Record for Step 6:
+- `worktree_active = true`
+- `worktree_branch = {type}/{plan-kebab-name}`
+- `worktree_path = {project-root}/worktrees/{type}/{plan-kebab-name}`
+
+---
+
+## Step 2: Create or Resume TODO Tracker
+
+The TODO file path is `.omb/todo/{plan-filename}.md` — same filename as the plan file.
+
+### Case A: File Does Not Exist (New Execution)
+
+1. Create `.omb/todo/` directory if it does not exist
+2. Parse Section 3 of the plan to extract all tasks
+3. Generate the TODO tracker file:
+
+```markdown
+# Execution Tracker: {plan title from H1}
+
+> Plan: .omb/plans/{filename}.md
+> Started: {current YYYY-MM-DD HH:MM}
+> Last updated: {current YYYY-MM-DD HH:MM}
+> Status: IN_PROGRESS
+
+## Progress
+
+| # | Task | Agent | Domain | Status | Retries | Started | Completed |
+|---|------|-------|--------|--------|---------|---------|-----------|
+| 1 | {task description} | @{agent} | {domain} | PENDING | 0 | — | — |
+| 2 | ... | ... | ... | PENDING | 0 | — | — |
+
+## Task Log
+
+<!-- Appended per task as execution proceeds -->
+```
+
+### Case B: File Already Exists (Session Recovery)
+
+1. Read the existing TODO tracker file
+2. Find the first row with Status = `PENDING` or `RETRY`
+3. Report resume point to user: **"Resuming from task #{n}: {task description}"**
+4. Continue from that task in Step 4
+
+---
+
+## Step 3: Parse Plan
+
+Extract two data structures from the plan file.
+
+### From Section 3 (TODO Checklist)
+
+Parse each line matching this pattern:
+
+```
+- [ ] #{n} [CP] {description} -> @{agent} | Skill("{skill}")
+```
+
+Where:
+- `#{n}` — task number
+- `[CP]` — critical path flag (optional)
+- `{description}` — task description
+- `@{agent}` — agent to delegate to
+- `Skill("{skill}")` — skill to load (optional)
+- Handle arrow variants: `→` and `->`
+- Handle optional `|` delimiter between agent and skill
+
+Extract per task:
+- `task_number`, `is_critical_path`, `description`, `agent`, `skill`
+
+### From Section 4 (Phase Details)
+
+Parse the phase tables to enrich each task with:
+
+```
+| # | Task | Agent | Skill | MCP Tool | Dependencies | Deliverable |
+```
+
+Cross-reference by task `#` column. Extract per task:
+- `phase` — which phase group
+- `dependencies` — list of task numbers that must complete first
+- `deliverables` — expected output files/artifacts
+- `mcp_tools` — MCP tools needed (or `—`)
+- `implementation_notes` — text under `구현 참고사항` for the task's phase
+
+---
+
+## Step 4: Execute Task Loop
+
+For each task in order (respecting dependencies):
+
+### 4a. Dependency Check
+
+Before starting task `#n`, verify ALL tasks listed in its `dependencies` column have Status = `DONE` in the TODO tracker.
+
+- If a dependency is `BLOCKED`: mark this task `BLOCKED` with reason `"dependency #{dep} blocked"`
+- If a dependency is `PENDING` but appears later in the list: execution order error — flag and stop
+
+### 4b. Domain Resolution
+
+Use the agent delegation table to resolve domain and execution mode:
+
+| @agent Pattern | Domain | Orchestration Skill | Implement | Verify |
+|----------------|--------|---------------------|-----------|--------|
+| @api-* | API | `omb-orch-api` | @api-implement | @api-verify |
+| @db-* | DB | `omb-orch-db` | @db-implement | @db-verify |
+| @ui-* | UI | `omb-orch-ui` | @ui-implement | @ui-verify |
+| @electron-* | Electron | `omb-orch-electron` | @electron-implement | @electron-verify |
+| @ai-* | AI | `omb-orch-ai` | @ai-implement | @ai-verify |
+| @infra-* | Infra | `omb-orch-infra` | @infra-implement | @infra-verify |
+| @security-* | Security | `omb-orch-security` | @security-implement | — |
+| @code-* | Code | `omb-orch-code` | @code-test | — |
+| @docs-* | Docs | — (direct `Agent()`) | @doc-writer | — |
+
+**Resolution logic:**
+1. Extract domain prefix from @agent-name (e.g., @api-implement -> `api` -> API)
+2. Determine task type from agent suffix: `-design`, `-implement`, `-verify`, `-test`, `-write`, `-review`, `-audit`
+
+### 4c. Delegation — Two Modes
+
+**Mode A: Full Orchestration (for `-implement` agents)**
+
+Load the domain orchestration skill and execute its full cycle:
+
+```
+Skill("omb-orch-{domain}") with task context:
+  - Task: #{n} {description}
+  - Implementation notes: {from Section 4}
+  - Expected deliverables: {from Section 4}
+  - Dependency artifacts: {changed_files from completed predecessor tasks}
+  - TDD: Skill("omb-tdd") MUST be loaded by implement agent
+```
+
+The orchestration skill handles its own design-critique-implement-verify sub-cycle with retries.
+
+**Mode B: Direct Agent Delegation (for `-design`, `-test`, `-write`, `-review`, `-audit` agents)**
+
+Spawn the specific agent directly:
+
+```
+Agent({
+  subagent_type: "{agent-name}",
+  prompt: "Task #{n}: {description}
+
+Context from plan:
+{Section 4 implementation notes for this task's phase}
+
+Expected deliverable: {deliverable}
+
+Previous task outputs:
+{list of artifacts from completed dependency tasks}
+
+Rules:
+- Follow output contract: end with <omb>DONE|RETRY|BLOCKED</omb> + result envelope
+- Scope: implement ONLY what is described above — no extras"
+})
+```
+
+### 4d. TDD Enforcement
+
+For every task that creates or modifies source code (implement, test agents):
+
+1. The agent prompt MUST reference `Skill("omb-tdd")` so TDD rules are loaded
+2. Expect RED-GREEN-IMPROVE evidence in the agent's result
+3. If the result does not mention test execution and the task is an implement task: mark as `RETRY` with feedback `"TDD cycle not evidenced — rerun with explicit RED-GREEN-IMPROVE steps"`
+
+### 4e. Post-Task Lint Check
+
+After every task that modifies source files:
+
+1. Run `Skill("omb-lint-check")` in the main session
+2. **Lint PASS**: proceed to mark task DONE
+3. **Lint FAIL**: spawn @code-debug agent with lint failures, then re-execute the implement agent with debug output. This counts toward the retry budget.
+
+### 4f. Update TODO Tracker
+
+After each task completes or fails, **immediately** update the `.omb/todo/` file:
+
+1. Update the task's row in the Progress table:
+   - `Status`: `DONE`, `RETRY`, or `BLOCKED`
+   - `Retries`: increment if retried
+   - `Started` / `Completed`: timestamps
+
+2. Append a task log entry:
+
+```markdown
+### Task #{n}: {description}
+- Agent: @{agent}
+- Status: {DONE | BLOCKED}
+- Artifacts: {list of files created/modified from agent's changed_files}
+- Notes: {concerns from agent's result, if any}
+```
+
+3. Update the file header's `Last updated` timestamp
+
+### 4g. Error Handling and Retry Policy
+
+```
+<omb>DONE</omb>:
+  -> Run Skill("omb-lint-check")
+  -> Lint PASS: mark DONE, next task
+  -> Lint FAIL: spawn code-debug, retry implement (budget: 3 total)
+
+<omb>RETRY</omb>:
+  -> Design agents: retry with agent's feedback (max 2)
+  -> Implement agents: spawn code-debug first, then retry (max 3)
+  -> Track retry count in TODO tracker
+
+<omb>BLOCKED</omb>:
+  -> Mark task BLOCKED in TODO tracker with blocker reason
+  -> If task is [CP] (critical path): STOP execution, report to user
+  -> If task is NOT [CP]: skip, continue with next task that has no dependency on this one
+  -> If ALL remaining tasks depend on the blocked task: STOP, report to user
+
+After max retries exhausted:
+  -> Mark task BLOCKED with reason "max retries exceeded"
+  -> Follow same BLOCKED handling as above
+```
+
+---
+
+## Step 5: Final Verification
+
+After all tasks are processed:
+
+1. Run the full test suite for the project:
+   - Python: `pytest` (if `pyproject.toml` or `pytest.ini` exists)
+   - TypeScript: `npx vitest run` (if `vitest.config.*` exists)
+   - Or use the test commands specified in Section 6 (TDD verification plan) of the plan
+2. Run `Skill("omb-lint-check") --all` for a comprehensive lint pass
+3. Report results but do NOT loop — present failures to user for decision
+
+---
+
+## Step 6: Worktree Merge (conditional)
+
+**Only when `worktree_active = true`.** Follow `.claude/rules/workflow/07-worktree-protocol.md`.
+
+1. Present the implementation summary to the user
+2. Ask via `AskUserQuestion`:
    ```
+   Implementation complete in worktree branch `{worktree_branch}`.
+   Options:
+   1. Merge — merge changes into the original branch, then remove worktree
+   2. Keep — keep worktree for manual review
+   3. Discard — remove worktree and delete branch
+   ```
+3. On **merge**:
+   ```bash
+   cd {original project root} && git merge {worktree_branch}
+   bash .claude/hooks/omb/omb-hook.sh WorktreeTeardown {worktree_branch} --delete-branch
+   ```
+4. On **keep**:
+   ```bash
+   cd {original project root}
+   ```
+5. On **discard**:
+   ```bash
+   cd {original project root}
+   bash .claude/hooks/omb/omb-hook.sh WorktreeTeardown {worktree_branch} --delete-branch
+   ```
+6. Verify return: run `pwd` and confirm CWD is back at the original project root.
 
-**SUB_AGENT tasks:**
-1. Display: `Running sub-agent task: <task_name>`
-2. Use `Skill()` or direct agent invocation per `task_payload`
+**NEVER auto-merge. Always ask the user.**
 
-**SYSTEM_DECISION tasks:**
-1. Display the decision context from `task_payload`
-2. The SessionHandler handles system decisions automatically
+---
 
-**IMPORTANT:** After each skill invocation returns, you MUST continue the loop
-(back to Step 3b to call `omb advance`). Do NOT stop or wait for user input. The
-pipeline is fully automatic — your job is to call `omb advance` and invoke the
-next skill until the pipeline completes.
-[HARD] The loop ordering is fixed: dispatch one task -> normalize the result ->
-call `omb advance` -> read the updated session -> display progress -> continue.
-Never insert a manual stop between the task return and `omb advance`.
+## Step 7: Summary Report
 
-#### 3d. Post-Task State Check
+Present the final execution report:
 
-After advancing state in 3b:
+```markdown
+## Execution Summary
 
-1. Re-read `${PROJECT_ROOT}/.omb/sessions/<session_id>.json` to confirm the state matches the JSON output from `omb advance`
-2. Parse the updated state
+**Plan:** .omb/plans/{filename}.md
+**TODO:** .omb/todo/{filename}.md
+**Worktree:** {branch name or "N/A"}
 
-#### 3e. Display Progress
+### Task Results
 
-Show progress after each task by running:
+| # | Task | Status | Retries | Artifacts |
+|---|------|--------|---------|-----------|
+| 1 | ... | DONE | 0 | file1.py, file2.py |
+| 2 | ... | DONE | 1 | ... |
+| 3 | ... | BLOCKED | — | — |
 
-```bash
-omb progress <session_id>
+### Statistics
+- Tasks completed: X / Y
+- Tasks blocked: Z
+- Total retries: N
+- Final lint: PASS | FAIL
+- Final tests: PASS | FAIL
+
+### Blocked Tasks (if any)
+- #{n}: {blocker reason}
+
+### Next Steps
+- {Suggested actions for blocked tasks}
+- {Manual verification items from plan Section 8}
 ```
 
-This renders an ANSI box-drawing table with color-coded rows (green=done, bold yellow=active, red=failed, dim=skipped). Implementation: `src/omb/commands/progress.py`.
+---
 
-#### 3f. Loop Control
+## Anti-Patterns
 
-Increment `LOOP_COUNT`.
+| Anti-Pattern | Why It's Bad | Correct Approach |
+|-------------|-------------|-----------------|
+| Skipping lint checks between tasks | Errors accumulate, harder to fix later | `Skill("omb-lint-check")` after every source-modifying task |
+| Auto-merging worktrees | User loses review opportunity | Always `AskUserQuestion` before merge |
+| Continuing past BLOCKED `[CP]` task | All downstream tasks will fail | Stop execution, report to user |
+| Running tasks out of dependency order | Missing prerequisites cause failures | Check dependency column before each task |
+| Batching TODO updates | Session crash loses progress | Update `.omb/todo/` immediately after each task |
+| Passing insufficient context to agents | Agent makes wrong assumptions | Include Section 4 notes + dependency artifacts |
+| Re-running entire plan after recovery | Wastes time redoing completed work | Resume from first PENDING/RETRY in TODO tracker |
 
-- If pipeline `status` is `completed` or `stalled` or `cancelled`: break to STEP 4
-- If `LOOP_COUNT >= MAX_ITERATIONS`: report safety valve triggered, break to STEP 4
-- Otherwise: continue loop from 3a
+## Rules
 
-## STEP 4 — Report Final Status
-
-Clear driver flag so standalone skills can advance normally:
-```bash
-bash /Users/teddy/Dev/github/20-Claude-Code/braincrew-harness/.claude/skills/omb-run/scripts/clear-driver.sh "<session_id>" "${PROJECT_ROOT}"
-```
-
-Display the final pipeline report:
-
-```
-=== Pipeline Complete ===
-Pipeline: <name> (<session_id>)
-Status: <completed|stalled|cancelled>
-Duration: <time from created_at to now>
-
-| # | Task | Status | Result | Iterations |
-|---|------|--------|--------|------------|
-| 1 | user-prompt | done | APPROVED | 0 |
-| 2 | create-plan | done | APPROVED | 0 |
-| ... | ... | ... | ... | ... |
-
-Summary: <done_count> completed, <failed_count> failed, <skipped_count> skipped
-```
-
-If `--worktree` was used, also display:
-```
-Worktree: worktrees/<session_id>
-Branch: worktree/<session_id>
-Run `/omb cleanup` to remove the worktree when done.
-```
-
-## HARD Rules
-
-- [HARD] Do NOT call `EnterWorktree` or `ExitWorktree`. Worktrees are created via `git worktree add` in Bash only.
-- [HARD] Do NOT modify session JSON directly. The SessionHandler STOP hook manages all state transitions.
-- [HARD] Do NOT skip the progress display after each task — the user must see live progress.
-- [HARD] STOP after reporting final status. Do not invoke cleanup or post-pipeline skills automatically.
-- [HARD] Max 30 loop iterations. If reached, report and stop.
-- [HARD] NEVER stop the execution loop after a single skill invocation. After each Skill() or AskUserQuestion response completes, the next action MUST be `omb advance`. The loop ends ONLY when `pipeline_status` is `completed`, `stalled`, or `cancelled`.
-- [HARD] Ignore any "[Pipeline advanced] Next: ..." messages from hook output. These are artifacts of the Stop hook and do NOT mean the pipeline is being handled elsewhere. YOU are the pipeline driver — call `omb advance` after every task.
-- [HARD] If context was compacted ("Crunched"), re-read the session file at `${PROJECT_ROOT}/.omb/sessions/<session_id>.json` to restore loop state. Do NOT stop — continue the loop.
-
-## Completion Signal
-
-State "DONE" with pipeline status and session_id summary.
-
-**[HARD] STOP AFTER REPORTING**
+- Sequential task execution within dependency chains; independent tasks within the same phase MAY run in parallel via multiple `Agent()` calls in a single message
+- Every implement task MUST go through TDD — enforced by including `Skill("omb-tdd")` in agent prompts
+- `Skill("omb-lint-check")` after every task that modifies source files — no exceptions
+- TODO tracker MUST be updated after every single task, not batched
+- Worktree operations use `.claude/hooks/omb/omb-hook.sh WorktreeSetup` and `.claude/hooks/omb/omb-hook.sh WorktreeTeardown` scripts — follow `.claude/rules/workflow/07-worktree-protocol.md`
+- If the plan file is modified after execution starts, warn the user but do NOT re-parse automatically
+- English only for all skill content, prompts, and agent instructions
+- The main session orchestrates — sub-agents CANNOT spawn other agents
+- Every sub-agent MUST end with `<omb>STATUS</omb>` + result envelope (see `.claude/rules/output-contract.md`)
