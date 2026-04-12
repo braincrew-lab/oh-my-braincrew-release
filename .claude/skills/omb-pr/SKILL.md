@@ -5,9 +5,13 @@ user-invocable: true
 argument-hint: "[--worktree] [--base main] [--draft]"
 ---
 
+## Language Setting
+
+Documentation language (`OMB_DOCUMENTATION_LANGUAGE`): !`echo ${OMB_DOCUMENTATION_LANGUAGE:-en}`
+
 # PR Creation Workflow
 
-Orchestrate the full GitHub PR lifecycle: validate branch name, run lint checks, commit changes, push, and create a PR with a structured template and label. Delegates commit and PR creation to the @git-commit agent.
+Orchestrate the full GitHub PR lifecycle: validate branch name, run lint checks, commit changes, push, and create a PR with a structured template and label. Delegates commit and PR creation to the @git-commit agent. PR body language follows the documentation language (`OMB_DOCUMENTATION_LANGUAGE`) from the Language Setting section. Technical terms, file paths, commands, and code references remain in English.
 
 ## When to Use
 
@@ -18,8 +22,8 @@ Orchestrate the full GitHub PR lifecycle: validate branch name, run lint checks,
 
 ## HARD RULES
 
-- **[HARD] PR body와 commit message에 Claude/Anthropic attribution 절대 금지.** `Generated with Claude Code`, `Co-Authored-By: Claude`, `noreply@anthropic.com` 등. 대소문자 무관, 이모지 유무 무관. `rules/no-claude-attribution.md` 참조.
-- **[HARD] PR 생성 후 attribution 감지 시 `gh pr edit`로 즉시 제거.**
+- **[HARD] No Claude/Anthropic attribution in PR body or commit messages.** No `Generated with Claude Code`, `Co-Authored-By: Claude`, `noreply@anthropic.com`, etc. Case-insensitive, with or without emoji. See `rules/no-claude-attribution.md`.
+- **[HARD] If attribution is detected after PR creation, remove it immediately with `gh pr edit`.**
 
 ## Architecture
 
@@ -63,7 +67,7 @@ Skill("omb-pr") orchestrates:
    - If verdict is FAIL: report BLOCKED with lint errors. Do NOT proceed.
    - If verdict is PASS: write the lint marker file for the PreToolUse hook:
      ```bash
-     mkdir -p .omb && date +%s > .omb/.lint-passed
+     mkdir -p "$CLAUDE_PROJECT_DIR/.omb" && date +%s > "$CLAUDE_PROJECT_DIR/.omb/.lint-passed"
      ```
    - The `omb-hook.sh PreToolUse` PreToolUse hook will verify this marker before allowing `gh pr create`.
 
@@ -119,6 +123,37 @@ Skill("omb-pr") orchestrates:
    - Log: `[attribution] REMOVED — stripped N line(s)` or `[attribution] CLEAN`
    - Clean up: `rm -f /tmp/pr-body-check.txt /tmp/pr-body-clean.txt /tmp/pr-body-final.txt`
 
+4.8. **Language verification** (always — ensures PR body matches `OMB_DOCUMENTATION_LANGUAGE`):
+   Read the documentation language from the Language Setting section above.
+   - `doc_language` = value from `OMB_DOCUMENTATION_LANGUAGE` (default: `en`)
+
+   Fetch the PR body:
+   ```bash
+   gh pr view {pr_url} --json body --jq '.body' > /tmp/pr-lang-check.txt
+   ```
+
+   Verify language match:
+   - If `doc_language = ko`: Check for Korean (Hangul) content in the PR body section headers and descriptions.
+     ```bash
+     grep -cP '[\uAC00-\uD7AF]' /tmp/pr-lang-check.txt
+     ```
+     If Hangul count is 0 or near-zero (body is English-only): the body language does NOT match. Rewrite the PR body in Korean:
+     - Section headers in Korean (## 요약, ## 동기 / 배경, ## 변경 사항, ## 테스트 계획, ## 관련 이슈, ## 체크리스트)
+     - Description text in Korean
+     - File paths, code references, commands, agent names, technical terms stay in English
+     - Write rewritten body to `/tmp/pr-lang-rewrite.txt`
+     - Apply: `gh pr edit {pr_url} --body-file /tmp/pr-lang-rewrite.txt`
+     - Log: `[language] REWRITTEN — en → ko`
+
+   - If `doc_language = en`: Check that the body is primarily English.
+     If body has Korean-dominant content: rewrite section headers and descriptions in English.
+     - Apply: `gh pr edit {pr_url} --body-file /tmp/pr-lang-rewrite.txt`
+     - Log: `[language] REWRITTEN — ko → en`
+
+   - If language matches: Log `[language] VERIFIED — {doc_language}`
+
+   Clean up: `rm -f /tmp/pr-lang-check.txt /tmp/pr-lang-rewrite.txt`
+
 5. **Report result**: Output the PR URL and final status.
 </execution_order>
 
@@ -131,6 +166,7 @@ Skill("omb-pr") orchestrates:
 | Step 4 | git-commit BLOCKED | BLOCKED — surface to user | 0 |
 | Step 4 | git-commit RETRY | Retry with feedback | 1 |
 | Step 4.7 | Attribution detected | Auto-fix via gh pr edit | 1 |
+| Step 4.8 | Language mismatch | Auto-fix via gh pr edit | 1 |
 
 ## PreToolUse Hook
 

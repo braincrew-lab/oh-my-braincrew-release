@@ -2,7 +2,7 @@
 name: omb
 description: >
   OMB orchestrator — unified dispatcher for the oh-my-braincrew workflow.
-  Routes subcommands (interview, plan, plan-review, run, verify, doc, pr, release,
+  Routes subcommands (interview, issue, plan, plan-review, run, verify, doc, pr, release,
   prompt-guide, prompt-review, lint-check, brainstorming, mermaid, harness, setup,
   codex) to specialized omb-* sub-skills.
 allowed-tools: Skill, AskUserQuestion, Bash, Read, Grep, Glob
@@ -56,6 +56,7 @@ Match the first word (case-insensitive) against the table below. If matched, inv
 | `codex` | — | `omb-codex` | Codex CLI code review and task delegation |
 | `worktree` | `wt` | `omb-worktree` | Worktree management (create, status, clean, resume) |
 | `clean` | — | `omb-clean` | Worktree cleanup and completion |
+| `issue` | `issues`, `scan` | `omb-issue` | Codebase issue scanning and GitHub creation |
 
 **Example:**
 - `omb interview add OAuth login` → `Skill("omb-interview") "add OAuth login"`
@@ -88,6 +89,7 @@ If the first word does not match Priority 1, scan the full argument string for w
 | `codex review`, `adversarial review`, `code review with codex`, `delegate to codex` | `omb-codex` |
 | `worktree`, `switch worktree`, `create worktree`, `worktree status` | `omb-worktree` |
 | `clean worktree`, `remove worktree`, `cleanup` | `omb-clean` |
+| `find issues`, `scan for issues`, `create issues`, `detect problems`, `register issues`, `codebase scan` | `omb-issue` |
 
 If a keyword match is found, invoke `Skill("{target}")` passing the full original `$ARGUMENTS` string.
 

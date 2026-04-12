@@ -5,11 +5,15 @@ user-invocable: true
 argument-hint: "<plan file path in .omb/plans/>"
 ---
 
+## Language Setting
+
+Documentation language (`OMB_DOCUMENTATION_LANGUAGE`): !`echo ${OMB_DOCUMENTATION_LANGUAGE:-en}`
+
 # Plan Review (Multi-Agent Team Discussion)
 
 Orchestrates a multi-agent review team to critique an existing implementation plan through quantitative evaluation followed by structured team discussion. Unlike `omb-plan` (which creates plans via write→evaluate→improve), this skill reviews an already-written plan from multiple specialist perspectives and synthesizes consensus findings.
 
-Output language follows `$OMB_DOCUMENTATION_LANGUAGE` (`en` default, `ko` for Korean).
+Output language follows the documentation language (`OMB_DOCUMENTATION_LANGUAGE`) from the Language Setting section.
 
 ## Architecture
 
@@ -345,9 +349,9 @@ Options:
 
 ## Step 7: Deliver Review Report
 
-Present the final report. Language follows `$OMB_DOCUMENTATION_LANGUAGE` (`en` default, `ko` for Korean).
+Present the final report. Language follows the documentation language from the Language Setting section.
 
-### Report Format (English — $OMB_DOCUMENTATION_LANGUAGE=en)
+### Report Format (English — documentation language = en)
 
 ```markdown
 ## Plan Review Report
@@ -400,7 +404,7 @@ Present the final report. Language follows `$OMB_DOCUMENTATION_LANGUAGE` (`en` d
 - **NEEDS REVISION** — P0 items remain after improvement
 ```
 
-### Report Format (Korean — $OMB_DOCUMENTATION_LANGUAGE=ko)
+### Report Format (Korean — documentation language = ko)
 
 Same structure with Korean headers:
 
@@ -526,7 +530,7 @@ If the session is **not** in plan mode (the user invoked `omb-plan-review` outsi
 - **@core-critique veto** — BLOCKING finding from @core-critique is minimum P1 even without majority.
 - **@security-audit veto** — BLOCKING finding from @security-audit is minimum P1 even without majority.
 - **@harness-design veto** — BLOCKING finding from @harness-design is minimum P1 for harness-domain plans.
-- **Language follows $OMB_DOCUMENTATION_LANGUAGE** — Report output language follows this env var. Skill content stays English.
+- **Language follows the documentation language (`OMB_DOCUMENTATION_LANGUAGE`) from the Language Setting section** — Report output language follows this resolved value. Skill content stays English.
 - **Max 1 improvement round** — Unlike `omb-plan` (3 iterations), plan-review runs improvement once. Re-invoke for more.
 - **Ticket ID prefix** — Consensus: `CP-P{N}-{NNN}`. Evaluation: `EP-P{N}-{NNN}`. See `.claude/rules/workflow/09-ticket-schema.md` for canonical schema.
 - **Write only to .omb/plans/** — Do not modify any other files during review.

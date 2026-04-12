@@ -5,9 +5,13 @@ user-invocable: true
 argument-hint: "[--worktree] [feature or task description]"
 ---
 
+## Language Setting
+
+Documentation language (`OMB_DOCUMENTATION_LANGUAGE`): !`echo ${OMB_DOCUMENTATION_LANGUAGE:-en}`
+
 # Implementation Plan Authoring
 
-Orchestrates the creation of structured implementation plans through a write → parallel multi-review → consensus → improve iteration loop. Produces Korean-language plan documents saved to `.omb/plans/` that serve as execution specs for domain orchestration skills (`omb-orch-*`).
+Orchestrates the creation of structured implementation plans through a write → parallel multi-review → consensus → improve iteration loop. Produces plan documents in the documentation language from the Language Setting section, saved to `.omb/plans/` that serve as execution specs for domain orchestration skills (`omb-orch-*`).
 
 ## Architecture
 
@@ -74,9 +78,24 @@ flowchart TD
 **WRITE:** `.omb/plans/*.md` files ONLY
 **READ:** Entire codebase, `docs/`, `.claude/agents/`, `.claude/skills/`, existing plans
 
-## Step 0: Parse Arguments + Clarify Requirements
+## Step 0: Language Setup + Parse Arguments + Clarify Requirements
 
-### Argument Parsing
+### 0a. Language Setup (FIRST — before any other processing)
+
+Read the documentation language from the Language Setting section above.
+- Record `doc_language` = value from `OMB_DOCUMENTATION_LANGUAGE` (default: `en`)
+- This determines the output language for ALL plan content:
+  - `ko`: Plan sections written in Korean (per `.claude/rules/workflow/01-plan.md` template)
+  - `en`: Plan sections written in English
+- Pass `doc_language` to @plan-writer in Step 2 prompt
+- Log: `[language] Plan output language: {doc_language}`
+
+**English-only items (regardless of doc_language):**
+- File paths, code references, agent names (@agent), Skill() invocations
+- CLAUDE.md, MEMORY.md content
+- Technical terms may include English with translation: `ISR(Incremental Static Regeneration)`
+
+### 0b. Argument Parsing
 
 ```
 omb-plan [--worktree] [feature or task description]
@@ -86,7 +105,7 @@ omb-plan [--worktree] [feature or task description]
 2. If yes: set `worktree_mode = true`, strip `--worktree` from the argument string
 3. Pass the remaining string as the feature/task description
 
-### Requirements Clarification
+### 0c. Requirements Clarification
 
 Before exploring or planning, ensure the requirements are clear. Use AskUserQuestion if the description is ambiguous:
 
@@ -153,7 +172,7 @@ Spawn the `plan-writer` agent with:
 ```
 Agent({
   subagent_type: "plan-writer",
-  prompt: "Write an implementation plan for: {requirements}\n\nExploration findings:\n{aggregated findings from Step 1}\n\nSave to: .omb/plans/{date}-{name}.md"
+  prompt: "Write an implementation plan for: {requirements}\n\nDocument language: {doc_language} (from OMB_DOCUMENTATION_LANGUAGE — use Korean for ko, English for en)\n\nExploration findings:\n{aggregated findings from Step 1}\n\nSave to: .omb/plans/{date}-{name}.md"
 })
 ```
 
@@ -538,5 +557,5 @@ Each agent receives context independently — no reviewer sees another reviewer'
 - **Ticket ID prefixes** — Consensus: `CP-P{N}-{NNN}`. Evaluation: `EP-P{N}-{NNN}`. See `.claude/rules/workflow/09-ticket-schema.md` for canonical schema.
 - **Max 3 review-improvement iterations** — After 3 rounds, deliver the best version regardless of score.
 - **Token budget on iteration** — On re-review (iteration 2+), pass only the previous consensus summary to plan-improver, not the full reviewer outputs.
-- **Korean plan output, English skill content** — Per `language-settings.md`.
+- **Plan output language follows the documentation language (`OMB_DOCUMENTATION_LANGUAGE`) from the Language Setting section, English skill content** — Per `language-settings.md`.
 - **AskUserQuestion actively** — Clarify early, not after 2 failed iterations.

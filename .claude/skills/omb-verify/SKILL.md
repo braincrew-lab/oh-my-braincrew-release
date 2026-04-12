@@ -5,13 +5,17 @@ user-invocable: true
 argument-hint: "[--worktree] [plan file path] [--domain <filter>]"
 ---
 
+## Language Setting
+
+Documentation language (`OMB_DOCUMENTATION_LANGUAGE`): !`echo ${OMB_DOCUMENTATION_LANGUAGE:-en}`
+
 # Implementation Verification (Multi-Agent Consensus)
 
 Orchestrates a multi-agent verification team to validate implementation results against the original plan. Uses parallel domain-specific verifiers plus architectural intent checking, then synthesizes consensus findings using the 7-topic framework. Auto-fixes P0/P1 issues with up to 3 iteration rounds.
 
 This skill runs after `omb-run` has completed. It is the quality gate between implementation and documentation/PR creation.
 
-Output language follows `$OMB_DOCUMENTATION_LANGUAGE` (`en` default, `ko` for Korean).
+Output language follows the documentation language (`OMB_DOCUMENTATION_LANGUAGE`) from the Language Setting section.
 
 ## Architecture
 
@@ -631,7 +635,7 @@ If the same issues persist across 2 iterations with no improvement, stop early:
 - **Fix TODO required** — Always generate a structured Fix TODO (Step 6) before spawning implement agents. No ad-hoc fixes.
 - **Max 3 fix iterations** — Steps 6-8 loop at most 3 times. After 3, verdict is RETRY.
 - **Scope-constrained fixes** — Implement agents in Step 7 may ONLY fix the specific issue cited. No other changes.
-- **Language follows $OMB_DOCUMENTATION_LANGUAGE** — Report language follows this env var. Skill content stays English.
+- **Language follows the documentation language (`OMB_DOCUMENTATION_LANGUAGE`) from the Language Setting section** — Report language follows this resolved value. Skill content stays English.
 - **Ticket ID prefixes** — Evaluation: `EV-P{N}-{NNN}`. Consensus: `CV-P{N}-{NNN}`. See `.claude/rules/workflow/09-ticket-schema.md` for canonical schema.
 - **Write through implement agents only** — Only Step 7 modifies code, and only through domain implement agents.
 - **Step 9 gate** — Only offer next steps when verdict is DONE. RETRY and BLOCKED skip the offer.

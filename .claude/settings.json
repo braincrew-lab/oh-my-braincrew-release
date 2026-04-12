@@ -73,7 +73,10 @@
       "Skill",
       "Write",
       "Edit",
-      "Agent"
+      "Agent",
+      "Edit(**/.claude/**)",
+      "Write(**/.claude/**)",
+      "Read(**/.claude/**)"
     ]
   },
   "respectGitignore": true,

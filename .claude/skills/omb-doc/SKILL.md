@@ -5,13 +5,17 @@ user-invocable: true
 argument-hint: "[--worktree] [category or document path]"
 ---
 
+## Language Setting
+
+Documentation language (`OMB_DOCUMENTATION_LANGUAGE`): !`echo ${OMB_DOCUMENTATION_LANGUAGE:-en}`
+
 # Service Documentation Guide
 
 Comprehensive guide for writing and maintaining living service documentation in `docs/`. Contains 26 rules across 5 categories covering folder structure, document templates, formatting standards, lifecycle management, and quality criteria.
 
-## Language Setting
+## Document Language
 
-Check the `OMB_DOCUMENTATION_LANGUAGE` environment variable to determine document language:
+Use the documentation language (`OMB_DOCUMENTATION_LANGUAGE`) from the Language Setting section to determine document language:
 - `en` (default): Write all documentation in English
 - `ko`: Write documentation in Korean
 

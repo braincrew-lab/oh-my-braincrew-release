@@ -59,7 +59,7 @@ SELECTION GUIDANCE:
 - Review the diff before committing — do not commit blindly.
 - Follow existing commit message conventions in the repository.
 - Commit message body explains "why" not "what" (the diff shows what).
-- Check `OMB_DOCUMENTATION_LANGUAGE` env var for commit message body language:
+- In step 0, resolve the documentation language via Bash. Use that resolved value for commit message body language:
   - `en` (default): Commit messages in English
   - `ko`: Commit message body in Korean
   - Commit title (`type(scope): description`) is ALWAYS English regardless of this setting
@@ -68,7 +68,7 @@ SELECTION GUIDANCE:
 - Use the appropriate commit message template tier (short/medium/full) based on change complexity.
 - (PR mode) PR title follows conventional commit format: `type(scope): description` — max 70 chars.
 - (PR mode) PR body MUST use the structured template (see `<pr_template>` section).
-- (PR mode) Check `OMB_DOCUMENTATION_LANGUAGE` env var for PR body language:
+- (PR mode) Use the documentation language resolved in step 0 for PR body language:
   - `en` (default): PR body in English (headers + body text)
   - `ko`: PR body in Korean (headers + body text). Only technical terms (API, endpoint, component, etc.), file paths, commands, and code references stay English.
   - PR title is ALWAYS English (conventional commit format) regardless of this setting
@@ -142,6 +142,12 @@ NEVER append: `Co-Authored-By:` lines referencing Claude or Anthropic. No AI att
 </commit_format>
 
 <execution_order>
+## Step 0: Resolve Documentation Language
+
+Run `echo ${OMB_DOCUMENTATION_LANGUAGE:-en}` via Bash to read the documentation language. Store the result (e.g., `en` or `ko`) and use it in all subsequent language-dependent steps. This determines:
+- Commit message body language (step 7)
+- PR body language and header set (step 11.5)
+
 ## Commit Steps (always run)
 
 1. Run `git status` to see all changes (staged and unstaged).
@@ -176,14 +182,14 @@ NEVER append: `Co-Authored-By:` lines referencing Claude or Anthropic. No AI att
 If the prompt contains `mode: pr`, continue with these steps after committing (or after step 2 if no changes to commit):
 
 11. Parse the base branch from prompt (default: `main`) and draft flag.
-11.5. Read `$OMB_DOCUMENTATION_LANGUAGE` env var. Default to `en` if unset. This determines which header set (English/Korean) to use from the `<pr_template>` header mapping table. When `ko`, write PR body descriptions in Korean (technical terms, file paths, commands stay English). PR title remains English regardless.
+11.5. Use the documentation language (`OMB_DOCUMENTATION_LANGUAGE`) resolved in step 0. This determines which header set (English/Korean) to use from the `<pr_template>` header mapping table. When `ko`, write PR body descriptions in Korean (technical terms, file paths, commands stay English). PR title remains English regardless.
 12. Run `git log {base}..HEAD --oneline` to get all commits on this branch.
 13. Run `git log {base}..HEAD --format="%s%n%b"` for full commit messages.
 14. Run `git diff {base}...HEAD --stat` for file change summary.
 15. Run `git diff {base}...HEAD` to review the full diff for PR description context.
 16. Derive PR title in conventional commit format (`type(scope): description`, max 70 chars). The type should reflect the overall theme of all commits. If commits span multiple types, use the dominant one.
 17. Determine the PR label from the primary commit type (see `<pr_labels>` mapping).
-18. Compose the PR body using the `<pr_template>`. Use the header set matching `$OMB_DOCUMENTATION_LANGUAGE` (from step 11.5). Fill each section from the commit analysis:
+18. Compose the PR body using the `<pr_template>`. Use the header set matching the documentation language (from step 0). Fill each section from the commit analysis:
     - Summary: 1-3 bullet points covering what, why, how
     - Motivation / Context: why the change was needed, link to issues
     - Changes: specific list (group by Added/Changed/Removed sub-headers if 5+ items total, otherwise flat list)
@@ -195,9 +201,14 @@ If the prompt contains `mode: pr`, continue with these steps after committing (o
     - Checklist: mark items as `[x]` where confirmed
     - Reviewer Notes (OPTIONAL): if the PR has non-obvious design decisions, performance trade-offs, or security considerations. Otherwise omit entirely.
 19. Push the branch: `git push -u origin HEAD`
+19.5. Create the label if it does not exist (idempotent):
+    ```bash
+    gh label create "{label}" --color "{color}" --description "{description}" --force 2>/dev/null || true
+    ```
+    Use the label name, color, and description from the `<pr_labels>` table below.
 20. Create the PR using a HEREDOC for the body:
     ```bash
-    gh pr create --title "type(scope): description" --base {base} --label "type: {label}" --body "$(cat <<'EOF'
+    gh pr create --title "type(scope): description" --base {base} --label "{label}" --body "$(cat <<'EOF'
     ... PR body ...
     EOF
     )"
@@ -209,22 +220,25 @@ If the prompt contains `mode: pr`, continue with these steps after committing (o
 <pr_labels>
 Every PR MUST have exactly one label assigned. Derive the label from the primary commit type:
 
-| Label | Commit Type(s) | Color |
-|-------|---------------|-------|
-| `type: feature` | feat | #a2eeef |
-| `type: bugfix` | fix | #d73a4a |
-| `type: refactor` | refactor | #f9d0c4 |
-| `type: test` | test | #bfd4f2 |
-| `type: docs` | docs | #0075ca |
-| `type: chore` | chore, build, style | #cfd3d7 |
-| `type: ci` | ci | #e6e6e6 |
-| `type: perf` | perf | #fbca04 |
+| Label | Commit Type(s) | Color | Description |
+|-------|---------------|-------|-------------|
+| `Feature` | feat | #a2eeef | New feature or capability |
+| `Bugfix` | fix | #d73a4a | Bug fix |
+| `Refactor` | refactor | #f9d0c4 | Code restructuring |
+| `Test` | test | #bfd4f2 | Test additions or modifications |
+| `Docs` | docs | #0075ca | Documentation only |
+| `Chore` | chore | #cfd3d7 | Maintenance, dependency updates |
+| `CI` | ci | #e6e6e6 | CI/CD pipeline changes |
+| `Improvements` | perf | #fbca04 | Performance and quality improvements |
+| `Style` | style | #c5def5 | Code style/formatting |
+| `Build` | build | #d4c5f9 | Build system changes |
 
 Rules:
 - Always assign exactly ONE label. Never zero, never multiple.
 - If commits span multiple types, use the label matching the dominant/primary type.
-- Use `--label "type: {label}"` in the `gh pr create` command.
-- If the label does not exist on the repo, `gh` will create it automatically.
+- Tie-breaker priority: Feature > Bugfix > Refactor > Improvements > Test > Docs > Build > Style > CI > Chore.
+- Use `--label "{label}"` in the `gh pr create` command.
+- If the label does not exist on the repo, create it with its color and description before the PR (see step 19.5).
 </pr_labels>
 
 <pr_template>
@@ -232,7 +246,7 @@ Use this template structure for the PR body. The template has REQUIRED sections 
 
 ## Language Selection
 
-Read `$OMB_DOCUMENTATION_LANGUAGE` (from step 11.5). Use the matching header set from this table. When `ko`, write body descriptions in Korean too (only technical terms, file paths, commands, code references stay English).
+Use the documentation language (`OMB_DOCUMENTATION_LANGUAGE`) resolved in step 0. Use the matching header set from this table. When `ko`, write body descriptions in Korean too (only technical terms, file paths, commands, code references stay English).
 
 | English Header | Korean Header |
 |----------------|---------------|
@@ -355,7 +369,7 @@ Mermaid rules: use ONLY `flowchart TD` or `graph LR`. Maximum 3-8 nodes. No styl
 4. **Test Plan specificity**: Each test item MUST include the actual command to run and the expected result. No generic checkboxes like "tests pass."
 5. **Related Issues**: Extract `#N` patterns from all commit messages on the branch. If none found, write "None."
 6. **Checklist**: Mark items as `[x]` where you can confirm they are satisfied from the diff analysis.
-7. **Language**: Use the header set matching `$OMB_DOCUMENTATION_LANGUAGE`. When `ko`, body descriptions are also in Korean — only technical terms (API, endpoint, component, etc.), file paths, commands, and code references stay English.
+7. **Language**: Use the header set matching the documentation language from step 0. When `ko`, body descriptions are also in Korean — only technical terms (API, endpoint, component, etc.), file paths, commands, and code references stay English.
 8. **PR title**: ALWAYS English, conventional commit format `type(scope): description`, max 70 chars.
 9. **Attribution**: NEVER include Claude/Anthropic attribution. The template content is the ONLY allowed PR body structure.
 10. **HEREDOC**: Always pass the PR body via HEREDOC to `gh pr create` for correct markdown formatting.

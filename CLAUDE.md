@@ -144,7 +144,7 @@ omb-lsp-common, omb-lsp-python, omb-lsp-typescript, omb-lsp-go, omb-lsp-rust, om
 omb-react-perf, omb-react-composition, omb-ui-guidelines, omb-react-native
 
 ### Git/PR (user-invocable)
-omb-pr, omb-lint-check
+omb-pr, omb-lint-check, omb-git-setup
 
 ### Codex Integration (user-invocable)
 omb-codex, omb-codex-review, omb-codex-adv-review, omb-codex-run, omb-codex-setup
@@ -233,6 +233,7 @@ Run step-by-step for a complete development cycle, or invoke individually.
 | `omb:setup` | Project scaffolding and configuration |
 | `omb:worktree` | Worktree management (create, status, clean, resume) |
 | `omb:clean` | Worktree cleanup and completion |
+| `omb:issue` | Codebase issue scanning and GitHub issue creation |
 
 ### CLI Commands
 
