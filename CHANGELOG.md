@@ -5,6 +5,35 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.15] - 2026-04-13
+
+### Added
+- add post-PR conflict and CI verification to omb-pr
+- add omb:cron skill for scheduling Claude Code tasks
+- add issue claim mechanism to omb-resolve-issue
+- add omb init survey and Slack notification module
+- add --bypass flag to omb-resolve-issue
+
+### Fixed
+- add explicit os import to cron handlers for CI ruff
+- add resolve_project_dir() fallback for manual CLI usage
+- auto-approve .claude/ writes via PreToolUse
+- update script path in test_setup_settings
+
+### Maintenance
+- Merge pull request #54 from teddynote-lab/feat/omb-cron
+- apply ruff format to cron files
+- Merge pull request #55 from teddynote-lab/feat/omb-pr-post-verification
+- Merge pull request #53 from teddynote-lab/feat/omb-init-survey
+- apply ruff format to new test files
+- Merge pull request #50 from teddynote-lab/feat/issue-claim-mechanism
+- Merge pull request #52 from teddynote-lab/feat/omb-resolve-bypass
+- apply ruff format to test_worktree_handlers
+- Merge pull request #51 from teddynote-lab/fix/protected-dir-pretooluse-approve
+- Merge pull request #49 from teddynote-lab/feat/omb-resolve-bypass
+
+
+
 ## [0.1.14] - 2026-04-13
 
 ### Maintenance
