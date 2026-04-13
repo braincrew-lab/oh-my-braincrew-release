@@ -5,6 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.7] - 2026-04-13
+
+### Added
+- expand omb-postgres references and rules content
+- add omb-resolve-issue skill for end-to-end GitHub issue resolution
+
+### Fixed
+- add package-lock.json for dependency pinning
+- eliminate shell injection in omb-setup-settings.sh Python fallback
+- log worktree-status DB errors to stderr
+- validate column names in update_status against allowlist
+- resolve all CI workflow failures
+- use vitest --passWithNoTests CLI flag
+- use vitest --passWithNoTests CLI flag
+- use vitest --passWithNoTests CLI flag
+- allow vitest to pass with no test files
+- allow vitest to pass with no test files
+- allow vitest to pass with no test files
+- add missing jsdom dependency for vitest
+- add missing jsdom dependency for vitest
+- add missing jsdom dependency for vitest
+- add missing @tailwindcss/postcss dependency
+- add missing @tailwindcss/postcss dependency
+- add missing @tailwindcss/postcss dependency
+- add git config for tests and fix eslint dependencies
+- add git config for tests and fix eslint dependencies
+- add git config for tests and fix eslint dependencies
+- add turbo type-check task and suppress certifi import
+- add turbo type-check task and suppress certifi import
+- add turbo type-check task and suppress certifi import
+- scope pyright, add packageManager, fix commit-lint perms
+- scope pyright, add packageManager, fix commit-lint perms
+- scope pyright, add packageManager, fix commit-lint perms
+- resolve CI workflow failures
+- resolve CI workflow failures
+- resolve CI workflow failures
+- update CLAUDE.md verification strategy references
+- enforce hook directory conventions
+
+### Improved
+- restructure PR and issue templates for improved LLM readability
+
+### Documentation
+- add 19 missing agents to CLAUDE.md Sub-Agent Inventory
+
+### Maintenance
+- reorder settings.json keys and expand gitignore
+- Merge pull request #32 from teddynote-lab/fix/issue-18-missing-package-lock
+- Merge pull request #33 from teddynote-lab/fix/issue-15-shell-injection-setup-settings
+- fix ruff format on test_setup_settings.py
+- Merge pull request #38 from teddynote-lab/fix/issue-21-silent-exception
+- Merge pull request #31 from teddynote-lab/fix/issue-16-sql-fstring-column
+- apply ruff format to test_worktree_db.py
+- Merge pull request #30 from teddynote-lab/fix/issue-14-remove-dead-shared-pkg
+- remove unused packages/shared dead code
+- Merge pull request #29 from teddynote-lab/refactor/pr-issue-fix
+- Merge pull request #27 from teddynote-lab/fix/issue-22-docs-verification
+- Merge pull request #26 from teddynote-lab/fix/issue-13-missing-agent-inventory
+- Merge pull request #25 from teddynote-lab/fix/issue-12-hook-convention
+- Merge pull request #24 from teddynote-lab/feat/omb-resolve-issue
+
+
+
 ## [0.1.6] - 2026-04-12
 
 ### Added
