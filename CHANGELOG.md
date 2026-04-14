@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.18] - 2026-04-14
+
+### Added
+- add omb:wiki blueprint wiki skill
+
+### Improved
+- split model rendering into Line 5 of statusline
+
+### Documentation
+- add omb:wiki core feature section
+
+### Maintenance
+- Merge pull request #56 from teddynote-lab/refactor/statusline-5line-layout
+- sync main into statusline-5line-layout
+- Merge pull request #58 from teddynote-lab/chore/ruff-format-fix
+- apply ruff format to 4 python files
+- Merge pull request #57 from teddynote-lab/feat/omb-wiki-skill
+- apply ruff format to pass python-lint CI
+
+
+
 ## [0.1.17] - 2026-04-14
 
 ### Maintenance
