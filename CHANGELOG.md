@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.24] - 2026-04-15
+
+### Added
+- add /omb:fix skill for bug-fix plan authoring
+- add centralized settings reader and gate Codex integration
+- auto-install jq during omb init/update
+
+### Fixed
+- replace wiki-route-guard keywords to fix false positives
+- resolve merge conflicts with main
+- resolve merge conflict and drift gate precision
+- add OMB_DEBUG trace logging for SKILL.md permission prompt diagnosis
+
+### Maintenance
+- Merge pull request #67 from teddynote-lab/feat/omb-fix-skill
+- Merge pull request #66 from teddynote-lab/fix/skill-md-permission-prompt
+- apply ruff format to test_permission_request
+- Merge pull request #65 from teddynote-lab/feat/codex-settings-env
+- resolve conflict with origin/main for cli.md frontmatter
+- Merge pull request #64 from teddynote-lab/feat/auto-install-jq
+- apply ruff format to new modules and tests
+- ruff format test_update_command.py
+- ruff format new files
+- rephrase drift marker mentions in log prose
+
+
+
 ## [0.1.23] - 2026-04-15
 
 ### Maintenance
