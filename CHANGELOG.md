@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.27] - 2026-04-18
+
+### Fixed
+- enforce canonical Section 3/4 in plan output + add plan-mode preflight
+
+### Improved
+- redesign CLAUDE.md v2 schema with 150-line cap
+
+### Maintenance
+- Merge pull request #71 from teddynote-lab/refactor/omb-setup-claude-md-v2
+- resolve conflicts with main (SPEC.md/INDEX.md wiki)
+- Merge pull request #70 from teddynote-lab/fix/omb-fix-plan-format
+- Merge pull request #69 from teddynote-lab/fix/wiki-realpath-macos
+
+
+
 ## [0.1.26] - 2026-04-17
 
 ### Added
