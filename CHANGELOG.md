@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-04-21
+
+### Fixed
+- use canonical pipe form in omb-tag prose reference
+
+### Improved
+- remove guidance HTML comments from omb-setup CLAUDE.md template
+- exclude 99_Settings/ registry from INDEX.md
+
+### Documentation
+- expand tags REGISTRY with 122 tech-spec tags
+
+### Maintenance
+- Merge pull request #98 from teddynote-lab/docs/wiki-tags-registry-expand
+- Merge pull request #99 from teddynote-lab/refactor/omb-setup-claude-md-reactive-turtle
+- accept slash-delimited prose in canonical status guard
+- Merge pull request #97 from teddynote-lab/refactor/wiki-index-exclude-settings
+- apply ruff format to test_wiki_index_rebuild.py
+
+
+
 ## [0.2.0] - 2026-04-21
 
 ### Added
