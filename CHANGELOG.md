@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [0.2.10] - 2026-05-01
+
+### Maintenance
+- Merge pull request #114 from braincrew-lab/chore/migrate-org-to-braincrew-lab
+
+
+
 ## [0.2.9] - 2026-05-01
 
 ### Fixed
