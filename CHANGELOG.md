@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.3] - 2026-08-07
+
+### Fixed
+- remove trailing blank line failing ruff format check
+- apply rendered notes to a CI-created release
+
+### Documentation
+- record codex compat contract narrowing in ADR
+
+### Maintenance
+- Merge pull request #251 from braincrew-lab/ci/restore-public-release-mirror
+- restore public release mirroring to the distribution repo
+- Merge pull request #250 from braincrew-lab/fix/ruff-format-release-fixtures
+- Merge pull request #249 from braincrew-lab/fix/codex-agent-role-toml
+
+
+
 ## [0.2.14] - 2026-05-04
 
 ### Documentation
