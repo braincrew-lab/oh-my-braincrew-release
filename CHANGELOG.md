@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-08-08
+
+### Added
+- add comprehension layer to explanation contract
+
+### Fixed
+- prevent skill injection from prose documentation
+
+### Improved
+- optimize omb-plan workflow and instruction budget
+
+### Maintenance
+- Merge pull request #254 from braincrew-lab/fix/skill-injection-prose-collision
+- apply ruff format to skill injection hygiene test
+- Merge pull request #253 from braincrew-lab/feat/omb-plan-robust-flute
+- Merge pull request #252 from braincrew-lab/feat/explain-comprehension-layer
+- Merge pull request #251 from braincrew-lab/ci/restore-public-release-mirror
+- restore public release mirroring to the distribution repo
+- Merge pull request #250 from braincrew-lab/fix/ruff-format-release-fixtures
+
+
+
 ## [0.6.3] - 2026-08-07
 
 ### Fixed
