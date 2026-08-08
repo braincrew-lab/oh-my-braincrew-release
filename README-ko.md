@@ -35,6 +35,36 @@
 - **워크트리 격리** — SQLite로 상태를 추적하는 별도 git 워크트리에서 기능 브랜치를 병렬로
   진행하므로, 두 작업이 같은 트리를 두고 충돌하지 않습니다
 
+### 구성 요소 흐름
+
+```mermaid
+flowchart TB
+  DEV(["개발자"])
+
+  subgraph DIST["배포 — 이 저장소"]
+    RELS["GitHub Releases<br/>바이너리 · 하네스 tarball"]
+  end
+
+  RELS -->|"install.sh / install.ps1"| BIN["omb CLI<br/>~/.local/bin"]
+  BIN -->|"omb init / omb update"| HARN[".claude/ 하네스<br/>에이전트 · 스킬 · 규칙 · 훅"]
+  HARN -.->|"프로젝트에 설치"| CC
+
+  DEV -->|"/omb:* 커맨드"| CC["Claude Code<br/>메인 세션"]
+
+  CC -->|"Skill()"| SK["스킬 67개<br/>.claude/skills/omb-*"]
+  CC -->|"Agent() — 메인 세션만"| AG["도메인 에이전트 59개<br/>.claude/agents/omb/"]
+  AG -->|"상태 태그 DONE · RETRY · BLOCKED"| CC
+  RUL["규칙 파일 117개<br/>.claude/rules/**"] -.->|"경로 매칭으로 로드"| AG
+
+  CC -->|"라이프사이클 이벤트 13종"| HOOK["omb-hook.sh<br/>→ oh-my-braincrew CLI → Registry"]
+  HOOK --> GATE{"핸들러 16개"}
+  GATE --> SEC["보안<br/>범위 · 시크릿 · raw SQL<br/>서브에이전트 bash 게이트"]
+  GATE --> QUA["품질<br/>린트 · 파일 크기<br/>pytest 타임아웃 · PR 게이트"]
+  GATE --> STA["상태<br/>상태 라우터 · 워크트리<br/>세션 복구"]
+  SEC & QUA & STA -->|"exit 0 허용 · exit 2 차단"| CC
+  STA --> DB[("`.omb/db/worktrees.db`")]
+```
+
 ## 설치
 
 ### macOS / Linux
@@ -98,6 +128,22 @@ omb init
 ## 권장 워크플로우
 
 전체 사이클을 순서대로 돌려도 되고, 각 단계를 따로 불러도 됩니다.
+
+```mermaid
+flowchart LR
+  IV["/omb:interview"] --> PL["/omb:plan"] --> PV["/omb:plan-review"]
+  PV -->|"P0/P1 남음"| PL
+  PV -->|"통과"| RUN["/omb:run"]
+  RUN --> VF["/omb:verify"]
+  VF -->|"P0/P1 남음"| RUN
+  VF -->|"통과"| DOC["/omb:doc"]
+  DOC --> PRC["/omb:pr"] --> REL["/omb:release"]
+
+  IV -.-> A1[("`.omb/interviews/`")]
+  PL -.-> A2[("`.omb/plans/`")]
+  RUN -.-> A3[("`.omb/todo/`")]
+  REL -.-> A4["GitHub Release<br/>+ 미러링된 바이너리"]
+```
 
 ```
 > /omb:interview      # 1. 요구사항 수집
