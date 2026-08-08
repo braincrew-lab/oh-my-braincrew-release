@@ -37,6 +37,36 @@ What it installs into a project:
 - **Worktree isolation** — parallel feature branches in separate git worktrees with SQLite
   state tracking, so two workstreams never fight over the same tree
 
+### How the pieces fit
+
+```mermaid
+flowchart TB
+  DEV(["Developer"])
+
+  subgraph DIST["Distribution — this repository"]
+    RELS["GitHub Releases<br/>binaries · harness tarball"]
+  end
+
+  RELS -->|"install.sh / install.ps1"| BIN["omb CLI<br/>~/.local/bin"]
+  BIN -->|"omb init / omb update"| HARN[".claude/ harness<br/>agents · skills · rules · hooks"]
+  HARN -.->|"installed into the project"| CC
+
+  DEV -->|"/omb:* command"| CC["Claude Code<br/>main session"]
+
+  CC -->|"Skill()"| SK["67 skills<br/>.claude/skills/omb-*"]
+  CC -->|"Agent() — main session only"| AG["59 domain agents<br/>.claude/agents/omb/"]
+  AG -->|"status tag DONE · RETRY · BLOCKED"| CC
+  RUL["117 rule files<br/>.claude/rules/**"] -.->|"loaded by path match"| AG
+
+  CC -->|"13 lifecycle events"| HOOK["omb-hook.sh<br/>→ oh-my-braincrew CLI → Registry"]
+  HOOK --> GATE{"16 handlers"}
+  GATE --> SEC["security<br/>scope · secrets · raw SQL<br/>sub-agent bash gate"]
+  GATE --> QUA["quality<br/>lint · file size<br/>pytest timeout · PR gate"]
+  GATE --> STA["state<br/>status router · worktree<br/>session recovery"]
+  SEC & QUA & STA -->|"exit 0 allow · exit 2 block"| CC
+  STA --> DB[("`.omb/db/worktrees.db`")]
+```
+
 ## Install
 
 ### macOS / Linux
@@ -100,6 +130,22 @@ files are added to `.gitignore` automatically.
 ## Recommended Workflow
 
 Run the cycle end to end, or invoke any step on its own.
+
+```mermaid
+flowchart LR
+  IV["/omb:interview"] --> PL["/omb:plan"] --> PV["/omb:plan-review"]
+  PV -->|"P0/P1 remain"| PL
+  PV -->|"clear"| RUN["/omb:run"]
+  RUN --> VF["/omb:verify"]
+  VF -->|"P0/P1 remain"| RUN
+  VF -->|"clear"| DOC["/omb:doc"]
+  DOC --> PRC["/omb:pr"] --> REL["/omb:release"]
+
+  IV -.-> A1[("`.omb/interviews/`")]
+  PL -.-> A2[("`.omb/plans/`")]
+  RUN -.-> A3[("`.omb/todo/`")]
+  REL -.-> A4["GitHub Release<br/>+ mirrored binaries"]
+```
 
 ```
 > /omb:interview      # 1. gather requirements
