@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2026-08-09
+
+### Fixed
+- replace omb-explain prime mode with Context Mode
+
+### Maintenance
+- Merge pull request #255 from braincrew-lab/fix/omb-explain-radiant-sunbeam
+
+
+
 ## [0.7.1] - 2026-08-08
 
 ### Fixed
