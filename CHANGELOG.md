@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2026-08-28
+
+### Fixed
+- complete successful discard
+- remove unsupported worktree hint
+- block when core verifier is lost
+- close remediation routing gaps
+- bind plan before worktree selection
+- preserve interview artifacts across teardown
+- guard worktree teardown against dirty state
+- harden omb doc workflow contracts
+- enforce worktree result contract
+- define terminal output contract
+- persist worktree execution state
+- guard worktree teardown after merge
+- align recovery and feedback contracts
+- bind pull request safety gates
+- gate completion on final checks
+- keep plans project-local
+- emit terminal workflow status
+- require fresh documentation evidence
+- allow required agent delegation
+- allow required agent delegation
+- align adaptive plan verification
+- align plan format with runner
+
+
+
 ## [0.8.0] - 2026-08-10
 
 ### Maintenance
