@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.5] - 2026-08-31
+
+### Added
+- add --codex delegation flag to fix/plan/plan-review/goal workflows
+
+### Documentation
+- document the --codex delegation flag for planning workflows
+
+### Maintenance
+- Merge pull request #267 from braincrew-lab/feat/codex-flag-workflows
+- Merge pull request #266 from braincrew-lab/feat/codex-flag-workflows
+- Merge remote-tracking branch 'origin/main' into feat/codex-flag-workflows
+- Merge pull request #265 from braincrew-lab/feat/omb-goal-e2e-hardening
+- apply ruff format to codex flag contract test
+
+
+
 ## [0.8.4] - 2026-08-31
 
 ### Added
