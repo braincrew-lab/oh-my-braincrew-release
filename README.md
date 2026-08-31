@@ -154,14 +154,42 @@ flowchart LR
 | 7 | `/omb:pr` | Lint gate → commit → push → GitHub PR |
 | 8 | `/omb:release` | Version bump, changelog, tag, GitHub Release |
 
+Prefer one call over eight? `/omb:goal` runs the whole cycle autonomously — see below.
+
+```
+> /omb:goal add a web search tool to the LangGraph agent
+```
+
 ## Commands
 
 ### Planning and execution
+
+#### `/omb:goal` — Autonomous end-to-end pipeline
+
+Chains interview → plan → plan-review → run → verify → doc → pr in one call. After the
+interview you answer a single go/no-go gate; from there the pipeline runs without further
+prompts until a ready-for-review PR is open.
+
+```
+> /omb:goal add a web search tool to the LangGraph agent
+> /omb:goal --codex add retry logic to the payment webhook
+```
+
+- Always creates its own git worktree; it never merges — the terminal condition is an open PR.
+- Decisions made in the autonomous stretch are recorded to a decision log
+  (`.omb/goal/{slug}-decisions.md`) and attached to the PR body as an
+  `## Autonomous Decisions` section.
+- `--codex` delegates the PLAN and PLAN_REVIEW authoring phases to the Codex CLI
+  (see [Codex integration](#codex-integration)).
 
 #### `/omb:interview` — Requirements interview
 
 Asks up to 15 questions covering tech stack, implementation choices, and design preferences,
 pre-searching your docs first so it does not ask what the repository already answers.
+
+```
+> /omb:interview add a web search tool to the LangGraph agent
+```
 
 #### `/omb:plan` — Implementation plan
 
@@ -173,6 +201,9 @@ twelve reviewers.
 ```
 > /omb:plan add OAuth login
 # Output: .omb/plans/2026-08-08-oauth-login.md
+
+> /omb:plan --worktree add OAuth login    # isolate the work in its own git worktree
+> /omb:plan --codex add OAuth login       # delegate plan authoring to Codex CLI
 ```
 
 #### `/omb:plan-review` — Plan review
@@ -181,35 +212,68 @@ Runs 3-12 domain reviewers in parallel, then synthesizes their findings into one
 list with P0-P3 priorities. A finding several reviewers raise independently outranks one only
 a single reviewer saw.
 
+```
+> /omb:plan-review
+> /omb:plan-review .omb/plans/2026-08-08-oauth-login.md   # only needed after /clear or a new session
+```
+
 #### `/omb:run` — Execute a plan
 
 Reads the plan's task list, delegates each task to the right domain agent, and enforces the
 RED-GREEN-IMPROVE cycle. Progress is tracked in `.omb/todo/`.
+
+```
+> /omb:run
+> /omb:run .omb/plans/2026-08-08-oauth-login.md   # only needed after /clear or a new session
+```
 
 #### `/omb:verify` — Post-implementation verification
 
 Runs the real checks (`tsc`, `ruff`, `pytest`, `eslint`), has domain agents review the diff,
 and returns one verdict. Claims are backed by command output, not by assertion.
 
+```
+> /omb:verify
+```
+
 #### `/omb:fix` — Bug-fix plan
 
 Git-history forensics, a reproduction procedure, and the smallest patch that fixes the cause
-rather than the symptom — plus whatever rule or wiki entry keeps it from recurring.
+rather than the symptom — plus whatever rule or wiki entry keeps it from recurring. The
+resulting plan goes through the same `/omb:plan-review` → `/omb:run` → `/omb:verify` chain.
+
+```
+> /omb:fix LoginForm returns 500 when the password field is empty
+> /omb:fix --worktree the SSE stream drops events after a reconnect
+```
 
 #### `/omb:refactoring` — Refactoring plan
 
 Goal refinement, then parallel analysis for latent bugs, modularization, design patterns, and
 source-of-truth drift, ending in a behavior-preserving TDD plan.
 
+```
+> /omb:refactoring split the payment service into domain modules
+```
+
 #### `/omb:resolve-issue` — Resolve a GitHub issue
 
 Takes an issue end to end: validity check → plan → implement → verify → PR with an auto-close
 link.
 
+```
+> /omb:resolve-issue 142
+```
+
 #### `/omb:issue` — Issue scanner
 
 Scans the codebase with parallel explorers, votes on what they found, and files GitHub issues
 for the survivors.
+
+```
+> /omb:issue all --dry-run    # scan every category, report only
+> /omb:issue all --bypass     # scan and file issues without confirmation prompts
+```
 
 ### Documentation and knowledge
 
@@ -218,19 +282,40 @@ for the survivors.
 Creates and updates documents under `docs/` following the project's category structure,
 naming conventions, and templates.
 
+```
+> /omb:doc
+```
+
 #### `/omb:wiki` — Project blueprint wiki
 
 Read, validate, stage, review, and transactionally publish `docs/wiki/` notes — the project's
 durable memory for lessons, constraints, and decisions.
+
+```
+> /omb:wiki init                                              # scaffold once per project
+> /omb:wiki add LangGraph checkpointer state serialization issue
+> /omb:wiki read auth                                         # 3-tier lookup, minimal tokens
+> /omb:wiki update                                            # sync notes affected by git diff
+> /omb:wiki lint
+```
 
 #### `/omb:explain` — Explanation contract
 
 Re-explains work for a reader who did not write the code: noun-phrase sections, plain spoken
 register, and evidence attached to each claim. `--page` renders the explanation to HTML.
 
+```
+> /omb:explain
+> /omb:explain --page
+```
+
 #### `/omb:mermaid` — Diagrams
 
 Generates Mermaid diagrams across 22 types, including LangGraph state-graph visualizations.
+
+```
+> /omb:mermaid draw the web search agent workflow as a state graph
+```
 
 ### Quality and prompts
 
@@ -238,18 +323,34 @@ Generates Mermaid diagrams across 22 types, including LangGraph state-graph visu
 
 Detects the stack from the changed files and runs the matching linters. Required before a PR.
 
+```
+> /omb:lint-check
+```
+
 #### `/omb:prompt-guide` — Prompt engineering reference
 
 Loads a 72-rule guide across 15 categories for writing system prompts, agent instructions,
 and `CLAUDE.md`.
 
+```
+> /omb:prompt-guide role definition
+```
+
 #### `/omb:prompt-review` — Prompt review
 
 Scores a prompt against a rubric, fixes the P0/P1 findings, and re-scores until it passes.
 
+```
+> /omb:prompt-review .claude/skills/omb-orch-api/SKILL.md
+```
+
 #### `/omb:brainstorming` — Idea exploration
 
 One question at a time, to sharpen intent and constraints before any design is committed.
+
+```
+> /omb:brainstorming how should the realtime notification system be built?
+```
 
 ### Project and repo management
 
@@ -282,10 +383,18 @@ Isolated git worktrees with persistent SQLite state.
 Removes finished worktrees, marks them DONE in the database, and deletes merged branches when
 there is merge evidence to justify it.
 
+```
+> /omb:clean
+```
+
 #### `/omb:pr` — Pull request
 
 Validates the branch name, runs the lint gate, commits, pushes, and opens a PR from a
 structured template.
+
+```
+> /omb:pr
+```
 
 #### `/omb:release` — Release
 
@@ -303,6 +412,10 @@ assets. Usable in any repository, not just this one.
 
 Schedule, list, and stop recurring Claude Code runs through the system crontab.
 
+```
+> /omb:cron --status
+```
+
 ### Codex integration
 
 Optional integration with the [OpenAI Codex CLI](https://github.com/openai/codex) for a
@@ -314,6 +427,38 @@ second opinion from a different model.
 | `/omb:codex-review` | Code review of the local git state |
 | `/omb:codex-adv-review` | Adversarial review: assumptions, failure modes, edge cases |
 | `/omb:codex-run <task>` | Delegates a task to Codex CLI |
+
+```
+> /omb:codex-review
+> /omb:codex-adv-review        # strongly recommended once before every PR
+> /omb:codex-run refactor the auth middleware from JWT to OAuth2
+```
+
+Enable Codex through the `omb init` interactive survey, or add `"OMB_USE_CODEX": "1"` to the
+`env` object in `.claude/settings.local.json`. `omb update` only refreshes an already-enabled
+Codex CLI — it is not an enablement path.
+
+#### `--codex` flag — delegate planning-workflow authoring
+
+Four planning workflows accept a per-invocation `--codex` flag. With the flag, only each
+workflow's **core authoring** is delegated to the Codex CLI; evaluation loops, consensus
+synthesis, and orchestration stay with Claude.
+
+| Command | What Codex authors |
+|---------|--------------------|
+| `/omb:plan --codex <goal>` | The plan draft and the P0/P1 improvement rewrite |
+| `/omb:fix --codex <bug>` | The bug-fix plan body — analysis agents and format gates stay with Claude |
+| `/omb:plan-review --codex <plan>` | Forces a Codex adversarial reviewer in and delegates P0/P1 fix authoring |
+| `/omb:goal --codex <goal>` | Propagates the flag to the PLAN and PLAN_REVIEW phases only |
+
+The flag composes with — never bypasses — the `OMB_USE_CODEX` switch and the preflight gate.
+If Codex is missing, disabled, or fails mid-run, the workflow announces
+`Codex unavailable ({reason}) — falling back to Claude` and continues on the Claude-only path.
+
+```
+> /omb:plan --codex add a web search tool to the LangGraph agent
+> /omb:goal --codex add retry logic to the payment webhook
+```
 
 ## Update / Uninstall
 

@@ -152,14 +152,41 @@ flowchart LR
 | 7 | `/omb:pr` | 린트 게이트 → 커밋 → 푸시 → GitHub PR |
 | 8 | `/omb:release` | 버전 범프, 체인지로그, 태그, GitHub Release |
 
+여덟 번 대신 한 번만 부르고 싶다면 `/omb:goal`이 전체 사이클을 자율 실행합니다 — 아래 참고.
+
+```
+> /omb:goal LangGraph agent에 웹 검색 도구 추가
+```
+
 ## 명령어
 
 ### 계획과 실행
+
+#### `/omb:goal` — 자율 end-to-end 파이프라인
+
+interview → plan → plan-review → run → verify → doc → pr을 한 번의 호출로 이어서 실행합니다.
+인터뷰 후 go/no-go 게이트에 한 번만 응답하면, 이후 ready-for-review PR이 열릴 때까지 추가
+질문 없이 진행됩니다.
+
+```
+> /omb:goal LangGraph agent에 웹 검색 도구 추가
+> /omb:goal --codex 결제 웹훅 재시도 로직 추가
+```
+
+- 항상 자체 git 워크트리를 만들고, merge는 하지 않습니다 — 종료 조건은 열린 PR입니다.
+- 자율 구간의 결정은 결정 로그(`.omb/goal/{slug}-decisions.md`)에 기록되고 PR 본문의
+  `## Autonomous Decisions` 섹션으로 첨부됩니다.
+- `--codex`를 붙이면 PLAN·PLAN_REVIEW 저작 단계만 Codex CLI에 위임합니다
+  (아래 "Codex 연동" 참고).
 
 #### `/omb:interview` — 요구사항 인터뷰
 
 기술 스택, 구현 선택지, 설계 취향을 최대 15개 질문으로 확인합니다. 먼저 프로젝트 문서를
 찾아보기 때문에, 저장소에 이미 답이 있는 것은 묻지 않습니다.
+
+```
+> /omb:interview LangGraph agent에 웹 검색 도구 추가
+```
 
 #### `/omb:plan` — 구현 계획
 
@@ -170,6 +197,9 @@ flowchart LR
 ```
 > /omb:plan OAuth 로그인 추가
 # 결과: .omb/plans/2026-08-08-oauth-login.md
+
+> /omb:plan --worktree OAuth 로그인 추가    # 별도 git 워크트리에서 격리 작업
+> /omb:plan --codex OAuth 로그인 추가       # 플랜 저작을 Codex CLI에 위임
 ```
 
 #### `/omb:plan-review` — 계획 리뷰
@@ -177,34 +207,67 @@ flowchart LR
 도메인 리뷰어 3~12명을 병렬로 돌린 뒤, 발견 사항을 P0-P3 우선순위가 붙은 하나의 합의 목록으로
 합칩니다. 여러 리뷰어가 독립적으로 같은 문제를 지적하면, 한 명만 본 지적보다 위로 올라갑니다.
 
+```
+> /omb:plan-review
+> /omb:plan-review .omb/plans/2026-08-08-oauth-login.md   # /clear 또는 새 세션에서만 경로 지정
+```
+
 #### `/omb:run` — 계획 실행
 
 계획의 작업 목록을 읽어 각 작업을 해당 도메인 에이전트에 위임하고, RED-GREEN-IMPROVE 사이클을
 강제합니다. 진행 상황은 `.omb/todo/`에 기록됩니다.
+
+```
+> /omb:run
+> /omb:run .omb/plans/2026-08-08-oauth-login.md   # /clear 또는 새 세션에서만 경로 지정
+```
 
 #### `/omb:verify` — 구현 검증
 
 `tsc`, `ruff`, `pytest`, `eslint`를 실제로 돌리고, 도메인 에이전트가 diff를 검토한 뒤 하나의
 판정을 냅니다. 주장은 명령 출력으로 뒷받침되며, 선언만으로는 통과하지 않습니다.
 
+```
+> /omb:verify
+```
+
 #### `/omb:fix` — 버그 수정 계획
 
 git 히스토리 추적, 재현 절차, 증상이 아니라 원인을 없애는 최소 패치. 여기에 재발을 막는 규칙
-또는 위키 항목까지 함께 계획합니다.
+또는 위키 항목까지 함께 계획합니다. 만들어진 계획은 그대로 `/omb:plan-review` → `/omb:run` →
+`/omb:verify` 체인으로 이어집니다.
+
+```
+> /omb:fix LoginForm에서 빈 비밀번호 입력 시 500 오류 발생
+> /omb:fix --worktree SSE 스트림이 재연결 후 이벤트를 유실함
+```
 
 #### `/omb:refactoring` — 리팩터링 계획
 
 목표를 먼저 다듬고, 잠재 버그·모듈화·디자인 패턴·SoT 드리프트를 병렬로 분석한 뒤, 동작을
 보존하는 TDD 계획으로 마무리합니다.
 
+```
+> /omb:refactoring 결제 서비스를 도메인 모듈로 분리
+```
+
 #### `/omb:resolve-issue` — GitHub 이슈 해결
 
 이슈를 끝까지 처리합니다. 유효성 판단 → 계획 → 구현 → 검증 → 자동 close 링크가 붙은 PR.
+
+```
+> /omb:resolve-issue 142
+```
 
 #### `/omb:issue` — 이슈 스캐너
 
 병렬 탐색 에이전트로 코드베이스를 훑고, 발견 사항을 투표로 거른 뒤 살아남은 것만 GitHub 이슈로
 등록합니다.
+
+```
+> /omb:issue all --dry-run    # 전체 카테고리 스캔, 보고만
+> /omb:issue all --bypass     # 확인 프롬프트 없이 스캔 후 이슈 등록
+```
 
 ### 문서와 지식
 
@@ -212,19 +275,40 @@ git 히스토리 추적, 재현 절차, 증상이 아니라 원인을 없애는 
 
 프로젝트의 카테고리 구조, 네이밍 규칙, 템플릿을 따라 `docs/` 문서를 만들고 갱신합니다.
 
+```
+> /omb:doc
+```
+
 #### `/omb:wiki` — 프로젝트 블루프린트 위키
 
 `docs/wiki/` 노트를 읽고, 검증하고, 스테이징하고, 리뷰하고, 트랜잭션으로 발행합니다. 교훈과
 제약, 결정을 담는 프로젝트의 장기 기억입니다.
+
+```
+> /omb:wiki init                                              # 프로젝트당 최초 1회 스캐폴딩
+> /omb:wiki add LangGraph checkpointer 사용시 state 직렬화 이슈
+> /omb:wiki read auth                                         # 3-tier 조회, 최소 토큰만 로드
+> /omb:wiki update                                            # git diff에 영향받는 노트 동기화
+> /omb:wiki lint
+```
 
 #### `/omb:explain` — 설명 컨트랙트
 
 코드를 직접 쓰지 않은 사람을 기준으로 다시 설명합니다. 명사구 섹션, 실제로 말하는 문체, 주장마다
 붙는 근거. `--page`를 주면 설명을 HTML로 렌더합니다.
 
+```
+> /omb:explain
+> /omb:explain --page
+```
+
 #### `/omb:mermaid` — 다이어그램
 
 22종의 Mermaid 다이어그램을 생성합니다. LangGraph 상태 그래프 시각화도 포함됩니다.
+
+```
+> /omb:mermaid 웹 검색 에이전트 워크플로우를 상태 그래프로 그려줘
+```
 
 ### 품질과 프롬프트
 
@@ -232,18 +316,34 @@ git 히스토리 추적, 재현 절차, 증상이 아니라 원인을 없애는 
 
 변경된 파일에서 스택을 감지해 맞는 린터를 실행합니다. PR 전 필수입니다.
 
+```
+> /omb:lint-check
+```
+
 #### `/omb:prompt-guide` — 프롬프트 엔지니어링 레퍼런스
 
 시스템 프롬프트, 에이전트 지시문, `CLAUDE.md` 작성을 위한 15개 카테고리 72개 규칙 가이드를
 로드합니다.
 
+```
+> /omb:prompt-guide 역할 정의
+```
+
 #### `/omb:prompt-review` — 프롬프트 리뷰
 
 루브릭으로 프롬프트를 채점하고, P0/P1 항목을 고친 뒤, 통과할 때까지 다시 채점합니다.
 
+```
+> /omb:prompt-review .claude/skills/omb-orch-api/SKILL.md
+```
+
 #### `/omb:brainstorming` — 아이디어 탐색
 
 한 번에 하나씩 질문해서, 설계를 확정하기 전에 의도와 제약을 뾰족하게 만듭니다.
+
+```
+> /omb:brainstorming 실시간 알림 시스템 구현 방식
+```
 
 ### 프로젝트와 저장소 관리
 
@@ -274,9 +374,17 @@ SQLite로 상태가 유지되는 격리된 git 워크트리를 다룹니다.
 
 끝난 워크트리를 제거하고 DB에 DONE으로 표시하며, 병합 증거가 확인된 브랜치만 삭제합니다.
 
+```
+> /omb:clean
+```
+
 #### `/omb:pr` — 풀 리퀘스트
 
 브랜치 이름을 검증하고, 린트 게이트를 돌리고, 커밋·푸시한 뒤 구조화된 템플릿으로 PR을 엽니다.
+
+```
+> /omb:pr
+```
 
 #### `/omb:release` — 릴리스
 
@@ -294,6 +402,10 @@ SQLite로 상태가 유지되는 격리된 git 워크트리를 다룹니다.
 
 시스템 crontab을 통해 반복 실행되는 Claude Code 작업을 등록·조회·중지합니다.
 
+```
+> /omb:cron --status
+```
+
 ### Codex 연동
 
 다른 모델의 의견을 받기 위한 [OpenAI Codex CLI](https://github.com/openai/codex) 선택 연동입니다.
@@ -304,6 +416,38 @@ SQLite로 상태가 유지되는 격리된 git 워크트리를 다룹니다.
 | `/omb:codex-review` | 로컬 git 상태 코드 리뷰 |
 | `/omb:codex-adv-review` | 가정·실패 모드·엣지 케이스를 파고드는 적대적 리뷰 |
 | `/omb:codex-run <task>` | Codex CLI에 작업 위임 |
+
+```
+> /omb:codex-review
+> /omb:codex-adv-review        # PR 전에 한 번은 강력 추천
+> /omb:codex-run 인증 미들웨어를 JWT에서 OAuth2로 리팩토링
+```
+
+Codex는 `omb init` 대화형 설문에서 활성화하거나, `.claude/settings.local.json`의 `env` 객체에
+`"OMB_USE_CODEX": "1"`을 추가해 켭니다. `omb update`는 이미 활성화된 Codex CLI를 갱신할 뿐,
+새로운 활성화 경로가 아닙니다.
+
+#### `--codex` 플래그 — 플래닝 워크플로 저작 위임
+
+플래닝 계열 워크플로 4종은 호출 단위 `--codex` 플래그를 지원합니다. 플래그가 붙으면 각
+워크플로의 **산출물 저작**만 Codex CLI에 위임하고, 평가 루프·합의 집계·오케스트레이션은
+그대로 Claude가 수행합니다.
+
+| 명령 | Codex가 저작하는 것 |
+|------|--------------------|
+| `/omb:plan --codex <goal>` | 플랜 초안과 P0/P1 개선 재작성 |
+| `/omb:fix --codex <bug>` | 버그 수정 플랜 본문 — 분석 에이전트와 포맷 게이트는 Claude 유지 |
+| `/omb:plan-review --codex <plan>` | Codex 적대 리뷰어 강제 포함 + P0/P1 수정 저작 |
+| `/omb:goal --codex <goal>` | PLAN·PLAN_REVIEW 두 phase에만 플래그 전파 |
+
+`--codex`는 `OMB_USE_CODEX` 스위치와 preflight 게이트를 우회하지 않고 합성됩니다. Codex가
+미설치·비활성이거나 실행이 실패하면 `Codex unavailable ({reason}) — falling back to Claude`
+한 줄 공지 후 Claude 단독 경로로 계속합니다 (중단 없음).
+
+```
+> /omb:plan --codex LangGraph agent에 웹 검색 도구 추가
+> /omb:goal --codex 결제 웹훅 재시도 로직 추가
+```
 
 ## 업데이트 / 제거
 
