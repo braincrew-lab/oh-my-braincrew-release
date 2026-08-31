@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.4] - 2026-08-31
+
+### Added
+- add omb:goal autonomous end-to-end pipeline skill
+
+### Fixed
+- resolve verification EV-P1 findings
+
+### Documentation
+- align pytest commands with timeout SSOT
+
+### Maintenance
+- Merge pull request #264 from braincrew-lab/feat/omb-goal-skill
+- apply ruff format to goal pipeline contract test
+- Merge pull request #263 from braincrew-lab/feat/diff-targeted-tests
+- skip dev-wrapper assertions under release-profile omb-cli.sh
+- align contracts and apply codex review fixes
+- apply ruff format to 5 files failing CI format check
+
+
+
 ## [0.8.3] - 2026-08-30
 
 ### Fixed
