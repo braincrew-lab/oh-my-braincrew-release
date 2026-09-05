@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.9] - 2026-09-05
+
+### Added
+- seed gh search allow entry for omb-architect research mode
+- sweep Copilot reviews and require a reason on declined comments
+- add pr-watch post-PR CI/review follow-through loop
+
+### Fixed
+- merge main into refactoring pipeline and harden architect skill contracts
+- harden pr-watch lease, target, and revert contracts
+
+### Maintenance
+- Merge pull request #269 from braincrew-lab/feat/omb-refactoring-e2e-pipeline
+- Merge pull request #272 from braincrew-lab/feat/pr-ci-monitor-review-followup-2
+- Merge pull request #271 from braincrew-lab/feat/pr-ci-monitor-review-followup
+- stage pr-watch defaults fragment in setup-settings fixture
+
+
+
 ## [0.8.8] - 2026-09-04
 
 ### Documentation
