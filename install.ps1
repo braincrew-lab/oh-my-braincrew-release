@@ -1,8 +1,8 @@
 #Requires -Version 5.1
 # install.ps1 — Download and install the latest oh-my-braincrew binary from GitHub Releases
-# Usage: iwr -useb https://raw.githubusercontent.com/braincrew-lab/oh-my-braincrew-release/main/scripts/install.ps1 | iex
+# Usage: iwr -useb https://raw.githubusercontent.com/braincrew-lab/oh-my-braincrew-release/main/install.ps1 | iex
 [CmdletBinding()]
-param()
+param([string]$ProjectDirectory)
 
 $ErrorActionPreference = "Stop"
 
@@ -115,8 +115,8 @@ function Invoke-Install {
         $tag = Get-LatestTag
         Write-Info "Latest release: $tag"
 
-        # Asset naming follows the pattern: oh-my-braincrew_windows_amd64.exe
-        $assetName  = "${BinaryName}_windows_${arch}.exe"
+        # Use the same versioned asset name as release-binary.yml.
+        $assetName  = "${BinaryName}-${tag}-windows-${arch}.exe"
         $baseUrl    = "https://github.com/$Repo/releases/download/$tag"
         $binaryUrl  = "$baseUrl/$assetName"
         $checksumUrl = "$baseUrl/checksums-sha256.txt"
@@ -144,7 +144,19 @@ function Invoke-Install {
         $installPath = [System.IO.Path]::Combine($InstallDir, "$BinaryName.exe")
         Copy-Item -Path $binaryPath -Destination $installPath -Force
 
+        # A cmd shim works without administrator privileges or symlink support.
+        $aliasPath = [System.IO.Path]::Combine($InstallDir, "omb.cmd")
+        Set-Content -LiteralPath $aliasPath -Encoding ASCII -Value '@echo off', '@"%~dp0oh-my-braincrew.exe" %*'
+        $env:PATH = "$InstallDir;$env:PATH"
+
         Write-Info "Installation complete: $installPath"
+        if ($ProjectDirectory) {
+            & $installPath install $ProjectDirectory
+            if ($LASTEXITCODE -ne 0) {
+                throw "Project harness installation failed (exit $LASTEXITCODE)."
+            }
+        }
+        Write-Info "Run 'omb install' in your project to install Claude and Codex skills."
 
         $pathUpdated = Add-ToUserPath -Directory $InstallDir
         if ($pathUpdated) {

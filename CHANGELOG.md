@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-09-08
+
+### Fixed
+- isolate portable commands and repair linux builds
+- satisfy release test formatting and type checks
+- deduplicate codex skills across release installs
+- refresh codex compatibility files on install
+
+### Documentation
+- document rule-loading contract and re-anchor wiki notes
+
+### Maintenance
+- Merge pull request #277 from braincrew-lab/codex/fix-v1-release-build
+- fix Codex installation and release migration
+- Merge pull request #275 from braincrew-lab/feat/rules-lazy-load-hook-optimization
+- freeze global-load allowlist and harden omb-goal pipeline hook tests
+
+
+
 ## [0.9.0] - 2026-09-06
 
 ### Added

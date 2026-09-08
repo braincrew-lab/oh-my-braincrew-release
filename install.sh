@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # install.sh — Download and install the latest oh-my-braincrew binary from GitHub Releases
+# Optional project setup: bash install.sh /path/to/project
 # Usage: curl -fsSL https://raw.githubusercontent.com/braincrew-lab/oh-my-braincrew-release/main/install.sh | bash
 set -euo pipefail
 
@@ -110,6 +111,8 @@ verify_checksum() {
 
 # --- Main ---
 main() {
+  [[ "$#" -le 1 ]] || error "Usage: install.sh [project-directory]"
+  local project_dir="${1:-}"
   info "Detecting platform..."
   local platform
   platform=$(detect_platform)
@@ -173,10 +176,14 @@ main() {
   ln -sf "${BINARY_NAME}" "${INSTALL_DIR}/omb"
   info "Symlink: omb -> ${BINARY_NAME}"
 
+  if [[ -n "${project_dir}" ]]; then
+    "${INSTALL_DIR}/${BINARY_NAME}" install "${project_dir}"
+  fi
+
   echo "To set up omb harness files in your project:"
   echo ""
   echo "  cd /path/to/your/project"
-  echo "  omb init"
+  echo "  omb install"
   echo ""
 }
 
