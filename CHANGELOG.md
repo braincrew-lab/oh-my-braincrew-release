@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-09-10
+
+### Added
+- monitor goals and review pull requests
+
+### Fixed
+- stop monitoring closed pull requests
+
+### Maintenance
+- Merge pull request #279 from braincrew-lab/feat/hermes-goal-monitor
+- Merge pull request #278 from braincrew-lab/fix/hermes-runtime-compat
+- format runtime compatibility tests
+
+
+
 ## [1.0.0] - 2026-09-08
 
 ### Fixed
