@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.2] - 2026-09-10
+
+### Added
+- distribute profile resources and support CI-owned releases
+
+### Fixed
+- exclude transient caches from resource snapshots
+
+### Improved
+- serialize binding journals before writing
+
+### Maintenance
+- Merge pull request #282 from braincrew-lab/codex/fix-hermes-version-checks
+- derive wrapper expectations from package version
+- Merge pull request #281 from braincrew-lab/feat/hermes-profile-distribution
+- Merge pull request #280 from braincrew-lab/feat/deep-project-setup
+
+
+
 ## [1.0.1] - 2026-09-10
 
 ### Added
