@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-09-21
+
+### Fixed
+- harden portable storage and refresh wiki evidence
+
+### Documentation
+- document operational memory and refresh onboarding
+
+### Maintenance
+- Merge pull request #286 from braincrew-lab/docs/readme-refresh
+- Merge pull request #285 from braincrew-lab/feat/operational-memory
+
+
+
 ## [1.0.4] - 2026-09-20
 
 ### Added
