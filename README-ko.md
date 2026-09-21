@@ -8,7 +8,7 @@
 
 **[English](README.md)** | **[한국어](README-ko.md)**
 
-[Claude Code](https://docs.anthropic.com/en/docs/claude-code)를 위한 멀티 에이전트 오케스트레이션 하네스.
+Claude Code, Codex, Hermes에서 사용하는 멀티 에이전트 개발 하네스입니다. 연결 방식은 호스트별로 다릅니다.
 
 > 위임하고, 조율하고, 검증하라 — 직접 구현하지 마라.
 
@@ -71,7 +71,44 @@ irm https://raw.githubusercontent.com/braincrew-lab/oh-my-braincrew-release/main
 | `omb version` | 설치된 버전 출력 |
 | `omb env <sub>` | 하네스 환경 설정 조회 (스킬 preflight가 사용) |
 | `omb hook-stats` | 훅 실행 시간·실패 통계 |
-| `omb wiki-runtime <sub>` | 위키 검색 / frontmatter / 요약 런타임 조회 |
+| `omb openwiki-read <sub>` | OpenWiki 검색·요약·근거 검증 |
+| `omb memory <sub>` | 운영 메모리 초기화·조회·검색·갱신·검증 |
+
+## v1.1.0 — 공유 운영 메모리
+
+[v1.1.0 릴리스 노트·다운로드](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/tag/v1.1.0)
+
+운영 메모리는 **v1.1.0부터 공개 릴리스에 포함**됩니다.
+기존 설치를 업데이트한 뒤 프로젝트에서 메모리를 활성화하세요.
+
+```bash
+omb update /absolute/project
+omb memory init --root /absolute/project
+omb memory status --root /absolute/project --host claude
+```
+
+`/absolute/project`는 이미 존재하는 실제 프로젝트의 절대 경로로 바꿉니다.
+신규 사용자는 먼저 `omb install`을 실행하세요. 사용 중인 호스트에 따라 `codex` 또는
+`hermes`를 지정할 수 있습니다. 기존 메모리를 다시 초기화할 필요는 없습니다.
+
+- **핵심과 선택 조회:** `.omb-memory/MEMORY.md`에는 공통 우선순위와 교정을,
+  계층형 `knowledge/` topic에는 작업별 상세 절차를 기록합니다. 공용 workspace와
+  저장소를 합쳐 핵심은 60줄·4,000자, 시작 인덱스는 20줄·1,200자까지입니다.
+  관련 상세 문서는 필요할 때 단계적으로 읽습니다.
+- **직접 피드백:** “기억해줘”, “명심해줘” 같은 요청은 메모리 스킬이 같은 차례에서
+  기존 기억 조회·병합·저장·재읽기로 처리합니다. 의미 판단은 에이전트가,
+  형식·한도·revision 검증은 CLI가 담당합니다.
+- **팀 운영:** `.omb-memory/`와 활성화 시 수정된 `AGENTS.md`를 커밋해 컨벤션,
+  저장소 지도, 연계 작업 조건과 SoT 문서 갱신 경로를 공유합니다.
+  동기화는 Git으로 수행하며 OMB가 자동 commit/push를 하지는 않습니다.
+- **갱신 검증:** revision 검사, 잠금과 journal 복구로 동시 수정을 보호합니다.
+  수동 편집·Git 병합 후 `omb memory check --root /absolute/project`를 실행하세요.
+  `.omb/memory-runtime/`의 실행 상태는 로컬에만 둡니다.
+
+Claude는 세션 생명주기 훅, Codex는 생성된 훅 설정과 workflow 안내,
+Hermes는 workflow의 명시적 CLI 조회 안내를 사용합니다. `status --host`는
+설정 상태를 보고하며 실제 호스트 실행을 인증하지 않습니다. 운영 메모리는
+구현 근거를 관리하는 `openwiki/`와 구분되며 별도 벡터 DB가 필요하지 않습니다.
 
 ## 초기 설정
 

@@ -8,7 +8,7 @@
 
 **[English](README.md)** | **[한국어](README-ko.md)**
 
-Multi-agent orchestration harness for [Claude Code](https://docs.anthropic.com/en/docs/claude-code).
+Multi-agent development harness for Claude Code, Codex, and Hermes, with host-specific integrations.
 
 > Delegate, orchestrate, verify — never implement directly.
 
@@ -73,7 +73,44 @@ installs), a matching `.sha256` sidecar, and `checksums-sha256.txt`.
 | `omb version` | Print the installed version |
 | `omb env <sub>` | Read harness environment settings (used by skill preflights) |
 | `omb hook-stats` | Hook execution timing and failure statistics |
-| `omb wiki-runtime <sub>` | Wiki search / frontmatter / summary runtime queries |
+| `omb openwiki-read <sub>` | OpenWiki search, summary, and evidence validation |
+| `omb memory <sub>` | Initialize, read, search, update, and validate operational memory |
+
+## v1.1.0 — Shared operational memory
+
+[v1.1.0 release notes and downloads](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/tag/v1.1.0)
+
+Operational memory is included in the public release starting with **v1.1.0**.
+Update an existing installation, then activate memory in your project:
+
+```bash
+omb update /absolute/project
+omb memory init --root /absolute/project
+omb memory status --root /absolute/project --host claude
+```
+
+Replace `/absolute/project` with an existing project's absolute path. For a new
+installation, use `omb install` first. Use `codex` or `hermes` for the host when
+appropriate. Existing memory does not need to be reinitialized.
+
+- **Core and progressive recall:** `.omb-memory/MEMORY.md` holds shared priorities
+  and corrections; hierarchical `knowledge/` topics hold task-specific procedures.
+  The workspace and repository together allow 60 lines / 4,000 characters of core
+  memory and 20 lines / 1,200 characters of startup index. Read relevant topics as needed.
+- **Direct feedback:** requests such as “remember this” or “기억해줘” route to the
+  memory skill, which reads, merges, saves, and rereads existing guidance in the same turn.
+  The agent interprets intent; the CLI validates format, limits, and revisions.
+- **Team operations:** commit `.omb-memory/` and the activation change in `AGENTS.md`
+  to share conventions, repository maps, cross-repository coordination, and SoT
+  documentation update routes. Git handles synchronization; OMB does not auto-commit or push.
+- **Verified updates:** revision checks, locking, and a recovery journal protect
+  edits. Run `omb memory check --root /absolute/project` after manual edits or Git merges.
+  Runtime state in `.omb/memory-runtime/` stays local.
+
+Claude uses session lifecycle hooks; Codex receives hook configuration and workflow
+instructions; Hermes uses explicit CLI retrieval through workflow instructions.
+`status --host` reports configuration, not live host verification. Memory is separate
+from the source-backed `openwiki/` knowledge store and needs no vector database.
 
 ## Setup
 
