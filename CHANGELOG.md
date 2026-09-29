@@ -5,6 +5,73 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-09-29
+
+### Added
+- delegate tasks in auto-closing tabs with edit permission
+- add Herdr scheduling and retire Hermes
+
+### Fixed
+- keep isolation helper failures structured on timeouts and OS errors
+- shell-quote the cwd-lock force-release command
+- clarify blocked_by_child lock state and strip owned ask rules on uninstall
+- serialize cwd-lock mutations and sweep markers before group check
+- isolation/cwd-lock helpers, delegate guard, codex startup-dialog gate
+- self-source guard for omb update/init
+- evidence protocol, run marker sweep, identity-bound kill
+- scope pre-launch worktree removal to the blocked gate path
+- block escaping relative symlinks and compare file modes
+- gate isolated verdict transfer and tracked absolute symlinks
+- require committed isolated deliverables and drop absolute symlinks
+- reject stacked schedule timezone prefixes
+- recover owned runs from fresh process evidence
+- roll back activation on native timeouts
+- isolate full delegation from a dirty checkout
+- trust suffix-less GraphQL bot logins
+- narrow optional hook output in herdr guard test
+- close ultra-review P1 gaps in delegation push and guard policy
+- complete interrupted activation cleanup
+- serialize long journal publications
+- retry transient journal lock acquisition
+- read removed jobs without native lookup
+- surface service installation warnings
+- roll back unpublished initial prompts
+- enable prestart fallback and clean failed staging
+- finish removal retries and retire old prompts
+- bound draining after launcher exit
+- handle exit races and management edge cases
+- preserve unresolved owned outcomes
+- finalize unstarted wrapper removal
+- finalize removal and make log maintenance safe
+- preserve occurrence deadlines and retained records
+- validate updates and reuse registered tools
+- preserve worktree setup portability and ignore ownership
+- address scheduler review feedback
+- copy OMB skills into managed worktrees
+- recover interrupted runs and refresh wiki evidence
+- prefer TeamClaude and correct review scope
+
+### Documentation
+- update documentation and OpenWiki for herdr hardening
+- refresh Herdr isolation evidence for transfer and symlink gates
+- re-pin Herdr evidence after merging main
+- refresh Herdr delegation evidence for dirty-checkout isolation
+
+### Maintenance
+- Merge pull request #301 from braincrew-lab/fix/herdr-hardening-296-300
+- Merge pull request #298 from braincrew-lab/fix/herdr-delegation-followups
+- Merge remote-tracking branch 'origin/main' into fix/herdr-delegation-followups
+- Merge pull request #291 from braincrew-lab/codex/omb-herdr-cronjob
+- Merge remote-tracking branch 'origin/main' into fix/herdr-delegation-followups
+- Merge pull request #297 from braincrew-lab/fix/herdr-delegate-p1
+- merge main into codex/omb-herdr-cronjob
+- Merge pull request #294 from braincrew-lab/feat/herdr-delegate-tab
+- sync main worktree support
+- Merge pull request #292 from braincrew-lab/codex/worktree-skills
+- Merge pull request #290 from braincrew-lab/feat/herdr-delegation
+
+
+
 ## [1.1.6] - 2026-09-27
 
 ### Added
