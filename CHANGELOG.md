@@ -5,6 +5,79 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-09-30
+
+### Fixed
+- render Kubernetes manifests outside the checkout
+- rebase grandfathered skill ceilings on merged main sizes
+- harden evidence paths, infra RETRY branch, verifier checks
+- preflight ui-verify diffs, Starlette handler, qafix tier 2
+- reject deletion of the wiki index in the freshness gate
+- include the omb dispatcher in the skill size gate
+- correct ultra-review scope-guard claim
+- close render, browser-smoke and size-ceiling gaps
+- preserve acquired root for delegation cleanup
+- require whole-file spec citations and AST-resolved acceptance nodes
+- harden cron logs, lock and trace reads and align prompts
+- require top-level acceptance tests and align summary body parsing
+- check page versions in wiki freshness gate and accept CRLF specs
+- annotate spec adapter test overrides for pyright
+- trust only the cwd worktree root in codex-launch-args
+- preserve delimiter text in spec frontmatter
+- trust store parent only for linked worktrees
+- accept the cron result marker only on the final line
+- verify launchd bootout and restore disabled override on rollback
+- validate reused LaunchAgent and report lastRun for removed jobs
+- validate launchd Program key in LaunchAgent check
+- fall back to resolved localtime path after symlink walk
+
+### Improved
+- make spec compliance prompt-guided and split wiki freshness
+
+### Documentation
+- reconcile development claims after main merge
+- point quickstart at the standalone freshness command
+- reconcile merged overview and development claims
+- republish spec-optional workflow and standalone freshness gate
+- record cwd-lock records_root reuse and relocate claims
+- relocate moved freshness test locator
+- republish spec lint citation and acceptance rules
+- correct launchd and guard claims after ultra-review
+- republish knowledge-context for freshness page-version check
+- publish spec-driven knowledge workflow to openwiki
+- describe worktree-root-only Codex trust (D-025)
+- re-point D-025 evidence after trust-root fix
+- explain remaining rejected alternatives
+- refresh launchd repair claims after review fixes
+- record per-launch Codex trust overrides (D-025)
+- refresh herdr delegation and cron pages
+- align delegation and cronjob docs with fixes
+
+### Maintenance
+- Merge pull request #308 from braincrew-lab/feat/harness-prompt-upgrade
+- Merge remote-tracking branch 'origin/main' into feat/harness-prompt-upgrade
+- Merge pull request #305 from braincrew-lab/feat/openwiki-spec-driven-development
+- Merge pull request #309 from braincrew-lab/fix/ultra-review-scope-guard-note
+- merge origin/main into feat/openwiki-spec-driven-development
+- Merge pull request #303 from braincrew-lab/fix/herdr-codex-startup-trust-dialog
+- record core-critique write-capability memory
+- merge origin/main into feat/openwiki-spec-driven-development
+- merge main into herdr codex trust branch
+- Merge pull request #302 from braincrew-lab/fix/herdr-cron-defects-and-prompts
+- record core-critique memory from PR 302 review
+- raise omb-pr inline CI fix loop cap from 3 to 5
+- checkpoint before Herdr Verify
+- raise improvement iteration caps from 3 to 5
+- checkpoint before Herdr Verify
+- checkpoint before Herdr Verify
+- checkpoint before Herdr Verify
+- checkpoint before Herdr Verify
+- narrow json_output before subscript in trace symlink test
+- checkpoint before Herdr Verify
+- checkpoint before Herdr Verify
+
+
+
 ## [1.2.0] - 2026-09-29
 
 ### Added
