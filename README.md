@@ -1,521 +1,310 @@
-# oh-my-braincrew (omb)
+<div align="center">
 
-[![Release](https://img.shields.io/github/v/release/braincrew-lab/oh-my-braincrew-release?style=flat-square)](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest)
-[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue?style=flat-square)](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest)
-[![Python](https://img.shields.io/badge/python-%3E%3D3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-harness-cc785c?style=flat-square&logo=anthropic&logoColor=white)](https://docs.anthropic.com/en/docs/claude-code)
+<img src="assets/hero.svg" alt="oh-my-braincrew: your coding agent, organized into an engineering team" width="100%">
+
+<br>
+
+**Turn Claude Code or Codex into an engineering team that plans, reviews, builds, verifies, and opens the PR.**
+
+[![Release](https://img.shields.io/github/v/release/braincrew-lab/oh-my-braincrew-release?style=flat-square&color=10b981)](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/braincrew-lab/oh-my-braincrew-release/total?style=flat-square&color=3b82f6)](https://github.com/braincrew-lab/oh-my-braincrew-release/releases)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-64748b?style=flat-square)](#install)
+[![Hosts](https://img.shields.io/badge/hosts-Claude%20Code%20%7C%20Codex-6366f1?style=flat-square)](#quick-start)
 [![License](https://img.shields.io/badge/license-Braincrew%20Internal%20Use%20Only-red?style=flat-square)](#license)
 
-**[English](README.md)** | **[한국어](README-ko.md)**
+[Quick start](#quick-start) · [How it works](#how-it-works) · [Workflow](#the-workflow) · [Commands](#commands) · [Memory](#memory-that-survives-the-session) · [Changelog](CHANGELOG.md) · [한국어](README-ko.md)
 
-Multi-agent development harness for Claude Code, Codex, and Hermes, with host-specific integrations.
+</div>
 
-> Delegate, orchestrate, verify — never implement directly.
+---
 
-This repository is the **public distribution channel**: prebuilt binaries, the harness
-tarball, and the install scripts. Source lives in the private `braincrew-lab/oh-my-braincrew`
-repository.
+A single coding agent working in a single context will happily write code, skip the tests, and tell you it's done. **oh-my-braincrew (`omb`)** installs a harness around that agent: 59 specialist agents, 77 skills, 135 convention rules, and lifecycle hooks. Together they make the agent work like a team with a process.
 
-## What is oh-my-braincrew?
+You describe a goal. The harness interviews you, writes a plan anchored to real files, has domain reviewers score it, implements it test-first in an isolated worktree, and runs the real type checker, linter, and tests. Then it opens a pull request. It does not call the work done on the agent's word alone.
 
-Claude Code on its own is one agent doing everything in one context. `omb` turns it into a
-team with a process. You describe what you want; the harness decides which specialists to
-involve, makes them work in parallel, has them review each other, and refuses to call the
-work done until the type checker, linter, and tests actually pass.
+```text
+> /omb:goal add retry logic to the payment webhook
+```
 
-What it installs into a project:
+## Why omb
 
-- **59 specialized agents** — design, implement, verify, explore, and review agents across
-  API, DB, UI, AI/ML, Electron, Infra, Security, Harness, Docs, and Wiki domains
-- **67 skills** — the `/omb:*` workflows below, plus internal rubrics and reference guides
-  loaded on demand
-- **117 rule files** — conventions loaded progressively, so an agent editing a FastAPI route
-  gets FastAPI rules and nothing else
-- **Lifecycle hooks** — a Python hook package that runs on session start, before and after
-  tool use, and when a sub-agent finishes. It gates secrets, out-of-scope writes, missing
-  pytest timeouts, raw SQL, and the sub-agent output contract.
-- **Worktree isolation** — parallel feature branches in separate git worktrees with SQLite
-  state tracking, so two workstreams never fight over the same tree
+| Agent on its own | Agent with omb |
+|---|---|
+| One context does design, code, and review | Separate design, implement, and verify agents per domain: API, DB, UI, AI, Electron, Infra, Security |
+| Plans are prose | Plans cite file paths and line ranges, then go through an evaluate → improve loop |
+| "Looks good to me" | 3–12 reviewers score the plan in parallel and merge their findings into one P0–P3 list |
+| "Tests should pass" | `/omb:verify` runs `pytest`, `ruff`, `tsc`, `eslint` and reports what the commands printed |
+| Edits land in your working tree | Each goal runs in its own git worktree with SQLite state tracking |
+| Every session starts from zero | Team conventions live in `.omb-memory/` and code facts in `openwiki/`, both in Git |
+| Every rule loaded at once | Rules load by file path, so a FastAPI edit gets FastAPI rules and nothing else |
 
-## Install
+## Quick start
 
-### macOS / Linux
+**1. Install the CLI**
 
 ```bash
+# macOS (Apple Silicon) / Linux (x86_64)
 curl -fsSL https://raw.githubusercontent.com/braincrew-lab/oh-my-braincrew-release/main/install.sh | bash
 ```
 
-### Windows (PowerShell)
-
 ```powershell
+# Windows (PowerShell)
 irm https://raw.githubusercontent.com/braincrew-lab/oh-my-braincrew-release/main/install.ps1 | iex
 ```
 
-### Manual Download
+Both scripts download the latest release, check its SHA-256 against `checksums-sha256.txt`, and add an `omb` shortcut. The binary goes to `~/.local/bin` on macOS/Linux and `%LOCALAPPDATA%\oh-my-braincrew` on Windows. No Python, `uv`, or source checkout is needed.
 
-| Platform | Architecture | Binary |
-|----------|-------------|--------|
-| macOS | Apple Silicon (arm64) | [`oh-my-braincrew-vX.Y.Z-darwin-arm64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
-| Linux | x86_64 | [`oh-my-braincrew-vX.Y.Z-linux-amd64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
-| Windows | x86_64 | [`oh-my-braincrew-vX.Y.Z-windows-amd64.exe`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
-
-Every release also ships `harness-vX.Y.Z.tar.gz` (the `.claude/` harness that `omb init`
-installs), a matching `.sha256` sidecar, and `checksums-sha256.txt`.
-
-### CLI Commands
-
-| Command | Description |
-|---------|-------------|
-| `omb init [path]` | Install harness files (`.claude/`, `.omb/`) from the latest release |
-| `omb update [path]` | Update the binary and refresh harness files |
-| `omb uninstall` | Remove the installed binary and harness files |
-| `omb update-gitignore` | Re-apply the harness `.gitignore` block |
-| `omb version` | Print the installed version |
-| `omb env <sub>` | Read harness environment settings (used by skill preflights) |
-| `omb hook-stats` | Hook execution timing and failure statistics |
-| `omb openwiki-read <sub>` | OpenWiki search, summary, and evidence validation |
-| `omb memory <sub>` | Initialize, read, search, update, and validate operational memory |
-
-## v1.1.0 — Shared operational memory
-
-[v1.1.0 release notes and downloads](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/tag/v1.1.0)
-
-Operational memory is included in the public release starting with **v1.1.0**.
-Update an existing installation, then activate memory in your project:
-
-```bash
-omb update /absolute/project
-omb memory init --root /absolute/project
-omb memory status --root /absolute/project --host claude
-```
-
-Replace `/absolute/project` with an existing project's absolute path. For a new
-installation, use `omb install` first. Use `codex` or `hermes` for the host when
-appropriate. Existing memory does not need to be reinitialized.
-
-- **Core and progressive recall:** `.omb-memory/MEMORY.md` holds shared priorities
-  and corrections; hierarchical `knowledge/` topics hold task-specific procedures.
-  The workspace and repository together allow 60 lines / 4,000 characters of core
-  memory and 20 lines / 1,200 characters of startup index. Read relevant topics as needed.
-- **Direct feedback:** requests such as “remember this” or “기억해줘” route to the
-  memory skill, which reads, merges, saves, and rereads existing guidance in the same turn.
-  The agent interprets intent; the CLI validates format, limits, and revisions.
-- **Team operations:** commit `.omb-memory/` and the activation change in `AGENTS.md`
-  to share conventions, repository maps, cross-repository coordination, and SoT
-  documentation update routes. Git handles synchronization; OMB does not auto-commit or push.
-- **Verified updates:** revision checks, locking, and a recovery journal protect
-  edits. Run `omb memory check --root /absolute/project` after manual edits or Git merges.
-  Runtime state in `.omb/memory-runtime/` stays local.
-
-Claude uses session lifecycle hooks; Codex receives hook configuration and workflow
-instructions; Hermes uses explicit CLI retrieval through workflow instructions.
-`status --host` reports configuration, not live host verification. Memory is separate
-from the source-backed `openwiki/` knowledge store and needs no vector database.
-
-## Setup
+**2. Attach it to a project**
 
 ```bash
 cd /path/to/your/project
-omb init
+omb version
+omb install        # alias of `omb init`
 ```
 
-Then, inside Claude Code:
+`omb install` writes the `.claude/` harness plus the Codex compatibility files. It creates `AGENTS.md` and `CLAUDE.md` only if they are missing; your own instructions, agents, skills, and settings are left alone.
 
-```
-> /omb:setup
-```
+**3. Start working** inside your agent:
 
-`omb init` installs the harness and creates the `.omb/` working directories. It updates only
-harness-owned paths — `.claude/skills/omb-*`, `.claude/agents/omb/`, `.claude/hooks/omb/`,
-`.claude/commands/omb/`, and `.claude/rules/**` — and never touches your own agents, skills,
-commands, `CLAUDE.md`, `.claude/settings.json`, or `.claude/rules/custom/`. Installed harness
-files are added to `.gitignore` automatically.
+| Host | Tune the project instructions | Run a goal |
+|---|---|---|
+| Claude Code | `/omb:deep-setup` | `/omb:goal add retry logic to the payment webhook` |
+| Codex | `$omb-deep-setup` | `$omb-goal add retry logic to the payment webhook` |
 
-`/omb:setup` then scans the codebase, generates a `CLAUDE.md` tailored to it, and configures
-`settings.json` hooks, permissions, and environment variables.
+`deep-setup` reads your real code, manifests, and CI, then writes root and folder-level `AGENTS.md` guidance. If new skills do not show up, restart the host session.
 
-## Recommended Workflow
+## How it works
 
-Run the cycle end to end, or invoke any step on its own.
+<p align="center">
+  <img src="assets/architecture.svg" alt="You call a workflow from Claude Code or Codex. The harness routes it through skills, specialist agents, path-scoped rules and lifecycle hooks, and produces an isolated worktree, a reviewed plan, a verified diff and a pull request." width="100%">
+</p>
+
+| Layer | What it is | Where it lives |
+|---|---|---|
+| **Skills** | The workflows you call (`/omb:plan`, `/omb:verify`, …) plus rubrics and reference guides loaded on demand | `.claude/skills/omb-*` |
+| **Agents** | Design, implement, verify, and explore specialists per domain, plus critics and plan evaluators | `.claude/agents/omb/` |
+| **Rules** | Conventions for FastAPI, React, LangGraph, Postgres/Redis, Docker/K8s/Terraform, 17 languages, testing, and git | `.claude/rules/` |
+| **Hooks** | A Python hook handler on session start, before and after tool use, and when a sub-agent stops. It blocks out-of-scope writes, raw SQL, pytest runs without a timeout, and sub-agent replies that break the output contract | `.claude/hooks/omb/` |
+| **State** | Plans, todo lists, interviews, and worktree records | `.omb/` |
+
+Covered stacks: Python/FastAPI, React/TypeScript/Next.js, LangGraph/LangChain/Deep Agents, Postgres/Redis, Electron, and Docker/GitHub Actions/Kubernetes/Terraform.
+
+## The workflow
+
+Run the whole cycle with one call, or invoke any step on its own.
 
 ```mermaid
-%%{init: {"theme":"base","themeVariables":{"fontFamily":"ui-sans-serif, -apple-system, Segoe UI, sans-serif","fontSize":"14px","lineColor":"#5a6577","primaryTextColor":"#161d29","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  IV["/omb:interview"] --> PL["/omb:plan"] --> PV["/omb:plan-review"]
+  IV["interview"] --> PL["plan"] --> PV{"plan-review"}
   PV -->|"P0/P1 remain"| PL
-  PV -->|"clear"| RUN["/omb:run"]
-  RUN --> VF["/omb:verify"]
+  PV -->|"clear"| RUN["run<br/>TDD agents"]
+  RUN --> VF{"verify"}
   VF -->|"P0/P1 remain"| RUN
-  VF -->|"clear"| DOC["/omb:doc"]
-  DOC --> PRC["/omb:pr"] --> REL["/omb:release"]
+  VF -->|"clear"| DOC["doc"] --> PR["pr"] --> PW["pr-watch"]
 
-  IV -.-> A1[("`.omb/interviews/`")]
-  PL -.-> A2[("`.omb/plans/`")]
-  RUN -.-> A3[("`.omb/todo/`")]
-  REL -.-> A4["GitHub Release<br/>+ mirrored binaries"]
-
-  classDef step fill:#eef4f0,stroke:#00a363,stroke-width:1.5px,color:#0a7350
-  classDef gate fill:#ffffff,stroke:#2768c7,stroke-width:1.5px,color:#1c4f9c
-  classDef ship fill:#01dd83,stroke:#00a363,stroke-width:1.5px,color:#0a3d2b
-  classDef artifact fill:#ffffff,stroke:#d9e5df,stroke-width:1px,color:#5a6577
-
+  classDef step fill:#ecfdf5,stroke:#10b981,color:#065f46
+  classDef gate fill:#eff6ff,stroke:#3b82f6,color:#1e3a8a
+  classDef ship fill:#10b981,stroke:#047857,color:#ffffff
   class IV,PL,RUN,DOC step
   class PV,VF gate
-  class PRC,REL ship
-  class A1,A2,A3,A4 artifact
-
-  linkStyle 2,5 stroke:#d17816,stroke-width:1.5px
-  linkStyle 3,6 stroke:#00a363,stroke-width:1.5px
-  linkStyle 9,10,11,12 stroke:#8a94a6,stroke-width:1px
+  class PR,PW ship
 ```
 
-```
-> /omb:interview      # 1. gather requirements
-> /omb:plan           # 2. write an implementation plan
-> /omb:plan-review    # 3. review and score the plan
-> /omb:run            # 4. execute it with TDD agents
-> /omb:verify         # 5. verify the implementation
-> /omb:doc            # 6. update documentation
-> /omb:pr             # 7. open a pull request
-> /omb:release        # 8. cut a release
-```
+| Step | Command | Result |
+|---|---|---|
+| 1 | `/omb:interview` | Requirements, with your repo searched first so it does not ask what the code already answers → `.omb/interviews/` |
+| 2 | `/omb:plan` | Code-location-first plan with an evaluate → improve loop → `.omb/plans/` |
+| 3 | `/omb:plan-review` | Parallel domain reviewers and one consensus list with P0–P3 priorities |
+| 4 | `/omb:run` | Tasks delegated to domain agents under RED → GREEN → IMPROVE → `.omb/todo/` |
+| 5 | `/omb:verify` | Real `tsc` / `ruff` / `pytest` / `eslint` runs, domain review, one verdict, P0/P1 auto-fix |
+| 6 | `/omb:doc` | `docs/` updated to match the change |
+| 7 | `/omb:pr` | Branch check → lint gate → commit → push → GitHub PR |
+| 8 | `/omb:pr-watch` | Fixes failing CI with new commits and replies to every review thread, then stops on a verdict |
 
-| # | Command | What it does |
-|---|---------|--------------|
-| 1 | `/omb:interview` | Structured requirements interview → `.omb/interviews/` |
-| 2 | `/omb:plan` | Code-location-first plan with an evaluate-improve loop → `.omb/plans/` |
-| 3 | `/omb:plan-review` | Parallel multi-agent review with P0-P3 scoring |
-| 4 | `/omb:run` | Executes the plan through domain agents → `.omb/todo/` |
-| 5 | `/omb:verify` | Parallel verifiers + consensus verdict |
-| 6 | `/omb:doc` | Generates or updates `docs/` |
-| 7 | `/omb:pr` | Lint gate → commit → push → GitHub PR |
-| 8 | `/omb:release` | Version bump, changelog, tag, GitHub Release |
+### `/omb:goal`: the whole cycle in one call
 
-Prefer one call over eight? `/omb:goal` runs the whole cycle autonomously — see below.
-
-```
+```text
 > /omb:goal add a web search tool to the LangGraph agent
 ```
+
+After the interview you answer one go/no-go gate. From there the pipeline runs interview → plan → plan-review → run → verify → doc → pr without further prompts, retrying each phase on failure.
+
+- It always works in its own git worktree and never merges. The run ends when a PR is open.
+- Decisions it makes on its own are written to a decision log and attached to the PR body.
+
+Not every change needs the full pipeline. `/omb:plan` starts with a necessity gate, so a one-file edit does not summon twelve reviewers.
 
 ## Commands
 
-### Planning and execution
+Claude Code uses `/omb:<name>`. Codex calls the same skills as `$omb-<name>`.
 
-#### `/omb:goal` — Autonomous end-to-end pipeline
-
-Chains interview → plan → plan-review → run → verify → doc → pr in one call. After the
-interview you answer a single go/no-go gate; from there the pipeline runs without further
-prompts until a ready-for-review PR is open.
-
-```
-> /omb:goal add a web search tool to the LangGraph agent
-> /omb:goal --codex add retry logic to the payment webhook
-```
-
-- Always creates its own git worktree; it never merges — the terminal condition is an open PR.
-- Decisions made in the autonomous stretch are recorded to a decision log
-  (`.omb/goal/{slug}-decisions.md`) and attached to the PR body as an
-  `## Autonomous Decisions` section.
-- `--codex` delegates the PLAN and PLAN_REVIEW authoring phases to the Codex CLI
-  (see [Codex integration](#codex-integration)).
-
-#### `/omb:interview` — Requirements interview
-
-Asks up to 15 questions covering tech stack, implementation choices, and design preferences,
-pre-searching your docs first so it does not ask what the repository already answers.
-
-```
-> /omb:interview add a web search tool to the LangGraph agent
-```
-
-#### `/omb:plan` — Implementation plan
-
-Explores the codebase, writes a plan anchored to real file paths and line ranges, then loops
-evaluate → improve until it clears the quality gate. A necessity gate up front decides whether
-the request needs the full treatment or a lighter pass, so a one-file edit does not summon
-twelve reviewers.
-
-```
-> /omb:plan add OAuth login
-# Output: .omb/plans/2026-08-08-oauth-login.md
-
-> /omb:plan --worktree add OAuth login    # isolate the work in its own git worktree
-> /omb:plan --codex add OAuth login       # delegate plan authoring to Codex CLI
-```
-
-#### `/omb:plan-review` — Plan review
-
-Runs 3-12 domain reviewers in parallel, then synthesizes their findings into one consensus
-list with P0-P3 priorities. A finding several reviewers raise independently outranks one only
-a single reviewer saw.
-
-```
-> /omb:plan-review
-> /omb:plan-review .omb/plans/2026-08-08-oauth-login.md   # only needed after /clear or a new session
-```
-
-#### `/omb:run` — Execute a plan
-
-Reads the plan's task list, delegates each task to the right domain agent, and enforces the
-RED-GREEN-IMPROVE cycle. Progress is tracked in `.omb/todo/`.
-
-```
-> /omb:run
-> /omb:run .omb/plans/2026-08-08-oauth-login.md   # only needed after /clear or a new session
-```
-
-#### `/omb:verify` — Post-implementation verification
-
-Runs the real checks (`tsc`, `ruff`, `pytest`, `eslint`), has domain agents review the diff,
-and returns one verdict. Claims are backed by command output, not by assertion.
-
-```
-> /omb:verify
-```
-
-#### `/omb:fix` — Bug-fix plan
-
-Git-history forensics, a reproduction procedure, and the smallest patch that fixes the cause
-rather than the symptom — plus whatever rule or wiki entry keeps it from recurring. The
-resulting plan goes through the same `/omb:plan-review` → `/omb:run` → `/omb:verify` chain.
-
-```
-> /omb:fix LoginForm returns 500 when the password field is empty
-> /omb:fix --worktree the SSE stream drops events after a reconnect
-```
-
-#### `/omb:refactoring` — Refactoring plan
-
-Goal refinement, then parallel analysis for latent bugs, modularization, design patterns, and
-source-of-truth drift, ending in a behavior-preserving TDD plan.
-
-```
-> /omb:refactoring split the payment service into domain modules
-```
-
-#### `/omb:resolve-issue` — Resolve a GitHub issue
-
-Takes an issue end to end: validity check → plan → implement → verify → PR with an auto-close
-link.
-
-```
-> /omb:resolve-issue 142
-```
-
-#### `/omb:issue` — Issue scanner
-
-Scans the codebase with parallel explorers, votes on what they found, and files GitHub issues
-for the survivors.
-
-```
-> /omb:issue all --dry-run    # scan every category, report only
-> /omb:issue all --bypass     # scan and file issues without confirmation prompts
-```
-
-### Documentation and knowledge
-
-#### `/omb:doc` — Service documentation
-
-Creates and updates documents under `docs/` following the project's category structure,
-naming conventions, and templates.
-
-```
-> /omb:doc
-```
-
-#### `/omb:wiki` — Project blueprint wiki
-
-Read, validate, stage, review, and transactionally publish `docs/wiki/` notes — the project's
-durable memory for lessons, constraints, and decisions.
-
-```
-> /omb:wiki init                                              # scaffold once per project
-> /omb:wiki add LangGraph checkpointer state serialization issue
-> /omb:wiki read auth                                         # 3-tier lookup, minimal tokens
-> /omb:wiki update                                            # sync notes affected by git diff
-> /omb:wiki lint
-```
-
-#### `/omb:explain` — Explanation contract
-
-Re-explains work for a reader who did not write the code: noun-phrase sections, plain spoken
-register, and evidence attached to each claim. `--page` renders the explanation to HTML.
-
-```
-> /omb:explain
-> /omb:explain --page
-```
-
-#### `/omb:mermaid` — Diagrams
-
-Generates Mermaid diagrams across 22 types, including LangGraph state-graph visualizations.
-
-```
-> /omb:mermaid draw the web search agent workflow as a state graph
-```
-
-### Quality and prompts
-
-#### `/omb:lint-check` — Lint gate
-
-Detects the stack from the changed files and runs the matching linters. Required before a PR.
-
-```
-> /omb:lint-check
-```
-
-#### `/omb:prompt-guide` — Prompt engineering reference
-
-Loads a 72-rule guide across 15 categories for writing system prompts, agent instructions,
-and `CLAUDE.md`.
-
-```
-> /omb:prompt-guide role definition
-```
-
-#### `/omb:prompt-review` — Prompt review
-
-Scores a prompt against a rubric, fixes the P0/P1 findings, and re-scores until it passes.
-
-```
-> /omb:prompt-review .claude/skills/omb-orch-api/SKILL.md
-```
-
-#### `/omb:brainstorming` — Idea exploration
-
-One question at a time, to sharpen intent and constraints before any design is committed.
-
-```
-> /omb:brainstorming how should the realtime notification system be built?
-```
-
-### Project and repo management
-
-#### `/omb:setup` — Project setup
-
-Scaffolds the directory structure, generates `CLAUDE.md`, and configures hooks and
-environment variables in `settings.json`.
-
-#### `/omb:harness` — Harness configuration
-
-Create, verify, fix, or design agents, skills, hooks, rules, and `settings.json`.
-
-```
-> /omb:harness --verify    # check configuration health
-> /omb:harness --fix       # auto-fix what it finds
-```
-
-#### `/omb:worktree` — Worktree management
-
-Isolated git worktrees with persistent SQLite state.
-
-```
-> /omb:worktree create feat/add-auth
-> /omb:worktree status
-> /omb:worktree resume feat/add-auth
-```
-
-#### `/omb:clean` — Cleanup
-
-Removes finished worktrees, marks them DONE in the database, and deletes merged branches when
-there is merge evidence to justify it.
-
-```
-> /omb:clean
-```
-
-#### `/omb:pr` — Pull request
-
-Validates the branch name, runs the lint gate, commits, pushes, and opens a PR from a
-structured template.
-
-```
-> /omb:pr
-```
-
-#### `/omb:release` — Release
-
-Version bump, changelog and README sync, commit, push, tag, and a GitHub Release with build
-assets. Usable in any repository, not just this one.
-
-```
-> /omb:release patch
-> /omb:release minor
-> /omb:release 2.0.0
-> /omb:release --dry-run     # preview only; writes nothing
-```
-
-#### `/omb:cron` — Scheduled tasks
-
-Schedule, list, and stop recurring Claude Code runs through the system crontab.
-
-```
-> /omb:cron --status
-```
-
-### Codex integration
-
-Optional integration with the [OpenAI Codex CLI](https://github.com/openai/codex) for a
-second opinion from a different model.
+<details open>
+<summary><strong>Plan, build, verify</strong></summary>
 
 | Command | What it does |
-|---------|--------------|
-| `/omb:codex` | Dispatcher — routes to the subcommands below |
-| `/omb:codex-review` | Code review of the local git state |
-| `/omb:codex-adv-review` | Adversarial review: assumptions, failure modes, edge cases |
-| `/omb:codex-run <task>` | Delegates a task to Codex CLI |
+|---|---|
+| `/omb:goal` | Autonomous interview → plan → review → run → verify → doc → pr, with a decision log |
+| `/omb:interview` | Multi-dimensional requirements interview |
+| `/omb:brainstorming` | One question at a time, to sharpen intent before any design |
+| `/omb:plan` | Implementation plan with an evaluate → improve loop (`--worktree`, `--codex`) |
+| `/omb:plan-review` | Multi-agent plan review with P0–P3 scoring |
+| `/omb:run` | Execute a plan through domain agents with TDD enforced |
+| `/omb:verify` | Static analysis, tests, multi-agent consensus, P0/P1 auto-fix |
+| `/omb:fix` | Bug-fix plan from git forensics, a reproduction, and the minimal patch |
+| `/omb:refactoring` | Behavior-preserving refactoring pipeline with an architecture pass |
+| `/omb:architect` | Parallel multi-topic architecture analysis with consensus scoring |
 
-```
-> /omb:codex-review
-> /omb:codex-adv-review        # strongly recommended once before every PR
-> /omb:codex-run refactor the auth middleware from JWT to OAuth2
-```
+</details>
 
-Enable Codex through the `omb init` interactive survey, or add `"OMB_USE_CODEX": "1"` to the
-`env` object in `.claude/settings.local.json`. `omb update` only refreshes an already-enabled
-Codex CLI — it is not an enablement path.
+<details>
+<summary><strong>Review, PR, release</strong></summary>
 
-#### `--codex` flag — delegate planning-workflow authoring
+| Command | What it does |
+|---|---|
+| `/omb:pr` | Branch validation, lint gate, structured PR |
+| `/omb:pr-watch` | Background watch: fix CI, sweep every review thread and comment, stop on a verdict |
+| `/omb:review-pr` | Review a PR diff against the original request and post an evidence comment |
+| `/omb:ultra-review` | Deep autonomous review of a PR or local work, with fixes and a thread sweep |
+| `/omb:lint-check` | Detect the stack from changed files and run the matching linters |
+| `/omb:release` | Version bump, changelog, tag, and GitHub Release, usable in any repo |
+| `/omb:issue` | Scan the codebase with parallel explorers and file the issues that survive a vote |
+| `/omb:issue-maintainer` | Merge and normalize one group of existing issues, with coordinated recovery |
 
-Four planning workflows accept a per-invocation `--codex` flag. With the flag, only each
-workflow's **core authoring** is delegated to the Codex CLI; evaluation loops, consensus
-synthesis, and orchestration stay with Claude.
+</details>
 
-| Command | What Codex authors |
-|---------|--------------------|
-| `/omb:plan --codex <goal>` | The plan draft and the P0/P1 improvement rewrite |
-| `/omb:fix --codex <bug>` | The bug-fix plan body — analysis agents and format gates stay with Claude |
-| `/omb:plan-review --codex <plan>` | Forces a Codex adversarial reviewer in and delegates P0/P1 fix authoring |
-| `/omb:goal --codex <goal>` | Propagates the flag to the PLAN and PLAN_REVIEW phases only |
+<details>
+<summary><strong>Knowledge, docs, project setup</strong></summary>
 
-The flag composes with — never bypasses — the `OMB_USE_CODEX` switch and the preflight gate.
-If Codex is missing, disabled, or fails mid-run, the workflow announces
-`Codex unavailable ({reason}) — falling back to Claude` and continues on the Claude-only path.
+| Command | What it does |
+|---|---|
+| `/omb:setup` | Scaffold `.omb/`, generate `AGENTS.md` with a `CLAUDE.md` bridge, configure `settings.json` |
+| `/omb:deep-setup` | Analyze an existing project and refine root and folder-level `AGENTS.md` |
+| `/omb:doc` | Write or update `docs/` from category templates |
+| `/omb:wiki` | Read, update, and lint the project's `openwiki/` knowledge store |
+| `/omb:explain` | Explain what just happened in the conversation, or a named topic or file (`--page` for HTML) |
+| `/omb:mermaid` | Mermaid diagrams across 22 types, including LangGraph state graphs |
+| `/omb:worktree` | Create, inspect, resume, and clean isolated worktrees |
+| `/omb:clean` | Remove finished worktrees and delete branches that have merge evidence |
+| `/omb:harness` | Create, verify, or fix agents, skills, hooks, and rules (`--verify`, `--fix`) |
+| `/omb:prompt-guide` · `/omb:prompt-review` | Prompt-writing reference, and an evaluate → fix loop for prompts |
 
-```
-> /omb:plan --codex add a web search tool to the LangGraph agent
-> /omb:goal --codex add retry logic to the payment webhook
-```
+</details>
 
-## Update / Uninstall
+<details>
+<summary><strong>Second opinions: Codex and Herdr</strong></summary>
+
+| Command | What it does |
+|---|---|
+| `/omb:codex-review` | Codex CLI review of your local git state |
+| `/omb:codex-adv-review` | Adversarial review aimed at assumptions, failure modes, and edge cases |
+| `/omb:codex-run <task>` | Delegate a task to the Codex CLI |
+| `/omb:herdr --codex <request>` | Run a request in a new [Herdr](https://herdr.dev) tab and close the tab once the result is collected |
+| `/omb:herdr-review` · `/omb:herdr-verify` | Independent plan/code review, or requirements verification, in a new Herdr tab |
+| `/omb:herdr-cronjob` | Schedule detached Codex or Claude CLI runs with owned panes and durable logs |
+
+Codex delegation needs an installed, authenticated Codex CLI and `"OMB_USE_CODEX": "1"` in `.claude/settings.local.json` (or enabling it in the `omb init` survey). If Codex is missing or fails, workflows announce the fallback and continue on Claude. Herdr skills run inside a Herdr project tab.
+
+</details>
+
+## Memory that survives the session
+
+The next session, and the next teammate, should know how this project works without being told again.
 
 ```bash
-omb update      # update the binary and refresh harness files
-omb init        # reinstall harness files only
-omb uninstall   # remove the binary and harness files
+omb memory init   --root /absolute/project
+omb memory status --root /absolute/project --host claude   # or: codex
 ```
 
-## Requirements
+Then just say it:
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
-- Python 3.12+
-- macOS, Linux, or Windows
-- `git`, and `gh` for the PR, issue, and release workflows
+> Remember this: when a public API changes, check the frontend consumers and the contract tests too.
+
+The memory skill reads what is already there, merges the new guidance, saves it, and reads it back in the same turn. The agent decides what the request means; the CLI enforces format, size limits, and revisions.
+
+- **Small core, deep topics.** `.omb-memory/MEMORY.md` holds priorities and corrections within a hard 60-line / 4,000-character budget. Detailed procedures live in `knowledge/<category>/<topic>.md` and are read only when relevant.
+- **Shared through Git.** Commit `.omb-memory/` like any other file. omb never auto-commits or pushes.
+- **Safe edits.** Revision checks, locking, and a recovery journal protect concurrent writes. Run `omb memory check --root /absolute/project` after a manual edit or merge.
+- **No vector database.** Memory and the `openwiki/` knowledge store are searched locally:
+
+```bash
+omb context search "authentication" --root /absolute/project
+omb context build  "authentication" --root /absolute/project --workflow plan
+```
+
+## CLI reference
+
+| Command | Purpose |
+|---|---|
+| `omb install [path]` / `omb init [path]` | Install harness files into a project |
+| `omb update [path]` | Update the binary and refresh harness files |
+| `omb uninstall` | Remove harness files and the binary (`--dry-run`, `--keep-binary`, `--project-dir`) |
+| `omb version` | Print the installed version |
+| `omb memory <sub>` | Initialize, read, search, update, and validate operational memory |
+| `omb context search\|build\|status` | Search wiki and memory, then build and reuse workflow context bundles |
+| `omb spec lint --root [path]` | Check `docs/specs/` structure, links, and status transitions (optional, never blocks) |
+| `omb openwiki-install --root [path]` | Install OpenWiki and the Claude/Codex host integrations |
+| `omb openwiki-read <sub>` | Search, summarize, lint, and freshness-check the wiki |
+| `omb update-gitignore` | Re-apply the harness `.gitignore` block |
+| `omb hook-stats` | Hook timing and failure statistics |
+
+## Configuration
+
+Values resolve in this order: shell environment → `.claude/settings.local.json` → `.claude/settings.json`.
+
+| Variable | Purpose |
+|---|---|
+| `OMB_DOCUMENTATION_LANGUAGE` | Language for replies and docs (`en` / `ko`). Code, prompts, and commits stay English |
+| `OMB_USE_CODEX` | Enable Codex CLI delegation and review |
+| `OMB_ORM_BACKEND` | ORM for DB work: `tortoise` (default) or `sqlalchemy` |
+| `OMB_INIT_CONFIRM` | Install confirmation: `never` (default) or `always` |
+| `OMB_DEBUG` | `1` writes diagnostic logs to `.omb/logs/` |
+
+## Install
+
+### Requirements
+
+- [Claude Code](https://docs.anthropic.com/en/docs/claude-code) or [Codex](https://github.com/openai/codex), installed and authenticated
+- `git`, plus an authenticated [`gh`](https://cli.github.com) for PR, issue, and release workflows
+- Node.js and npm, if you use the OpenWiki knowledge store
+
+### Manual download
+
+| Platform | Binary |
+|---|---|
+| macOS (Apple Silicon) | [`oh-my-braincrew-v1.2.1-darwin-arm64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
+| Linux (x86_64) | [`oh-my-braincrew-v1.2.1-linux-amd64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
+| Windows (x86_64) | [`oh-my-braincrew-v1.2.1-windows-amd64.exe`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
+
+Each release also ships `harness-vX.Y.Z.tar.gz` (the harness that `omb install` lays down), its `.sha256` sidecar, and `checksums-sha256.txt`. Verify a manual download before running it:
+
+```bash
+shasum -a 256 -c checksums-sha256.txt --ignore-missing
+```
+
+### What install and update touch
+
+- **Updated:** omb-owned paths only: `.claude/skills/omb*/`, `.claude/agents/omb/`, `.claude/hooks/omb/`, `.claude/commands/omb/`, `.claude/rules/**`, and the generated Codex files under `.agents/skills/` and `.Codex/`.
+- **Preserved:** your `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, your own agents and skills, and `.claude/rules/custom/`.
+- Installed harness files are added to `.gitignore`. `.omb-memory/` and your instructions are meant to be committed.
+
+### Update and uninstall
+
+```bash
+omb update      # new binary + refreshed harness
+omb uninstall --dry-run   # preview what will be removed
+omb uninstall             # remove harness files and the binary
+```
+
+### Troubleshooting
+
+- **`omb: command not found`**: add `~/.local/bin` to your `PATH`.
+- **macOS blocks the binary**: run `xattr -d com.apple.quarantine ~/.local/bin/oh-my-braincrew`.
+- **Skills missing after install or update**: restart the Claude Code or Codex session.
 
 ## Changelog
 
-See [CHANGELOG.md](./CHANGELOG.md) for release history.
+Release notes for every version are in [CHANGELOG.md](CHANGELOG.md) and on the [Releases](https://github.com/braincrew-lab/oh-my-braincrew-release/releases) page.
 
 ## License
 
-Braincrew Internal Use Only.
+**Braincrew Internal Use Only.** This repository distributes prebuilt binaries and the harness tarball; the source lives in a private repository. Only parties authorized in writing by Braincrew Inc. may use it. See [LICENSE](LICENSE) for the full terms.

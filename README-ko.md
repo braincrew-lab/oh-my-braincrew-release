@@ -1,510 +1,310 @@
-# oh-my-braincrew (omb)
+<div align="center">
 
-[![Release](https://img.shields.io/github/v/release/braincrew-lab/oh-my-braincrew-release?style=flat-square)](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest)
-[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue?style=flat-square)](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest)
-[![Python](https://img.shields.io/badge/python-%3E%3D3.12-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![Claude Code](https://img.shields.io/badge/Claude%20Code-harness-cc785c?style=flat-square&logo=anthropic&logoColor=white)](https://docs.anthropic.com/en/docs/claude-code)
+<img src="assets/hero.svg" alt="oh-my-braincrew: 코딩 에이전트를 엔지니어링 팀으로" width="100%">
+
+<br>
+
+**Claude Code나 Codex를 계획·리뷰·구현·검증·PR까지 해내는 엔지니어링 팀으로 바꿉니다.**
+
+[![Release](https://img.shields.io/github/v/release/braincrew-lab/oh-my-braincrew-release?style=flat-square&color=10b981)](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/braincrew-lab/oh-my-braincrew-release/total?style=flat-square&color=3b82f6)](https://github.com/braincrew-lab/oh-my-braincrew-release/releases)
+[![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-64748b?style=flat-square)](#설치)
+[![Hosts](https://img.shields.io/badge/hosts-Claude%20Code%20%7C%20Codex-6366f1?style=flat-square)](#빠른-시작)
 [![License](https://img.shields.io/badge/license-Braincrew%20Internal%20Use%20Only-red?style=flat-square)](#라이선스)
 
-**[English](README.md)** | **[한국어](README-ko.md)**
+[빠른 시작](#빠른-시작) · [동작 방식](#동작-방식) · [워크플로우](#워크플로우) · [명령어](#명령어) · [운영 메모리](#세션이-끝나도-남는-메모리) · [변경 기록](CHANGELOG.md) · [English](README.md)
 
-Claude Code, Codex, Hermes에서 사용하는 멀티 에이전트 개발 하네스입니다. 연결 방식은 호스트별로 다릅니다.
+</div>
 
-> 위임하고, 조율하고, 검증하라 — 직접 구현하지 마라.
+---
 
-이 저장소는 **공개 배포 채널**입니다. 미리 빌드된 바이너리, 하네스 tarball, 설치 스크립트를
-제공합니다. 소스는 비공개 저장소 `braincrew-lab/oh-my-braincrew`에 있습니다.
+하나의 컨텍스트에서 혼자 일하는 코딩 에이전트는 코드를 쓰고, 테스트를 건너뛰고, 다 됐다고 말하기 쉽습니다. **oh-my-braincrew(`omb`)** 는 그 에이전트 주위에 하네스를 설치합니다. 전문 에이전트 59개, 스킬 77개, 컨벤션 규칙 135개와 라이프사이클 훅이 함께 동작해 에이전트가 절차를 갖춘 팀처럼 일하게 만듭니다.
 
-## oh-my-braincrew란
+목표를 말하면 하네스가 요구사항을 인터뷰하고, 실제 파일에 근거한 계획을 쓰고, 도메인 리뷰어가 그 계획을 채점합니다. 이어서 격리된 worktree에서 테스트 먼저 구현하고, 실제 타입 체커·린터·테스트를 돌린 뒤 PR을 엽니다. 에이전트의 말만 믿고 완료로 처리하지 않습니다.
 
-기본 Claude Code는 에이전트 하나가 하나의 컨텍스트에서 모든 일을 처리합니다. `omb`는 여기에
-팀과 절차를 붙입니다. 무엇을 원하는지만 말하면, 하네스가 어떤 전문 에이전트를 부를지 정하고,
-병렬로 일을 시키고, 서로의 결과를 검토하게 하고, 타입 체커·린터·테스트가 실제로 통과하기
-전까지는 완료로 인정하지 않습니다.
+```text
+> /omb:goal 결제 웹훅에 재시도 로직 추가
+```
 
-프로젝트에 설치되는 것:
+## omb를 쓰는 이유
 
-- **전문 에이전트 59개** — API, DB, UI, AI/ML, Electron, 인프라, 보안, 하네스, 문서, 위키
-  도메인에 걸친 설계·구현·검증·탐색·리뷰 에이전트
-- **스킬 67개** — 아래의 `/omb:*` 워크플로우와, 필요할 때만 로드되는 내부 루브릭·참조 가이드
-- **규칙 파일 117개** — 점진적으로 로드되므로, FastAPI 라우트를 고치는 에이전트에게는 FastAPI
-  규칙만 들어가고 나머지는 들어가지 않습니다
-- **라이프사이클 훅** — 세션 시작, 도구 사용 전후, 서브에이전트 종료 시점에 실행되는 Python 훅
-  패키지. 시크릿 유출, 범위 밖 파일 쓰기, pytest 타임아웃 누락, raw SQL, 서브에이전트 출력
-  계약 위반을 차단합니다.
-- **워크트리 격리** — SQLite로 상태를 추적하는 별도 git 워크트리에서 기능 브랜치를 병렬로
-  진행하므로, 두 작업이 같은 트리를 두고 충돌하지 않습니다
+| 에이전트 단독 | omb와 함께 |
+|---|---|
+| 한 컨텍스트가 설계·코드·리뷰를 모두 처리 | API, DB, UI, AI, Electron, Infra, Security 도메인별로 설계·구현·검증 에이전트를 분리 |
+| 계획이 산문으로 끝남 | 계획이 파일 경로와 줄 범위를 인용하고, 평가 → 개선 루프를 통과해야 함 |
+| "문제없어 보입니다" | 리뷰어 3~12명이 병렬로 계획을 채점하고 결과를 P0~P3 목록 하나로 합침 |
+| "테스트는 통과할 겁니다" | `/omb:verify`가 `pytest`, `ruff`, `tsc`, `eslint`를 실행하고 명령 출력으로 보고 |
+| 작업 중인 트리에 바로 수정 | 목표마다 별도 git worktree에서 진행하고 SQLite로 상태 추적 |
+| 세션마다 처음부터 다시 설명 | 팀 컨벤션은 `.omb-memory/`, 코드 사실은 `openwiki/`에 두고 둘 다 Git으로 공유 |
+| 모든 규칙을 한꺼번에 로드 | 파일 경로에 맞는 규칙만 로드. FastAPI를 고칠 때는 FastAPI 규칙만 읽음 |
 
-## 설치
+## 빠른 시작
 
-### macOS / Linux
+**1. CLI 설치**
 
 ```bash
+# macOS (Apple Silicon) / Linux (x86_64)
 curl -fsSL https://raw.githubusercontent.com/braincrew-lab/oh-my-braincrew-release/main/install.sh | bash
 ```
 
-### Windows (PowerShell)
-
 ```powershell
+# Windows (PowerShell)
 irm https://raw.githubusercontent.com/braincrew-lab/oh-my-braincrew-release/main/install.ps1 | iex
 ```
 
-### 수동 다운로드
+두 스크립트 모두 최신 릴리스를 내려받아 `checksums-sha256.txt`로 SHA-256을 확인하고 `omb` 단축 명령을 만듭니다. 바이너리 위치는 macOS/Linux가 `~/.local/bin`, Windows가 `%LOCALAPPDATA%\oh-my-braincrew`입니다. Python, `uv`, 소스 체크아웃은 필요하지 않습니다.
 
-| 플랫폼 | 아키텍처 | 바이너리 |
-|--------|----------|----------|
-| macOS | Apple Silicon (arm64) | [`oh-my-braincrew-vX.Y.Z-darwin-arm64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
-| Linux | x86_64 | [`oh-my-braincrew-vX.Y.Z-linux-amd64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
-| Windows | x86_64 | [`oh-my-braincrew-vX.Y.Z-windows-amd64.exe`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
-
-각 릴리스에는 `omb init`이 설치하는 하네스 tarball(`harness-vX.Y.Z.tar.gz`)과 대응하는
-`.sha256` 파일, `checksums-sha256.txt`도 함께 올라갑니다.
-
-### CLI 명령
-
-| 명령 | 설명 |
-|------|------|
-| `omb init [path]` | 최신 릴리스에서 하네스 파일(`.claude/`, `.omb/`) 설치 |
-| `omb update [path]` | 바이너리 업데이트 및 하네스 파일 갱신 |
-| `omb uninstall` | 설치된 바이너리와 하네스 파일 제거 |
-| `omb update-gitignore` | 하네스 `.gitignore` 블록 재적용 |
-| `omb version` | 설치된 버전 출력 |
-| `omb env <sub>` | 하네스 환경 설정 조회 (스킬 preflight가 사용) |
-| `omb hook-stats` | 훅 실행 시간·실패 통계 |
-| `omb openwiki-read <sub>` | OpenWiki 검색·요약·근거 검증 |
-| `omb memory <sub>` | 운영 메모리 초기화·조회·검색·갱신·검증 |
-
-## v1.1.0 — 공유 운영 메모리
-
-[v1.1.0 릴리스 노트·다운로드](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/tag/v1.1.0)
-
-운영 메모리는 **v1.1.0부터 공개 릴리스에 포함**됩니다.
-기존 설치를 업데이트한 뒤 프로젝트에서 메모리를 활성화하세요.
-
-```bash
-omb update /absolute/project
-omb memory init --root /absolute/project
-omb memory status --root /absolute/project --host claude
-```
-
-`/absolute/project`는 이미 존재하는 실제 프로젝트의 절대 경로로 바꿉니다.
-신규 사용자는 먼저 `omb install`을 실행하세요. 사용 중인 호스트에 따라 `codex` 또는
-`hermes`를 지정할 수 있습니다. 기존 메모리를 다시 초기화할 필요는 없습니다.
-
-- **핵심과 선택 조회:** `.omb-memory/MEMORY.md`에는 공통 우선순위와 교정을,
-  계층형 `knowledge/` topic에는 작업별 상세 절차를 기록합니다. 공용 workspace와
-  저장소를 합쳐 핵심은 60줄·4,000자, 시작 인덱스는 20줄·1,200자까지입니다.
-  관련 상세 문서는 필요할 때 단계적으로 읽습니다.
-- **직접 피드백:** “기억해줘”, “명심해줘” 같은 요청은 메모리 스킬이 같은 차례에서
-  기존 기억 조회·병합·저장·재읽기로 처리합니다. 의미 판단은 에이전트가,
-  형식·한도·revision 검증은 CLI가 담당합니다.
-- **팀 운영:** `.omb-memory/`와 활성화 시 수정된 `AGENTS.md`를 커밋해 컨벤션,
-  저장소 지도, 연계 작업 조건과 SoT 문서 갱신 경로를 공유합니다.
-  동기화는 Git으로 수행하며 OMB가 자동 commit/push를 하지는 않습니다.
-- **갱신 검증:** revision 검사, 잠금과 journal 복구로 동시 수정을 보호합니다.
-  수동 편집·Git 병합 후 `omb memory check --root /absolute/project`를 실행하세요.
-  `.omb/memory-runtime/`의 실행 상태는 로컬에만 둡니다.
-
-Claude는 세션 생명주기 훅, Codex는 생성된 훅 설정과 workflow 안내,
-Hermes는 workflow의 명시적 CLI 조회 안내를 사용합니다. `status --host`는
-설정 상태를 보고하며 실제 호스트 실행을 인증하지 않습니다. 운영 메모리는
-구현 근거를 관리하는 `openwiki/`와 구분되며 별도 벡터 DB가 필요하지 않습니다.
-
-## 초기 설정
+**2. 프로젝트에 연결**
 
 ```bash
 cd /path/to/your/project
-omb init
+omb version
+omb install        # `omb init`의 별칭
 ```
 
-이후 Claude Code 안에서:
+`omb install`은 `.claude/` 하네스와 Codex 호환 파일을 설치합니다. `AGENTS.md`와 `CLAUDE.md`는 없을 때만 만들고, 기존 지침·에이전트·스킬·설정은 그대로 둡니다.
 
-```
-> /omb:setup
-```
+**3. 에이전트에서 작업 시작**
 
-`omb init`은 하네스를 설치하고 `.omb/` 작업 디렉토리를 만듭니다. 갱신 대상은 하네스 소유
-경로(`.claude/skills/omb-*`, `.claude/agents/omb/`, `.claude/hooks/omb/`,
-`.claude/commands/omb/`, `.claude/rules/**`)뿐이며, 사용자가 만든 에이전트·스킬·커맨드와
-`CLAUDE.md`, `.claude/settings.json`, `.claude/rules/custom/`은 건드리지 않습니다. 설치된
-하네스 파일은 `.gitignore`에 자동으로 추가됩니다.
+| 호스트 | 프로젝트 지침 정리 | 목표 실행 |
+|---|---|---|
+| Claude Code | `/omb:deep-setup` | `/omb:goal 결제 웹훅에 재시도 로직 추가` |
+| Codex | `$omb-deep-setup` | `$omb-goal 결제 웹훅에 재시도 로직 추가` |
 
-`/omb:setup`은 코드베이스를 스캔해 그에 맞는 `CLAUDE.md`를 생성하고, `settings.json`의 훅과
-권한, 환경 변수를 구성합니다.
+`deep-setup`은 실제 코드, 매니페스트, CI를 읽고 루트와 폴더별 `AGENTS.md` 지침을 작성합니다. 새 스킬이 보이지 않으면 호스트 세션을 다시 시작하세요.
 
-## 권장 워크플로우
+## 동작 방식
 
-전체 사이클을 순서대로 돌려도 되고, 각 단계를 따로 불러도 됩니다.
+<p align="center">
+  <img src="assets/architecture.svg" alt="Claude Code나 Codex에서 워크플로우를 호출하면 하네스가 스킬, 전문 에이전트, 경로별 규칙, 라이프사이클 훅을 거쳐 격리된 worktree, 리뷰된 계획, 검증된 diff, PR을 만듭니다." width="100%">
+</p>
+
+| 계층 | 역할 | 위치 |
+|---|---|---|
+| **스킬** | 직접 호출하는 워크플로우(`/omb:plan`, `/omb:verify` 등)와 필요할 때 로드되는 루브릭·참고 가이드 | `.claude/skills/omb-*` |
+| **에이전트** | 도메인별 설계·구현·검증·탐색 전문가와 비평·계획 평가 에이전트 | `.claude/agents/omb/` |
+| **규칙** | FastAPI, React, LangGraph, Postgres/Redis, Docker/K8s/Terraform, 17개 언어, 테스트, git 컨벤션 | `.claude/rules/` |
+| **훅** | 세션 시작, 도구 사용 전후, 서브 에이전트 종료 시 실행되는 Python 훅 핸들러. 범위 밖 쓰기, raw SQL, 타임아웃 없는 pytest 실행, 출력 계약을 어긴 서브 에이전트 응답을 차단 | `.claude/hooks/omb/` |
+| **상태** | 계획, todo, 인터뷰, worktree 기록 | `.omb/` |
+
+지원 스택은 Python/FastAPI, React/TypeScript/Next.js, LangGraph/LangChain/Deep Agents, Postgres/Redis, Electron, Docker/GitHub Actions/Kubernetes/Terraform입니다.
+
+## 워크플로우
+
+한 번의 호출로 전체를 돌리거나, 필요한 단계만 따로 호출할 수 있습니다.
 
 ```mermaid
-%%{init: {"theme":"base","themeVariables":{"fontFamily":"ui-sans-serif, -apple-system, Segoe UI, sans-serif","fontSize":"14px","lineColor":"#5a6577","primaryTextColor":"#161d29","edgeLabelBackground":"#ffffff"}}}%%
 flowchart LR
-  IV["/omb:interview"] --> PL["/omb:plan"] --> PV["/omb:plan-review"]
+  IV["interview"] --> PL["plan"] --> PV{"plan-review"}
   PV -->|"P0/P1 남음"| PL
-  PV -->|"통과"| RUN["/omb:run"]
-  RUN --> VF["/omb:verify"]
+  PV -->|"통과"| RUN["run<br/>TDD 에이전트"]
+  RUN --> VF{"verify"}
   VF -->|"P0/P1 남음"| RUN
-  VF -->|"통과"| DOC["/omb:doc"]
-  DOC --> PRC["/omb:pr"] --> REL["/omb:release"]
+  VF -->|"통과"| DOC["doc"] --> PR["pr"] --> PW["pr-watch"]
 
-  IV -.-> A1[("`.omb/interviews/`")]
-  PL -.-> A2[("`.omb/plans/`")]
-  RUN -.-> A3[("`.omb/todo/`")]
-  REL -.-> A4["GitHub Release<br/>+ 미러링된 바이너리"]
-
-  classDef step fill:#eef4f0,stroke:#00a363,stroke-width:1.5px,color:#0a7350
-  classDef gate fill:#ffffff,stroke:#2768c7,stroke-width:1.5px,color:#1c4f9c
-  classDef ship fill:#01dd83,stroke:#00a363,stroke-width:1.5px,color:#0a3d2b
-  classDef artifact fill:#ffffff,stroke:#d9e5df,stroke-width:1px,color:#5a6577
-
+  classDef step fill:#ecfdf5,stroke:#10b981,color:#065f46
+  classDef gate fill:#eff6ff,stroke:#3b82f6,color:#1e3a8a
+  classDef ship fill:#10b981,stroke:#047857,color:#ffffff
   class IV,PL,RUN,DOC step
   class PV,VF gate
-  class PRC,REL ship
-  class A1,A2,A3,A4 artifact
-
-  linkStyle 2,5 stroke:#d17816,stroke-width:1.5px
-  linkStyle 3,6 stroke:#00a363,stroke-width:1.5px
-  linkStyle 9,10,11,12 stroke:#8a94a6,stroke-width:1px
+  class PR,PW ship
 ```
 
-```
-> /omb:interview      # 1. 요구사항 수집
-> /omb:plan           # 2. 구현 계획 작성
-> /omb:plan-review    # 3. 계획 리뷰 및 채점
-> /omb:run            # 4. TDD 에이전트로 실행
-> /omb:verify         # 5. 구현 검증
-> /omb:doc            # 6. 문서 갱신
-> /omb:pr             # 7. PR 생성
-> /omb:release        # 8. 릴리스
+| 단계 | 명령 | 결과 |
+|---|---|---|
+| 1 | `/omb:interview` | 저장소를 먼저 찾아본 뒤 코드로 답할 수 없는 것만 묻는 요구사항 인터뷰 → `.omb/interviews/` |
+| 2 | `/omb:plan` | 코드 위치 중심 계획과 평가 → 개선 루프 → `.omb/plans/` |
+| 3 | `/omb:plan-review` | 도메인 리뷰어 병렬 리뷰와 P0~P3 우선순위의 합의 목록 |
+| 4 | `/omb:run` | RED → GREEN → IMPROVE 사이클로 도메인 에이전트에 작업 위임 → `.omb/todo/` |
+| 5 | `/omb:verify` | `tsc` / `ruff` / `pytest` / `eslint` 실제 실행, 도메인 리뷰, 단일 판정, P0/P1 자동 수정 |
+| 6 | `/omb:doc` | 변경에 맞춰 `docs/` 갱신 |
+| 7 | `/omb:pr` | 브랜치 확인 → 린트 게이트 → 커밋 → 푸시 → GitHub PR |
+| 8 | `/omb:pr-watch` | 실패한 CI를 새 커밋으로 고치고 모든 리뷰 스레드에 답한 뒤 판정에서 멈춤 |
+
+### `/omb:goal`: 한 번의 호출로 전체 사이클
+
+```text
+> /omb:goal LangGraph 에이전트에 웹 검색 도구 추가
 ```
 
-| # | 명령 | 하는 일 |
-|---|------|---------|
-| 1 | `/omb:interview` | 구조화된 요구사항 인터뷰 → `.omb/interviews/` |
-| 2 | `/omb:plan` | 코드 위치 기반 계획 + 평가-개선 루프 → `.omb/plans/` |
-| 3 | `/omb:plan-review` | 병렬 멀티 에이전트 리뷰, P0-P3 채점 |
-| 4 | `/omb:run` | 도메인 에이전트로 계획 실행 → `.omb/todo/` |
-| 5 | `/omb:verify` | 병렬 검증 에이전트 + 합의 판정 |
-| 6 | `/omb:doc` | `docs/` 생성·갱신 |
-| 7 | `/omb:pr` | 린트 게이트 → 커밋 → 푸시 → GitHub PR |
-| 8 | `/omb:release` | 버전 범프, 체인지로그, 태그, GitHub Release |
+인터뷰가 끝나면 진행 여부를 한 번만 승인합니다. 이후 파이프라인은 interview → plan → plan-review → run → verify → doc → pr을 추가 질문 없이 이어가고, 단계가 실패하면 그 단계를 재시도합니다.
 
-여덟 번 대신 한 번만 부르고 싶다면 `/omb:goal`이 전체 사이클을 자율 실행합니다 — 아래 참고.
+- 항상 자체 git worktree에서 작업하며 merge하지 않습니다. PR이 열리면 끝납니다.
+- 자율 구간에서 내린 결정은 결정 기록에 남기고 PR 본문에 첨부합니다.
 
-```
-> /omb:goal LangGraph agent에 웹 검색 도구 추가
-```
+모든 변경에 전체 파이프라인이 필요하지는 않습니다. `/omb:plan`은 먼저 필요성을 판단하므로 파일 하나를 고치는 데 리뷰어 열두 명을 부르지 않습니다.
 
 ## 명령어
 
-### 계획과 실행
-
-#### `/omb:goal` — 자율 end-to-end 파이프라인
-
-interview → plan → plan-review → run → verify → doc → pr을 한 번의 호출로 이어서 실행합니다.
-인터뷰 후 go/no-go 게이트에 한 번만 응답하면, 이후 ready-for-review PR이 열릴 때까지 추가
-질문 없이 진행됩니다.
-
-```
-> /omb:goal LangGraph agent에 웹 검색 도구 추가
-> /omb:goal --codex 결제 웹훅 재시도 로직 추가
-```
-
-- 항상 자체 git 워크트리를 만들고, merge는 하지 않습니다 — 종료 조건은 열린 PR입니다.
-- 자율 구간의 결정은 결정 로그(`.omb/goal/{slug}-decisions.md`)에 기록되고 PR 본문의
-  `## Autonomous Decisions` 섹션으로 첨부됩니다.
-- `--codex`를 붙이면 PLAN·PLAN_REVIEW 저작 단계만 Codex CLI에 위임합니다
-  (아래 "Codex 연동" 참고).
-
-#### `/omb:interview` — 요구사항 인터뷰
-
-기술 스택, 구현 선택지, 설계 취향을 최대 15개 질문으로 확인합니다. 먼저 프로젝트 문서를
-찾아보기 때문에, 저장소에 이미 답이 있는 것은 묻지 않습니다.
-
-```
-> /omb:interview LangGraph agent에 웹 검색 도구 추가
-```
-
-#### `/omb:plan` — 구현 계획
-
-코드베이스를 탐색해 실제 파일 경로와 라인 범위에 근거한 계획을 쓰고, 품질 기준을 넘길 때까지
-평가 → 개선을 반복합니다. 앞단의 필요성 게이트가 요청 규모에 맞춰 전체 경로와 경량 경로를
-가르므로, 파일 하나 고치는 일에 리뷰어 열두 명이 붙지 않습니다.
-
-```
-> /omb:plan OAuth 로그인 추가
-# 결과: .omb/plans/2026-08-08-oauth-login.md
-
-> /omb:plan --worktree OAuth 로그인 추가    # 별도 git 워크트리에서 격리 작업
-> /omb:plan --codex OAuth 로그인 추가       # 플랜 저작을 Codex CLI에 위임
-```
-
-#### `/omb:plan-review` — 계획 리뷰
-
-도메인 리뷰어 3~12명을 병렬로 돌린 뒤, 발견 사항을 P0-P3 우선순위가 붙은 하나의 합의 목록으로
-합칩니다. 여러 리뷰어가 독립적으로 같은 문제를 지적하면, 한 명만 본 지적보다 위로 올라갑니다.
-
-```
-> /omb:plan-review
-> /omb:plan-review .omb/plans/2026-08-08-oauth-login.md   # /clear 또는 새 세션에서만 경로 지정
-```
-
-#### `/omb:run` — 계획 실행
-
-계획의 작업 목록을 읽어 각 작업을 해당 도메인 에이전트에 위임하고, RED-GREEN-IMPROVE 사이클을
-강제합니다. 진행 상황은 `.omb/todo/`에 기록됩니다.
-
-```
-> /omb:run
-> /omb:run .omb/plans/2026-08-08-oauth-login.md   # /clear 또는 새 세션에서만 경로 지정
-```
-
-#### `/omb:verify` — 구현 검증
-
-`tsc`, `ruff`, `pytest`, `eslint`를 실제로 돌리고, 도메인 에이전트가 diff를 검토한 뒤 하나의
-판정을 냅니다. 주장은 명령 출력으로 뒷받침되며, 선언만으로는 통과하지 않습니다.
-
-```
-> /omb:verify
-```
-
-#### `/omb:fix` — 버그 수정 계획
-
-git 히스토리 추적, 재현 절차, 증상이 아니라 원인을 없애는 최소 패치. 여기에 재발을 막는 규칙
-또는 위키 항목까지 함께 계획합니다. 만들어진 계획은 그대로 `/omb:plan-review` → `/omb:run` →
-`/omb:verify` 체인으로 이어집니다.
-
-```
-> /omb:fix LoginForm에서 빈 비밀번호 입력 시 500 오류 발생
-> /omb:fix --worktree SSE 스트림이 재연결 후 이벤트를 유실함
-```
-
-#### `/omb:refactoring` — 리팩터링 계획
-
-목표를 먼저 다듬고, 잠재 버그·모듈화·디자인 패턴·SoT 드리프트를 병렬로 분석한 뒤, 동작을
-보존하는 TDD 계획으로 마무리합니다.
-
-```
-> /omb:refactoring 결제 서비스를 도메인 모듈로 분리
-```
-
-#### `/omb:resolve-issue` — GitHub 이슈 해결
-
-이슈를 끝까지 처리합니다. 유효성 판단 → 계획 → 구현 → 검증 → 자동 close 링크가 붙은 PR.
-
-```
-> /omb:resolve-issue 142
-```
-
-#### `/omb:issue` — 이슈 스캐너
-
-병렬 탐색 에이전트로 코드베이스를 훑고, 발견 사항을 투표로 거른 뒤 살아남은 것만 GitHub 이슈로
-등록합니다.
-
-```
-> /omb:issue all --dry-run    # 전체 카테고리 스캔, 보고만
-> /omb:issue all --bypass     # 확인 프롬프트 없이 스캔 후 이슈 등록
-```
-
-### 문서와 지식
-
-#### `/omb:doc` — 서비스 문서
-
-프로젝트의 카테고리 구조, 네이밍 규칙, 템플릿을 따라 `docs/` 문서를 만들고 갱신합니다.
-
-```
-> /omb:doc
-```
-
-#### `/omb:wiki` — 프로젝트 블루프린트 위키
-
-`docs/wiki/` 노트를 읽고, 검증하고, 스테이징하고, 리뷰하고, 트랜잭션으로 발행합니다. 교훈과
-제약, 결정을 담는 프로젝트의 장기 기억입니다.
-
-```
-> /omb:wiki init                                              # 프로젝트당 최초 1회 스캐폴딩
-> /omb:wiki add LangGraph checkpointer 사용시 state 직렬화 이슈
-> /omb:wiki read auth                                         # 3-tier 조회, 최소 토큰만 로드
-> /omb:wiki update                                            # git diff에 영향받는 노트 동기화
-> /omb:wiki lint
-```
-
-#### `/omb:explain` — 설명 컨트랙트
-
-코드를 직접 쓰지 않은 사람을 기준으로 다시 설명합니다. 명사구 섹션, 실제로 말하는 문체, 주장마다
-붙는 근거. `--page`를 주면 설명을 HTML로 렌더합니다.
-
-```
-> /omb:explain
-> /omb:explain --page
-```
-
-#### `/omb:mermaid` — 다이어그램
-
-22종의 Mermaid 다이어그램을 생성합니다. LangGraph 상태 그래프 시각화도 포함됩니다.
-
-```
-> /omb:mermaid 웹 검색 에이전트 워크플로우를 상태 그래프로 그려줘
-```
-
-### 품질과 프롬프트
-
-#### `/omb:lint-check` — 린트 게이트
-
-변경된 파일에서 스택을 감지해 맞는 린터를 실행합니다. PR 전 필수입니다.
-
-```
-> /omb:lint-check
-```
-
-#### `/omb:prompt-guide` — 프롬프트 엔지니어링 레퍼런스
-
-시스템 프롬프트, 에이전트 지시문, `CLAUDE.md` 작성을 위한 15개 카테고리 72개 규칙 가이드를
-로드합니다.
-
-```
-> /omb:prompt-guide 역할 정의
-```
-
-#### `/omb:prompt-review` — 프롬프트 리뷰
-
-루브릭으로 프롬프트를 채점하고, P0/P1 항목을 고친 뒤, 통과할 때까지 다시 채점합니다.
-
-```
-> /omb:prompt-review .claude/skills/omb-orch-api/SKILL.md
-```
-
-#### `/omb:brainstorming` — 아이디어 탐색
-
-한 번에 하나씩 질문해서, 설계를 확정하기 전에 의도와 제약을 뾰족하게 만듭니다.
-
-```
-> /omb:brainstorming 실시간 알림 시스템 구현 방식
-```
-
-### 프로젝트와 저장소 관리
-
-#### `/omb:setup` — 프로젝트 설정
-
-디렉토리 구조를 만들고, `CLAUDE.md`를 생성하고, `settings.json`의 훅과 환경 변수를 구성합니다.
-
-#### `/omb:harness` — 하네스 설정
-
-에이전트, 스킬, 훅, 규칙, `settings.json`을 생성·검증·수정·설계합니다.
-
-```
-> /omb:harness --verify    # 설정 상태 점검
-> /omb:harness --fix       # 발견된 문제 자동 수정
-```
-
-#### `/omb:worktree` — 워크트리 관리
-
-SQLite로 상태가 유지되는 격리된 git 워크트리를 다룹니다.
-
-```
-> /omb:worktree create feat/add-auth
-> /omb:worktree status
-> /omb:worktree resume feat/add-auth
-```
-
-#### `/omb:clean` — 정리
-
-끝난 워크트리를 제거하고 DB에 DONE으로 표시하며, 병합 증거가 확인된 브랜치만 삭제합니다.
-
-```
-> /omb:clean
-```
-
-#### `/omb:pr` — 풀 리퀘스트
-
-브랜치 이름을 검증하고, 린트 게이트를 돌리고, 커밋·푸시한 뒤 구조화된 템플릿으로 PR을 엽니다.
-
-```
-> /omb:pr
-```
-
-#### `/omb:release` — 릴리스
-
-버전 범프, 체인지로그와 README 동기화, 커밋, 푸시, 태그, 빌드 산출물이 붙은 GitHub Release까지
-처리합니다. 이 저장소 전용이 아니라 어떤 저장소에서든 쓸 수 있습니다.
-
-```
-> /omb:release patch
-> /omb:release minor
-> /omb:release 2.0.0
-> /omb:release --dry-run     # 미리보기만, 아무것도 쓰지 않음
-```
-
-#### `/omb:cron` — 예약 작업
-
-시스템 crontab을 통해 반복 실행되는 Claude Code 작업을 등록·조회·중지합니다.
-
-```
-> /omb:cron --status
-```
-
-### Codex 연동
-
-다른 모델의 의견을 받기 위한 [OpenAI Codex CLI](https://github.com/openai/codex) 선택 연동입니다.
-
-| 명령 | 하는 일 |
-|------|---------|
-| `/omb:codex` | 디스패처 — 아래 서브커맨드로 라우팅 |
-| `/omb:codex-review` | 로컬 git 상태 코드 리뷰 |
-| `/omb:codex-adv-review` | 가정·실패 모드·엣지 케이스를 파고드는 적대적 리뷰 |
-| `/omb:codex-run <task>` | Codex CLI에 작업 위임 |
-
-```
-> /omb:codex-review
-> /omb:codex-adv-review        # PR 전에 한 번은 강력 추천
-> /omb:codex-run 인증 미들웨어를 JWT에서 OAuth2로 리팩토링
-```
-
-Codex는 `omb init` 대화형 설문에서 활성화하거나, `.claude/settings.local.json`의 `env` 객체에
-`"OMB_USE_CODEX": "1"`을 추가해 켭니다. `omb update`는 이미 활성화된 Codex CLI를 갱신할 뿐,
-새로운 활성화 경로가 아닙니다.
-
-#### `--codex` 플래그 — 플래닝 워크플로 저작 위임
-
-플래닝 계열 워크플로 4종은 호출 단위 `--codex` 플래그를 지원합니다. 플래그가 붙으면 각
-워크플로의 **산출물 저작**만 Codex CLI에 위임하고, 평가 루프·합의 집계·오케스트레이션은
-그대로 Claude가 수행합니다.
-
-| 명령 | Codex가 저작하는 것 |
-|------|--------------------|
-| `/omb:plan --codex <goal>` | 플랜 초안과 P0/P1 개선 재작성 |
-| `/omb:fix --codex <bug>` | 버그 수정 플랜 본문 — 분석 에이전트와 포맷 게이트는 Claude 유지 |
-| `/omb:plan-review --codex <plan>` | Codex 적대 리뷰어 강제 포함 + P0/P1 수정 저작 |
-| `/omb:goal --codex <goal>` | PLAN·PLAN_REVIEW 두 phase에만 플래그 전파 |
-
-`--codex`는 `OMB_USE_CODEX` 스위치와 preflight 게이트를 우회하지 않고 합성됩니다. Codex가
-미설치·비활성이거나 실행이 실패하면 `Codex unavailable ({reason}) — falling back to Claude`
-한 줄 공지 후 Claude 단독 경로로 계속합니다 (중단 없음).
-
-```
-> /omb:plan --codex LangGraph agent에 웹 검색 도구 추가
-> /omb:goal --codex 결제 웹훅 재시도 로직 추가
-```
-
-## 업데이트 / 제거
+Claude Code에서는 `/omb:<name>`, Codex에서는 같은 스킬을 `$omb-<name>`으로 호출합니다.
+
+<details open>
+<summary><strong>계획·구현·검증</strong></summary>
+
+| 명령 | 역할 |
+|---|---|
+| `/omb:goal` | interview → plan → review → run → verify → doc → pr 자율 실행과 결정 기록 |
+| `/omb:interview` | 다차원 요구사항 인터뷰 |
+| `/omb:brainstorming` | 설계 전에 한 번에 한 질문씩 의도를 구체화 |
+| `/omb:plan` | 평가 → 개선 루프를 거치는 구현 계획(`--worktree`, `--codex`) |
+| `/omb:plan-review` | P0~P3 채점을 포함한 멀티 에이전트 계획 리뷰 |
+| `/omb:run` | TDD를 강제하며 도메인 에이전트로 계획 실행 |
+| `/omb:verify` | 정적 분석, 테스트, 멀티 에이전트 합의, P0/P1 자동 수정 |
+| `/omb:fix` | git 이력 분석과 재현 절차에 근거한 최소 패치 계획 |
+| `/omb:refactoring` | 아키텍처 분석을 포함한 동작 보존 리팩터링 파이프라인 |
+| `/omb:architect` | 여러 주제를 병렬로 분석하고 합의 점수를 매기는 아키텍처 분석 |
+
+</details>
+
+<details>
+<summary><strong>리뷰·PR·릴리스</strong></summary>
+
+| 명령 | 역할 |
+|---|---|
+| `/omb:pr` | 브랜치 검증, 린트 게이트, 구조화된 PR 생성 |
+| `/omb:pr-watch` | CI 수정과 모든 리뷰 스레드·코멘트 처리를 백그라운드로 진행하고 판정에서 멈춤 |
+| `/omb:review-pr` | 원래 요청에 비추어 PR diff를 리뷰하고 근거 코멘트 게시 |
+| `/omb:ultra-review` | PR이나 로컬 작업을 깊이 리뷰하고 수정·스레드 처리까지 진행 |
+| `/omb:lint-check` | 변경 파일로 스택을 감지해 맞는 린터 실행 |
+| `/omb:release` | 버전 올림, 변경 기록, 태그, GitHub Release. 다른 저장소에서도 사용 가능 |
+| `/omb:issue` | 병렬 탐색으로 코드베이스를 스캔하고 투표를 통과한 항목만 이슈로 등록 |
+| `/omb:issue-maintainer` | 기존 이슈 한 묶음을 통합·정리하고 중단 시 조건부 복구 |
+
+</details>
+
+<details>
+<summary><strong>지식·문서·프로젝트 설정</strong></summary>
+
+| 명령 | 역할 |
+|---|---|
+| `/omb:setup` | `.omb/` 생성, `AGENTS.md`와 `CLAUDE.md` 브리지 작성, `settings.json` 설정 |
+| `/omb:deep-setup` | 기존 프로젝트를 분석해 루트·폴더별 `AGENTS.md` 정리 |
+| `/omb:doc` | 카테고리 템플릿에 맞춰 `docs/` 작성·갱신 |
+| `/omb:wiki` | 프로젝트 지식 저장소 `openwiki/` 조회·갱신·검사 |
+| `/omb:explain` | 방금 진행한 작업이나 지정한 주제·파일을 설명(`--page`로 HTML 출력) |
+| `/omb:mermaid` | LangGraph 상태 그래프를 포함한 22종 Mermaid 다이어그램 |
+| `/omb:worktree` | 격리된 worktree 생성·조회·재개·정리 |
+| `/omb:clean` | 끝난 worktree 제거와 merge 근거가 있는 브랜치 삭제 |
+| `/omb:harness` | 에이전트·스킬·훅·규칙 생성·검증·수정(`--verify`, `--fix`) |
+| `/omb:prompt-guide` · `/omb:prompt-review` | 프롬프트 작성 가이드와 평가 → 수정 루프 |
+
+</details>
+
+<details>
+<summary><strong>두 번째 의견: Codex와 Herdr</strong></summary>
+
+| 명령 | 역할 |
+|---|---|
+| `/omb:codex-review` | Codex CLI로 로컬 git 상태 리뷰 |
+| `/omb:codex-adv-review` | 가정·실패 모드·엣지 케이스를 겨냥한 적대적 리뷰 |
+| `/omb:codex-run <작업>` | Codex CLI에 작업 위임 |
+| `/omb:herdr --codex <요청>` | 새 [Herdr](https://herdr.dev) 탭에서 요청을 실행하고 결과 회수 후 탭 종료 |
+| `/omb:herdr-review` · `/omb:herdr-verify` | 새 Herdr 탭에서 계획·코드 독립 리뷰 또는 요구사항 검증 |
+| `/omb:herdr-cronjob` | 전용 Pane과 로그를 가진 Codex·Claude CLI 정기 실행 |
+
+Codex 위임에는 설치·인증된 Codex CLI와 `.claude/settings.local.json`의 `"OMB_USE_CODEX": "1"`(또는 `omb init` 설문에서 활성화)이 필요합니다. Codex가 없거나 실패하면 전환 사실을 알리고 Claude로 계속 진행합니다. Herdr 스킬은 Herdr 프로젝트 탭 안에서 실행합니다.
+
+</details>
+
+## 세션이 끝나도 남는 메모리
+
+다음 세션과 다음 팀원이 이 프로젝트의 작업 방식을 다시 듣지 않아도 알 수 있어야 합니다.
 
 ```bash
-omb update      # 바이너리 업데이트 및 하네스 파일 갱신
-omb init        # 하네스 파일만 재설치
-omb uninstall   # 바이너리와 하네스 파일 제거
+omb memory init   --root /absolute/project
+omb memory status --root /absolute/project --host claude   # 또는 codex
 ```
 
-## 요구 사항
+활성화한 뒤에는 이렇게 말하면 됩니다.
 
-- [Claude Code](https://docs.anthropic.com/en/docs/claude-code)
-- Python 3.12+
-- macOS, Linux, Windows
-- `git`, 그리고 PR·이슈·릴리스 워크플로우를 쓰려면 `gh`
+> 기억해줘. 공개 API를 바꾸면 프론트엔드 소비자와 계약 테스트도 확인해.
 
-## 체인지로그
+메모리 스킬은 같은 차례에서 기존 기억을 읽고, 새 지침을 병합해 저장한 뒤 다시 읽어 확인합니다. 요청의 의미는 에이전트가 판단하고, 형식·크기 한도·revision은 CLI가 검증합니다.
 
-릴리스 이력은 [CHANGELOG.md](./CHANGELOG.md)를 참고하세요.
+- **핵심은 짧게, 상세는 필요할 때.** `.omb-memory/MEMORY.md`는 우선순위와 교정을 60줄·4,000자 한도 안에 담습니다. 구체적인 절차는 `knowledge/<category>/<topic>.md`에 두고 관련 있을 때만 읽습니다.
+- **Git으로 공유.** `.omb-memory/`를 다른 파일처럼 커밋합니다. omb는 자동으로 커밋하거나 푸시하지 않습니다.
+- **안전한 수정.** revision 확인, 잠금, 복구 저널로 동시 수정을 보호합니다. 직접 편집하거나 merge한 뒤에는 `omb memory check --root /absolute/project`를 실행하세요.
+- **벡터 DB 불필요.** 메모리와 `openwiki/` 지식 저장소를 로컬에서 검색합니다.
+
+```bash
+omb context search "authentication" --root /absolute/project
+omb context build  "authentication" --root /absolute/project --workflow plan
+```
+
+## CLI 레퍼런스
+
+| 명령 | 용도 |
+|---|---|
+| `omb install [path]` / `omb init [path]` | 프로젝트에 하네스 설치 |
+| `omb update [path]` | 바이너리 갱신과 하네스 파일 새로고침 |
+| `omb uninstall` | 하네스 파일과 바이너리 제거(`--dry-run`, `--keep-binary`, `--project-dir`) |
+| `omb version` | 설치 버전 확인 |
+| `omb memory <sub>` | 운영 메모리 초기화·조회·검색·갱신·검증 |
+| `omb context search\|build\|status` | wiki·메모리 검색, 워크플로우 컨텍스트 번들 생성과 재사용 확인 |
+| `omb spec lint --root [path]` | `docs/specs/` 구조·링크·상태 전이 점검(선택, 작업을 막지 않음) |
+| `omb openwiki-install --root [path]` | OpenWiki와 Claude·Codex 호스트 연동 설치 |
+| `omb openwiki-read <sub>` | wiki 검색·요약·검사·최신성 확인 |
+| `omb update-gitignore` | 하네스 `.gitignore` 블록 다시 적용 |
+| `omb hook-stats` | 훅 실행 시간과 실패 통계 |
+
+## 설정
+
+값은 셸 환경 → `.claude/settings.local.json` → `.claude/settings.json` 순서로 적용됩니다.
+
+| 변수 | 용도 |
+|---|---|
+| `OMB_DOCUMENTATION_LANGUAGE` | 응답과 문서 언어(`en` / `ko`). 코드·프롬프트·커밋은 영어 유지 |
+| `OMB_USE_CODEX` | Codex CLI 위임과 리뷰 활성화 |
+| `OMB_ORM_BACKEND` | DB 작업 ORM: `tortoise`(기본) 또는 `sqlalchemy` |
+| `OMB_INIT_CONFIRM` | 설치 확인 동작: `never`(기본) 또는 `always` |
+| `OMB_DEBUG` | `1`이면 `.omb/logs/`에 진단 로그 기록 |
+
+## 설치
+
+### 요구 사항
+
+- 설치·인증된 [Claude Code](https://docs.anthropic.com/en/docs/claude-code) 또는 [Codex](https://github.com/openai/codex)
+- `git`, 그리고 PR·이슈·릴리스 워크플로우용으로 인증된 [`gh`](https://cli.github.com)
+- OpenWiki 지식 저장소를 쓴다면 Node.js와 npm
+
+### 수동 다운로드
+
+| 플랫폼 | 바이너리 |
+|---|---|
+| macOS (Apple Silicon) | [`oh-my-braincrew-v1.2.1-darwin-arm64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
+| Linux (x86_64) | [`oh-my-braincrew-v1.2.1-linux-amd64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
+| Windows (x86_64) | [`oh-my-braincrew-v1.2.1-windows-amd64.exe`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
+
+릴리스마다 `harness-vX.Y.Z.tar.gz`(`omb install`이 설치하는 하네스), `.sha256` 파일, `checksums-sha256.txt`가 함께 올라갑니다. 직접 내려받았다면 실행 전에 확인하세요.
+
+```bash
+shasum -a 256 -c checksums-sha256.txt --ignore-missing
+```
+
+### 설치·업데이트가 건드리는 파일
+
+- **갱신:** omb 소유 경로만 갱신합니다. `.claude/skills/omb*/`, `.claude/agents/omb/`, `.claude/hooks/omb/`, `.claude/commands/omb/`, `.claude/rules/**`, 그리고 `.agents/skills/`·`.Codex/` 아래 생성되는 Codex 파일입니다.
+- **보존:** `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json`, 직접 만든 에이전트·스킬, `.claude/rules/custom/`은 그대로 둡니다.
+- 설치된 하네스 파일은 `.gitignore`에 추가됩니다. `.omb-memory/`와 프로젝트 지침은 커밋 대상입니다.
+
+### 업데이트와 제거
+
+```bash
+omb update                # 새 바이너리와 하네스 갱신
+omb uninstall --dry-run   # 제거될 항목 미리 보기
+omb uninstall             # 하네스 파일과 바이너리 제거
+```
+
+### 문제 해결
+
+- **`omb: command not found`**: `~/.local/bin`을 `PATH`에 추가하세요.
+- **macOS에서 실행이 차단됨**: `xattr -d com.apple.quarantine ~/.local/bin/oh-my-braincrew`를 실행하세요.
+- **설치·업데이트 후 스킬이 보이지 않음**: Claude Code나 Codex 세션을 다시 시작하세요.
+
+## 변경 기록
+
+버전별 릴리스 노트는 [CHANGELOG.md](CHANGELOG.md)와 [Releases](https://github.com/braincrew-lab/oh-my-braincrew-release/releases) 페이지에 있습니다.
 
 ## 라이선스
 
-Braincrew Internal Use Only.
+**Braincrew Internal Use Only.** 이 저장소는 빌드된 바이너리와 하네스 tarball을 배포하며, 소스는 비공개 저장소에 있습니다. 브레인크루 주식회사가 서면으로 승인한 사용자만 쓸 수 있습니다. 전체 조건은 [LICENSE](LICENSE)를 참고하세요.
