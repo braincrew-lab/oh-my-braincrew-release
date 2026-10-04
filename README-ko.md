@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/hero.svg" alt="oh-my-braincrew: 코딩 에이전트를 엔지니어링 팀으로" width="100%">
+<img src="assets/hero-ko.svg" alt="oh-my-braincrew: 코딩 에이전트를 엔지니어링 팀으로" width="100%">
 
 <br>
 
@@ -76,7 +76,7 @@ omb install        # `omb init`의 별칭
 ## 동작 방식
 
 <p align="center">
-  <img src="assets/architecture.svg" alt="Claude Code나 Codex에서 워크플로우를 호출하면 하네스가 스킬, 전문 에이전트, 경로별 규칙, 라이프사이클 훅을 거쳐 격리된 worktree, 리뷰된 계획, 검증된 diff, PR을 만듭니다." width="100%">
+  <img src="assets/architecture-ko.svg" alt="Claude Code나 Codex에서 워크플로우를 호출하면 하네스가 스킬, 전문 에이전트, 경로별 규칙, 라이프사이클 훅을 거쳐 격리된 worktree, 리뷰된 계획, 검증된 diff, PR을 만듭니다." width="100%">
 </p>
 
 | 계층 | 역할 | 위치 |
