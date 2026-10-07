@@ -271,9 +271,9 @@ Values resolve in this order: shell environment → `.claude/settings.local.json
 
 | Platform | Binary |
 |---|---|
-| macOS (Apple Silicon) | [`oh-my-braincrew-v1.2.1-darwin-arm64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
-| Linux (x86_64) | [`oh-my-braincrew-v1.2.1-linux-amd64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
-| Windows (x86_64) | [`oh-my-braincrew-v1.2.1-windows-amd64.exe`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
+| macOS (Apple Silicon) | [`oh-my-braincrew-v1.3.1-darwin-arm64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
+| Linux (x86_64) | [`oh-my-braincrew-v1.3.1-linux-amd64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
+| Windows (x86_64) | [`oh-my-braincrew-v1.3.1-windows-amd64.exe`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
 
 Each release also ships `harness-vX.Y.Z.tar.gz` (the harness that `omb install` lays down), its `.sha256` sidecar, and `checksums-sha256.txt`. Verify a manual download before running it:
 
