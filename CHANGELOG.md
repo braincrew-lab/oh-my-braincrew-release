@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-10-20
+
+### Fixed
+- accept herdr 0.9.5 or newer
+
+### Improved
+- make version gate public and refuse pre-releases
+
+### Documentation
+- re-anchor installer stop rows after the version gate change
+
+### Maintenance
+- Merge pull request #387 from braincrew-lab/fix/herdr-min-version
+- Merge pull request #386 from braincrew-lab/fix/release-smoke-legacy-preserve
+
+
+
 ## [1.4.0] - 2026-10-20
 
 ### Added
