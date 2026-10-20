@@ -5,6 +5,119 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-10-20
+
+### Added
+- add scheduler self-healing and supervision coordinator
+- add goal merge completion and watch detection
+- add goal-run record and workflow session foundation
+- add autonomy workflow contracts
+
+### Fixed
+- expect preserved legacy codex copies in release smoke test
+- make the destructive-migration check a keyword tripwire
+- catch owned, extension and multi-line column drops
+- flag database drops and bound ultra-goal event files
+- hash the reply as GitHub stored it in the failed-read fallback
+- keep a conservative fingerprint when the post-reply read fails
+- fingerprint threads against the pre-call state
+- adopt only own marked comments, pin effect fingerprints
+- journal marked comments and bound body reads
+- keep the watch's own resolution out of fresh evidence
+- close four review gaps in roadmap and watch evidence
+- post each outbox payload from its own file
+- read the boot id before the darwin start probe
+- refuse state writes that predate a stop or handover
+- run begin as one lease-guarded section
+- decide every end mutation under the lease guard
+- leave a lease alone when end saw no state directory
+- hold the lease guard across creation, end and rollback
+- guard pr-watch lease release and refuse a changed job_id
+- delete the merged branch by compare-and-swap on GitHub
+- delete only when origin pushes to the recorded repository
+- delete the merged branch only under a ref lease
+- resume goal runs on fresh evidence of ended watch
+- clear the stale session binding when resume takes over
+- verify checkout identity on adoption; watch new evidence
+- require the run's git common dir in checkout-preflight
+- bind preflight path, keep budget marker, gate effects
+- validate adoption ownership and fresh review evidence
+- judge only complete migration patches, cap progress resets
+- hash preserved files in chunks and re-anchor stop inventory
+- keep force-tracked ignored deletions out of seeding
+- bound report reads, restart empty panes, cap lookup
+- launch added-repository runs in their own checkout
+- fingerprint watch evidence and bound its read budget
+- resume an ended standalone watch on fresh PR evidence
+- keep a present agent with unknown status alive
+- keep finished turns alive and pin re-resolution flow
+- close verify findings on merge, diagnosis and effect gate
+- classify protected-folder warning anchors (bundle 5)
+- make prune stat test independent of pathlib internals (bundle 3)
+- re-anchor stop inventory rows moved by the review fixes
+- warn on root-anchored gitignore rules that hide negations
+- pin checkout identity and base across prepare
+- decode evidence paths throughout retrieval
+- decode evidence paths and accept large recovery grants
+- pin the prepared base on every route and tolerate a stale fetch refspec
+- recheck excludes against the origin base and fetch the default branch
+- settle checkout failures on origin base and backfill excludes on every route
+- accept base in the worktree-add test stub
+- read the live origin default and recheck before ff
+- re-append negations listed before their positive rule
+- keep exclude negations effective and repeat stash restore warnings
+- align CI fixtures with checkpoint safeguards
+
+### Improved
+- remove duplicate reviews and regenerate compat
+
+### Documentation
+- republish pages for the migration tripwire and bounded event read
+- document the destructive-migration tripwire limits
+- republish pages for the failed-read reply fingerprint
+- republish pages after roadmap and watch evidence fixes
+- republish pages after outbox payload fix
+- republish pages after state-generation and observe fixes
+- republish pages after lease guard and roadmap identity fixes
+- republish pages after branch cleanup and supervision fixes
+- republish pages after adoption and review-identity fixes
+- republish pages after migration and progress-budget fixes
+- republish pages after chunked hash and inventory fix
+- republish pages after seed deletion fix
+- republish pages after review-fix commits
+- correct re-anchored goal and delegation claims
+- republish pages for autonomy self-healing
+- record 2026-10-17-autonomy-self-healing interview
+- republish checkout pages after inventory re-anchor
+- republish installation page for anchored ignore warning
+- republish checkout preparation pages after review fixes
+- republish checkout preparation pages after merging main
+- refresh decoded evidence retrieval claims
+- refresh recovery and evidence validation claims
+- republish checkout preparation and exclude behavior after review fixes
+- republish checkout default and fast-forward recheck
+- republish exclude negation ordering after review fix
+- republish checkout and exclude pages after review fixes
+- publish ultra-goal checkout preparation and exclude defaults
+- document ultra-goal checkout preparation and exclude-based ignores
+- publish ultra-goal checkout preparation and exclude defaults
+- record 2026-10-14-ultra-goal-dirty-checkout-halt interview
+- refresh checkpoint recovery evidence
+
+### Maintenance
+- Merge pull request #386 from braincrew-lab/fix/release-smoke-legacy-preserve
+- Merge pull request #383 from braincrew-lab/feat/autonomy-self-healing
+- give the existing-issue fixture row an author
+- pin resolution history and merge head in re-resolution test
+- Merge pull request #379 from braincrew-lab/fix/ultra-goal-dirty-checkout-halt
+- merge main into fix/ultra-goal-dirty-checkout-halt
+- Merge pull request #381 from braincrew-lab/fix/ultra-goal-large-recovery-receipts
+- Merge remote-tracking branch 'refs/remotes/omb-base/3159399f2a7e728bd18ade4a32702025df5fb1ff6f44ce2624f029a7e50e8c83/main' into fix/ultra-goal-dirty-checkout-halt
+- checkpoint before Herdr Verify
+- Merge pull request #377 from braincrew-lab/fix/ultra-goal-checkpoint-adoption
+
+
+
 ## [1.3.1] - 2026-10-07
 
 ### Fixed
