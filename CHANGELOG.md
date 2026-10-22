@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.2] - 2026-10-22
+
+### Fixed
+- require a precedent row for every changed endpoint
+- add auth to api precedent table and pair veto test domains
+
+### Documentation
+- publish api and db plan design gates
+
+### Maintenance
+- Merge pull request #391 from braincrew-lab/docs/openwiki-api-db-plan-gates
+- Merge pull request #388 from braincrew-lab/feat/api-db-naming-plan-gates
+- checkpoint before Herdr Verify
+
+
+
 ## [1.4.1] - 2026-10-20
 
 ### Fixed
