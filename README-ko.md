@@ -26,14 +26,6 @@
 > /omb:goal 결제 웹훅에 재시도 로직 추가
 ```
 
-## v1.4.4 새 소식
-
-- **`/omb:goal --merge`가 merge까지 끝납니다.** `goal-run merge`가 매번 `checks-unstable`로 실패하던 문제를 고쳤습니다. PR watch가 안정으로 판정한 snapshot을 merge 확인에 그대로 쓰고, merge 결과를 run 기록에 남깁니다.
-- **`/omb:ultra-goal`이 사람의 merge를 기다리는 단위를 제대로 표시합니다.** 해당 단위를 `waiting_human`으로 두고 알린 뒤, merge가 이루어지면 대기를 풀고 완료로 기록합니다.
-- **작업 중인 goal 세션을 다시 띄우지 않습니다.** merge가 막힌 단위를 손으로 재개해도 agent가 아직 작업 중이면 세션을 재시작하지 않습니다.
-
-전체 내용: [v1.4.4 릴리스](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/tag/v1.4.4) · [CHANGELOG.md](CHANGELOG.md)
-
 ## omb를 쓰는 이유
 
 | 에이전트 단독 | omb와 함께 |
@@ -137,7 +129,8 @@ flowchart LR
 
 인터뷰가 끝나면 진행 여부를 한 번만 승인합니다. 이후 파이프라인은 interview → plan → plan-review → run → verify → doc → pr을 추가 질문 없이 이어가고, 단계가 실패하면 그 단계를 재시도합니다.
 
-- 항상 자체 git worktree에서 작업하며 merge하지 않습니다. PR이 열리면 끝납니다.
+- 항상 자체 git worktree에서 작업합니다. PR을 연 뒤에는 실패한 CI를 고치고 리뷰 댓글에 답합니다.
+- `--merge`를 주지 않으면 merge하지 않습니다. `--merge`를 주면 watch가 끝난 뒤 `goal-run merge`가 watch가 안정으로 판정한 snapshot으로 아홉 조건을 다시 확인하고, 모두 참일 때만 병합합니다.
 - 자율 구간에서 내린 결정은 결정 기록에 남기고 PR 본문에 첨부합니다.
 
 모든 변경에 전체 파이프라인이 필요하지는 않습니다. `/omb:plan`은 먼저 필요성을 판단하므로 파일 하나를 고치는 데 리뷰어 열두 명을 부르지 않습니다.
@@ -152,6 +145,7 @@ Claude Code에서는 `/omb:<name>`, Codex에서는 같은 스킬을 `$omb-<name>
 | 명령 | 역할 |
 |---|---|
 | `/omb:goal` | interview → plan → review → run → verify → doc → pr 자율 실행과 결정 기록 |
+| `/omb:ultra-goal` | 여러 PR 로드맵을 한 번 승인하면 예약된 coordinator가 단위 PR을 차례로 실행·watch·merge. 사람 merge가 필요한 단위는 `waiting_human`으로 대기하며 허브 이슈에 한 번 알리고, 사람이 PR을 merge하면 다음 단위로 넘어감. merge가 막힌 단위는 PR에 새 커밋이나 답글이 생기면 다시 시도하고, `resume <job> --unit <NN>`으로 어느 대기든 직접 풀 수 있음 |
 | `/omb:interview` | 다차원 요구사항 인터뷰 |
 | `/omb:brainstorming` | 설계 전에 한 번에 한 질문씩 의도를 구체화 |
 | `/omb:plan` | 평가 → 개선 루프를 거치는 구현 계획(`--worktree`, `--codex`) |

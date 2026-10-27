@@ -26,14 +26,6 @@ You describe a goal. The harness interviews you, writes a plan anchored to real 
 > /omb:goal add retry logic to the payment webhook
 ```
 
-## What's new in v1.4.4
-
-- **`/omb:goal --merge` now finishes the merge.** `goal-run merge` no longer fails every time with `checks-unstable`: it reuses the snapshot the PR watch already judged stable and records the merge result in the run record.
-- **`/omb:ultra-goal` marks units that wait on a human merge.** Such a unit is set to `waiting_human` with a notice, then released and recorded as complete once the merge lands.
-- **A goal session that is still working is not restarted.** Resuming a merge-blocked unit by hand no longer relaunches a session whose agent is mid-turn.
-
-Full notes: [v1.4.4 release](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/tag/v1.4.4) · [CHANGELOG.md](CHANGELOG.md)
-
 ## Why omb
 
 | Agent on its own | Agent with omb |
@@ -137,7 +129,8 @@ flowchart LR
 
 After the interview you answer one go/no-go gate. From there the pipeline runs interview → plan → plan-review → run → verify → doc → pr without further prompts, retrying each phase on failure.
 
-- It always works in its own git worktree and never merges. The run ends when a PR is open.
+- It always works in its own git worktree. After the PR opens, it fixes failing CI and answers review comments.
+- It does not merge unless you pass `--merge`. With `--merge`, `goal-run merge` rechecks nine conditions after the watch ends, reusing the snapshot the watch judged stable, and merges only when all of them hold.
 - Decisions it makes on its own are written to a decision log and attached to the PR body.
 
 Not every change needs the full pipeline. `/omb:plan` starts with a necessity gate, so a one-file edit does not summon twelve reviewers.
@@ -152,6 +145,7 @@ Claude Code uses `/omb:<name>`. Codex calls the same skills as `$omb-<name>`.
 | Command | What it does |
 |---|---|
 | `/omb:goal` | Autonomous interview → plan → review → run → verify → doc → pr, with a decision log |
+| `/omb:ultra-goal` | Multi-PR roadmap: one approval, then a scheduled coordinator runs, watches, and merges each unit PR. A unit whose merge needs a person waits as `waiting_human`, gets one notice on the hub issue, and moves on once you merge the PR. A blocked merge is retried when the PR gets new commits or replies, and `resume <job> --unit <NN>` releases any wait by hand |
 | `/omb:interview` | Multi-dimensional requirements interview |
 | `/omb:brainstorming` | One question at a time, to sharpen intent before any design |
 | `/omb:plan` | Implementation plan with an evaluate → improve loop (`--worktree`, `--codex`) |
