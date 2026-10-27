@@ -26,6 +26,14 @@
 > /omb:goal 결제 웹훅에 재시도 로직 추가
 ```
 
+## v1.4.4 새 소식
+
+- **`/omb:goal --merge`가 merge까지 끝납니다.** `goal-run merge`가 매번 `checks-unstable`로 실패하던 문제를 고쳤습니다. PR watch가 안정으로 판정한 snapshot을 merge 확인에 그대로 쓰고, merge 결과를 run 기록에 남깁니다.
+- **`/omb:ultra-goal`이 사람의 merge를 기다리는 단위를 제대로 표시합니다.** 해당 단위를 `waiting_human`으로 두고 알린 뒤, merge가 이루어지면 대기를 풀고 완료로 기록합니다.
+- **작업 중인 goal 세션을 다시 띄우지 않습니다.** merge가 막힌 단위를 손으로 재개해도 agent가 아직 작업 중이면 세션을 재시작하지 않습니다.
+
+전체 내용: [v1.4.4 릴리스](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/tag/v1.4.4) · [CHANGELOG.md](CHANGELOG.md)
+
 ## omb를 쓰는 이유
 
 | 에이전트 단독 | omb와 함께 |

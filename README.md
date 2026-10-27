@@ -26,6 +26,14 @@ You describe a goal. The harness interviews you, writes a plan anchored to real 
 > /omb:goal add retry logic to the payment webhook
 ```
 
+## What's new in v1.4.4
+
+- **`/omb:goal --merge` now finishes the merge.** `goal-run merge` no longer fails every time with `checks-unstable`: it reuses the snapshot the PR watch already judged stable and records the merge result in the run record.
+- **`/omb:ultra-goal` marks units that wait on a human merge.** Such a unit is set to `waiting_human` with a notice, then released and recorded as complete once the merge lands.
+- **A goal session that is still working is not restarted.** Resuming a merge-blocked unit by hand no longer relaunches a session whose agent is mid-turn.
+
+Full notes: [v1.4.4 release](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/tag/v1.4.4) · [CHANGELOG.md](CHANGELOG.md)
+
 ## Why omb
 
 | Agent on its own | Agent with omb |
