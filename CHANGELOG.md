@@ -5,6 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.5] - 2026-10-29
+
+### Fixed
+- read answer ownership from viewerDidAuthor
+- keep goal autonomous and make GitHub the only answer record
+- recover a pr-watch reply posted before its lease was lost
+- clear gh_failures when a pr-watch run ends resumably
+- refuse pr-watch state writes from a session without the lease
+- retry the supervisor claim read that races the publish
+- apply an explicit update --apply-from archive as given
+- satisfy pyright in pr-watch and cronjob evidence tests
+
+### Improved
+- retire ultra-goal and Electron harness surfaces
+- simplify goal pipeline and add codex-exec wrapper
+
+### Documentation
+- describe the GitHub answer record and realign evidence
+- check wiki evidence before each pr-watch push
+- describe the pr-watch state-write lease check
+- realign standalone launch test evidence
+- realign update.py evidence after the apply-from fix
+- cite D-033 body line instead of blank line
+- add SPEC-001 and the simplification roadmap
+- update docs and openwiki for the simplified goal harness
+- record 2026-10-27-simplify-goal-doc-harness interview
+- describe ultra-goal merge waits in place of release summary
+
+### Maintenance
+- Merge pull request #394 from braincrew-lab/refactor/simplify-goal-doc-harness
+- cover reply thread repository and comment paging
+- add TLA+ sanity, deadlock and three-session checks
+- mirror the resumable-end state write in both models
+- prove the pr-watch lease properties in Lean for any session count
+- add the pr-watch lease TLA+ model and a drift guard
+- add fake-run QC suite and qc-smoke script
+- Merge pull request #393 from braincrew-lab/docs/readme-latest-release
+
+
+
 ## [1.4.4] - 2026-10-27
 
 ### Fixed
