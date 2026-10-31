@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-10-31
+
+### Added
+- require plain one-at-a-time questions without metaphors
+
+### Fixed
+- address ultra-review findings on update output
+- reject symlinked marker directory during cleanup
+- close layered verification leaks in the fix loop
+- extend PR diagram quoting to erDiagram labels
+- close ultra-review gaps in budget and integrity checks
+- repeat cross-review after a candidate-changing re-run and route reproduction tests by runner
+- keep veto reviewers and refactoring depth under planning levels
+- realign omb-interview OpenWiki claims after rule insertion
+- keep review requests out of write-capable task mode
+
+### Documentation
+- realign installation claims after update output fixes
+- document update lock and skip conditions
+- record update lock and symlink hardening
+- realign goal VERIFY cross-review Claims after review fix
+- document omb-verify levels and goal VERIFY high
+- document planning levels for plan, plan-review and goal
+
+### Maintenance
+- Merge pull request #400 from braincrew-lab/feat/omb-update-output-ux
+- checkpoint before Herdr Verify
+- checkpoint before Herdr Verify
+- checkpoint before Herdr Verify
+- checkpoint before Herdr Verify
+- Merge pull request #398 from braincrew-lab/feat/omb-verify-levels
+- give the PowerShell contract test a cold-start budget
+- Merge pull request #399 from braincrew-lab/feat/pr-body-visual-explanation
+- checkpoint before Herdr Verify
+- pin medium+ requirement row grading
+- checkpoint before Herdr Verify
+- checkpoint before Herdr Verify
+- Merge pull request #397 from braincrew-lab/feat/plan-review-levels
+- Merge remote-tracking branch 'refs/remotes/omb-base/3159399f2a7e728bd18ade4a32702025df5fb1ff6f44ce2624f029a7e50e8c83/main' into feat/plan-review-levels
+- checkpoint before Herdr Verify
+- Merge pull request #395 from braincrew-lab/refactor/consolidate-codex-skill
+- Merge pull request #396 from braincrew-lab/feat/interview-plain-single-question
+
+
+
 ## [1.4.5] - 2026-10-29
 
 ### Fixed
