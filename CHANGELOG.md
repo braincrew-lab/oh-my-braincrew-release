@@ -5,6 +5,99 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2026-11-01
+
+### Added
+- retire listed harness paths
+
+### Fixed
+- align update output references with the item-level summary
+- keep harness item keys posix and lock in flag pass-through
+- name changed items and harness source in update output
+- replace legacy omb agent entries outside the managed block
+- satisfy repository-wide pyright in retirement tests
+- align main's new tests and docs with the retirement result
+- stop omb-run on a plan row naming a missing skill
+- deliver the security owner to the cronjob entry
+- show the Depends case of the Prohibited rule in api-implement
+- name domain exceptions in the owner rule line
+- deliver pr-body owner to git-commit in PR mode
+- restore the one-caller bullet in coding principles
+- pin git locale and environment in retirement
+- bind seed import before handling its error
+- keep injected text out of reports
+- restore wiki modes in the omb router
+
+### Improved
+- finish naming, pattern and git owner cuts
+- state role boundaries in implement roles
+- merge infra and mermaid roles and retire unused skill
+- trim implement roles to their own duties
+- move omb-plan prompts to rules
+- move omb-run branch detail to references
+- move pr-watch recovery detail to references
+- trim core roles
+- trim harness and security roles
+- trim ui and infra roles
+- trim backend roles
+- merge explorers
+- merge domain orchestration
+- compress doc templates
+- trim explain examples
+- trim setup reference
+- trim tdd teaching
+- trim generic rubric items
+- merge ci generators
+- remove lsp aliases
+- merge prompt skills
+- trim langchain references
+- shrink mermaid skill
+- replace react catalogs with criteria
+- define resident core
+- merge worktree and hook owners
+- record taste-based recommendations
+- move tool rules to owners
+- merge security owner
+- merge infra owners
+- merge ai owners
+- merge ui owners
+- move streaming rules to skill
+- merge db owners
+- merge api rules into owners
+- consolidate naming owners
+- deliver owners in role bodies
+- set one precedence owner
+- own fix plan layout in omb-fix
+- move git and delivery rules to owners
+- replace generic workflow rules
+- define content labels
+
+### Documentation
+- realign codex compat claims and restore the legacy agent behavior
+- refresh evidence for shifted update-output claims
+- realign update output claims after review fixes
+- describe item-level update output and harness source line
+- realign codex compat claims after legacy agent fix
+- realign claims after harness lightening
+- refresh docs left stale by the lightening
+- describe design-patterns after the catalog cut
+- add breaking migration notes
+- move rationale out of resident rules
+- add first-stop decision table
+
+### Maintenance
+- Merge pull request #402 from braincrew-lab/fix/codex-config-legacy-agents
+- take main into fix/codex-config-legacy-agents
+- Merge pull request #403 from braincrew-lab/fix/update-output-clarity
+- Merge pull request #401 from braincrew-lab/refactor/taste-first-harness-lightening
+- Merge branch 'main' into refactor/taste-first-harness-lightening
+- split oversize pr-watch and ultra-review contracts
+- split oversize rule and seed contract files
+- lock delivery and retirement checks
+- Merge remote-tracking branch 'origin/main' into refactor/taste-first-harness-lightening
+
+
+
 ## [1.5.0] - 2026-10-31
 
 ### Added
