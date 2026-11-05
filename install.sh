@@ -73,39 +73,39 @@ download() {
 }
 
 # --- Verify SHA-256 checksum ---
+sha256_of() {
+  if command -v sha256sum &>/dev/null; then
+    sha256sum "$1" | awk '{print $1}'
+  elif command -v shasum &>/dev/null; then
+    shasum -a 256 "$1" | awk '{print $1}'
+  else
+    error "Neither 'sha256sum' nor 'shasum' found. Cannot verify checksum. Install one and retry."
+  fi
+}
+
 verify_checksum() {
   local binary_file="$1"
   local checksum_file="$2"
   local binary_basename
   binary_basename="$(basename "${binary_file}")"
 
-  # Extract the relevant line for this binary only
-  local expected_line
-  expected_line=$(grep "${binary_basename}" "${checksum_file}" 2>/dev/null || true)
+  # Only an entry whose file field is exactly this asset (`<hash>  <name>` or `<hash> *<name>`)
+  # counts; a substring or regex match could select another asset's line.
+  local expected
+  expected=$(awk -v name="${binary_basename}" 'NF == 2 && ($2 == name || $2 == "*" name) { print $1 }' "${checksum_file}")
 
-  if [[ -z "${expected_line}" ]]; then
+  if [[ -z "${expected}" ]]; then
     error "No checksum entry found for '${binary_basename}' in $(basename "${checksum_file}")."
   fi
-
-  # Write a single-line checksum file scoped to the binary
-  local single_check="${TMP_DIR}/single.sha256"
-  echo "${expected_line}" > "${single_check}"
-
-  local old_dir
-  old_dir="$(pwd)"
-  cd "${TMP_DIR}"
-
-  if command -v sha256sum &>/dev/null; then
-    sha256sum -c "${single_check}" --status \
-      || error "SHA-256 checksum mismatch for '${binary_basename}'. Aborting installation."
-  elif command -v shasum &>/dev/null; then
-    shasum -a 256 -c "${single_check}" --status \
-      || error "SHA-256 checksum mismatch for '${binary_basename}'. Aborting installation."
-  else
-    error "Neither 'sha256sum' nor 'shasum' found. Cannot verify checksum. Install one and retry."
+  if [[ "${expected}" == *$'\n'* ]]; then
+    error "Ambiguous checksum entries for '${binary_basename}' in $(basename "${checksum_file}"). Aborting installation."
   fi
 
-  cd "${old_dir}"
+  local actual
+  actual=$(sha256_of "${binary_file}")
+  if [[ "$(printf '%s' "${expected}" | tr 'A-F' 'a-f')" != "${actual}" ]]; then
+    error "SHA-256 checksum mismatch for '${binary_basename}'. Aborting installation."
+  fi
   info "Checksum verified."
 }
 
@@ -124,6 +124,10 @@ main() {
   info "Fetching latest release..."
   local tag
   tag=$(fetch_latest_tag)
+  # The tag becomes part of download URLs and file names; accept only vX.Y.Z (ASCII digits).
+  if ! [[ "${tag}" =~ ^v[0-9]{1,9}\.[0-9]{1,9}\.[0-9]{1,9}$ ]]; then
+    error "Unexpected release tag '${tag}' from ${GITHUB_API}; expected vX.Y.Z."
+  fi
   info "Latest release: ${tag}"
 
   # Expected asset names follow the pattern: oh-my-braincrew-v0.1.4-linux-amd64

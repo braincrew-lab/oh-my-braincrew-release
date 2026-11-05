@@ -5,6 +5,74 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] - 2026-11-05
+
+### Fixed
+- run the pr-watch bundle smoke only on POSIX release builds
+- bind PowerShell checksum mock parameters by name
+- fail closed on release lookup errors, lock build backend, paginate latest check
+- harden publish gate, client trust and CI hygiene
+- narrow optional push result in pr-watch journal test
+- address ultra-review findings on merge gate and pipeline ending
+- realign openwiki claims to moved herdr evidence
+- converge verify rows and pin codex reasoning effort
+- require explicit review clearance
+- stay in kept worktrees and reconcile stale records; refresh wiki claims
+- align remaining EP and P{N} wording with callers and docs
+- unify terminology and emphasis in workflow skills
+- merge the verified base ref, not origin/<base>
+- clear residual rubric findings after re-partition
+- repair defects introduced in cycle 3
+- state that the flaky rerun delays the no-progress budget
+- address ultra-review findings and add live goal checkpoint checks
+- bound verifier reports and restore domain-reviewer placeholder
+- close rubric gaps in waits, spawn bounds and output contracts
+
+### Improved
+- install OMB only from public releases
+- remove omb-qafix; keep worktrees after PR; clean merged PRs from conversation
+- resolve cycle 2 rubric findings (cycle 3)
+- resolve cycle 1 rubric findings (cycle 2)
+- re-partition agents and sharpen skill prompts (cycle 1)
+
+### Documentation
+- describe 1.7.0 changes and upgrade notes
+- refresh release checksum, downgrade and token scope evidence
+- describe public-release-only install and retired source channel
+- refresh pr-watch merge grant, draft gate and stale evidence
+- document post-PR ultra-review, allow-merge gate and Copilot handling
+- document conditional agent skill loading and refresh wiki
+- refresh OpenWiki claims after harness re-partition
+- record goal pipeline hardening under Unreleased
+- align docs and wiki with goal hardening behavior
+
+### Maintenance
+- Merge pull request #417 from braincrew-lab/docs/readme-1-7-0
+- Merge pull request #415 from braincrew-lab/fix/release-pipeline-hardening
+- Merge pull request #414 from braincrew-lab/refactor/public-release-install-only
+- Merge pull request #413 from braincrew-lab/fix/post-review-followups
+- checkpoint before Herdr Verify
+- Merge pull request #412 from braincrew-lab/feat/post-pr-review-merge-pipeline
+- checkpoint before Herdr Verify
+- checkpoint before Herdr Verify
+- checkpoint before Herdr Verify
+- Merge remote-tracking branch 'origin/main' into feat/post-pr-review-merge-pipeline
+- Merge pull request #411 from braincrew-lab/fix/herdr-verify-convergence
+- checkpoint before Herdr Verify
+- checkpoint before Herdr Verify
+- Merge pull request #410 from braincrew-lab/refactor/agent-skill-conditional-loading
+- checkpoint before Herdr Verify
+- checkpoint before Herdr Verify
+- checkpoint before Herdr Verify
+- Merge pull request #409 from braincrew-lab/fix/clean-from-conversation
+- Merge pull request #408 from braincrew-lab/fix/agents-skills-p2-wording
+- Merge pull request #407 from braincrew-lab/fix/agents-skills-residuals
+- Merge pull request #406 from braincrew-lab/refactor/agents-skills-optimization
+- format changed contract tests
+- Merge pull request #404 from braincrew-lab/feat/goal-prompt-hardening
+
+
+
 ## [1.6.0] - 2026-11-01
 
 ### Added

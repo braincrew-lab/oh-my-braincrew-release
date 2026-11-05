@@ -69,15 +69,22 @@ function Confirm-Checksum {
     )
     $binaryBasename = [System.IO.Path]::GetFileName($BinaryPath)
 
+    # Only an entry whose file field is exactly this asset (`<hash>  <name>` or `<hash> *<name>`)
+    # counts; a substring or regex match could select another asset's line.
     $checksumContent = Get-Content $ChecksumFile -ErrorAction Stop
-    $matchLine = $checksumContent | Where-Object { $_ -match [regex]::Escape($binaryBasename) }
+    $matchLines = @($checksumContent | Where-Object {
+        $fields = $_.Trim() -split '\s+'
+        $fields.Count -eq 2 -and ($fields[1] -ceq $binaryBasename -or $fields[1] -ceq "*$binaryBasename")
+    })
 
-    if (-not $matchLine) {
+    if ($matchLines.Count -eq 0) {
         Write-Err "No checksum entry found for '$binaryBasename' in $([System.IO.Path]::GetFileName($ChecksumFile))."
     }
+    if ($matchLines.Count -gt 1) {
+        Write-Err "Ambiguous checksum entries for '$binaryBasename' in $([System.IO.Path]::GetFileName($ChecksumFile)). Aborting installation."
+    }
 
-    # Checksum files use format: <hash>  <filename>
-    $expectedHash = ($matchLine -split '\s+')[0].ToUpper()
+    $expectedHash = ($matchLines[0].Trim() -split '\s+')[0].ToUpper()
 
     $actualHash = (Get-FileHash -Path $BinaryPath -Algorithm SHA256).Hash.ToUpper()
 
@@ -113,6 +120,10 @@ function Invoke-Install {
 
         Write-Info "Fetching latest release..."
         $tag = Get-LatestTag
+        # The tag becomes part of download URLs and file names; accept only vX.Y.Z (ASCII digits).
+        if ($tag -isnot [string] -or $tag -cnotmatch '^v[0-9]{1,9}\.[0-9]{1,9}\.[0-9]{1,9}\z') {
+            Write-Err "Unexpected release tag '$tag' from $GitHubApi; expected vX.Y.Z."
+        }
         Write-Info "Latest release: $tag"
 
         # Use the same versioned asset name as release-binary.yml.
