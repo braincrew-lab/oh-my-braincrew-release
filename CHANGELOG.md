@@ -5,6 +5,306 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2026-11-08
+
+### Added
+- drift-code, a rule change only the code carries
+- retention cadence (memory status nudge, omb-clean after teardown), reclaimable meter, docs
+- omb retention plan|apply|status with index-confirmed, bounded-log deletion
+- age-based run compaction and bounded journals extending logs-purge
+- PostToolUse recall hook counts Read/Grep of memory topic files; wrapper fast path skips the binary for other reads
+- wiki health from omb wiki status (live stale count, max page vs 40 KiB ceiling, contract-page verbatim excerpts) and ceilings for max page size and dangling links
+- dreaming proposes wiki-refresh candidates (refresh verdict, proposal only) and matches wiki and memory by code terms across languages
+- omb wiki status reports live Claim health apart from publication; omb wiki stale-sources lists pages whose cited sources changed since their evidence commit; memory status warns wiki_stale
+- injected chunk view with per-chunk recall signal; SessionStart memory block vs budget, core vs index lines, promote/demote counts
+- dream-candidates proposes promote/demote layer moves and wiki <-> memory boundary moves from recall, verified freshness, hypothesis state and drift
+- 4 KB injected memory budget; root index lists every stable topic with when it applies; overflow moves core items to index lines
+- transcript dream input for notes contradicted by later prompts; index origin-less claude -p prompts (schema 3)
+- --dream-after runs a budgeted /omb:memory update turn in the memory arm, counted in its cost
+- omb:memory update dreaming pass with read-only verifiers, proposal and approval
+- deterministic dreaming candidates, recall counter, dream state and status nudge
+- transcript index metrics and layer ceilings
+- bounded read-only transcript index with evidence-id lookup, retrieval source and teardown indexing
+- learning dispositions after verified post-PR fixes, hypotheses on unresolved runs
+- dated unverified hypothesis topics, labeled in search and metered apart
+- honest recall columns and a drift sequence
+- report legacy stores, memory-field agents and topic evidence
+- initialize the tracked .omb-memory store and retire legacy role memory
+- add CL-Bench-style memory vs stateless eval harness
+- add deterministic memory footprint meter
+- add --detect-only mode and pinned detection eval harness
+- diff-mapped lenses, independent verification, tiered models
+
+### Fixed
+- swallow killpg EPERM only for an exited leader; size the apply test budget
+- pyright 0 on darwin for the #433 tests and pipe salvage typing
+- keep a gh child's zombie-group EPERM out of cleanup
+- settle a child that exits before its identity on Darwin
+- mark vanished sources missing before cap eviction; probe every omb the wrapper may run
+- init refuses a store over the OMB 1.7 caps before writing
+- honor OMB_HOOK_OMB only as an absolute path
+- R7 review P3s for dreaming and the transcript backfill
+- steer hooks with OMB_HOOK_OMB instead of a per-task HOME
+- run the product's hooks on this checkout's omb and refuse build skew
+- keep on-disk indexes byte-identical to OMB 1.7, render the R8 root index at read time
+- fail closed on unreadable inputs, digest-confirm sources, private log
+- cap eviction keeps missing sources longest
+- stub journals only for schedulers that advertise journal_stubs
+- checkpoint only between JSONL records, yield to a concurrent refresh at a checkpoint, never chmod a custom index directory
+- batch cron compaction per job, bound journals by settled runs, flush the log per class
+- refuse non-regular, foreign or hard-linked index sidecars; hermetic git in teardown tests; lock the fake CLI turn counter
+- type the root index header as str lines (pyright)
+- excerpt check needs word boundaries and a clause end, reports unparsed anchors and stays inside the repository
+- code-term overlap keeps code spans whole, needs real identifiers and ignores terms most wiki sections share; pyright-clean dream.py
+- reworded-Claim attribution drops stopwords, needs 3 content words and fails closed when the other scope covers 25%
+- pyright narrowing, exhaust incremental_vacuum so the file cap holds, re-mask older indexes before read-only search/find
+- recall hook counts only the active checkout's layers; Read|Grep hook timeout 10 s, guarded by a fail-open-only registry check
+- a legacy core larger than the layer share is injected with a context_budget warning, not dropped as stale_index (the generator's last index level is valid)
+- memory block measured as the budget counts it, unlinked collapsed index lines and migration warnings as chunks, recall and wiki notes
+- demote core items by length in characters, never for low recall; rule marks read the wiki heading; notes for thin recall coverage and cross-language wiki overlap with the best cover
+- reads never drop an older store (indexes regenerated in memory, legacy core injected with a warning), init migrates, caps hold when an update writes the core; layer room shared with the workspace and path-independent; clipped index lines and a fold-all level
+- attribute a reworded Claim to the heading section holding its words, so mixed-history pages stop excluding 124 current Claims as unresolved_historical_scope
+- dream evidence ignores replies and the last dream's sessions; missing and renamed cites; commit-time topic age; verifier reads are not recalls
+- freeze schema 3 backfill offsets at migration, skip evicted sources, count backfilled rows, ignore command wrappers
+- private index dir without the ancestor rule, in-place migration and re-masking, raw-text ranking, shared cwd rule for isolation worktrees and cron
+- linear line-anchored .netrc rule; mask only header-shaped auth and name=value cookie values
+- safe-open sources, cwd-verified sessions, whole-text redaction, private WAL index, bounded teardown and fenced history evidence
+- mask credential headers, lowercase bearer and .netrc passwords; move strip_untrusted_markers to hook.core
+- never clip an actionable plan or todo path; show it relative or withhold it
+- require a scored predecessor for memory-arm reruns and archive downstream attempts when a cascade stops
+- guard post-PR memory saves and keep RED evidence durable
+- hypothesis age is a status/check warning, not a CI gate
+- read the worktree DB from a temp-dir snapshot so WAL sidecars never appear in the measured checkout
+- keep scanning after memory apply, detect cp/mv/touch/dd and list unhandled writes
+- gate reload on .omb-memory and the injected block, keep the AGENTS block to pointer plus mechanics
+- keep the memory routing section at three lines so fixture counts hold
+- count archived attempts and pings in run spend and keep the meter from writing bytecode into the measured checkout
+- look up product code only inside recorded checks and count SessionStart output only when the OMB hook is registered
+- correct review topics flagged in the R3 review
+- look up recurrence keys with the exact memory search
+- stop a memory-arm unit after a runner error, require --cascade for downstream reruns and index later-task metrics by sequence position
+- keep foreign scratch trees, fail on grader errors, kill the whole group and exclude runner errors from scores
+- pin a copy of the claude CLI per run, abort on launch failures and rerun single tasks with --only
+- count per/Apply reads, add default-path required reads, hermetic mode
+- restore sibling exclusions in descriptions and route hints to Skill()
+- import AGENTS.md from the OMB-owned part of CLAUDE.md
+- restore the English sub-agent report rule and widen resident triggers
+- write commit bodies in English per the language owner
+- accept one-line paths lists and resident rules in rules-fm-check
+- bound SessionStart worktree recovery to the current checkout
+- treat quota and API failures as infrastructure errors, abort the run and ping before it
+- follow the goal read graph to closure and model host loading
+- isolate arms, exclude user settings, move host transcripts and kill timed-out process groups
+- grade rounding only under a passing rate reading and check __all__ and migration registration
+- exclude dev-only skill evals from the duplication scan
+- resolve an unmerged ticket's P0 evidence through cand_ids and ignore malformed usage events
+- audit the ticket's own contract promotion beside its merged records
+- decode C-quoted git paths before statting ignored files
+- name the phase at every spawn instruction and close round-3 review follow-ups
+- name P0 evidence per record and relabel the h3-r3 hook truth P0
+- skip rule and semantic checks on shape-invalid blocks
+- keep VERIFY's contract answer through RANK and audit unevidenced promotions
+- audit only shape-valid blocks so malformed axes never abort scoring
+- treat non-string audit links as unlinked instead of crashing
+- address round-2 review on field refusals, ticket contracts and eval doc size
+- tie completion evidence to the write boundary and report preservation apart
+- keep FIND's original axes beside the realism normalization; report incomplete evidence apart
+- establish contract validity before realism and severity
+- classify egress sinks by their consumers before producer plausibility
+- reconcile precondition fields to IDs and audit per-field refusal attempts
+- count missing realism evidence on unrealistic triggers as a rule violation
+- exclude host runtime artifacts from the ignored check; report realism mismatches as rule violations
+- address review of round-1 rules and harness
+- rank a missing test alone as P3
+- require producer and contract evidence for trigger realism
+- verify contract obligations per path, not per group
+- keep read-only review roles from writing agent memory or runtime files
+- require one merged record per ticket cand_id
+- refuse drafts in all s4 family gates; GT-s1-1 is P2
+- address review of severity axes and contract coverage
+- make controls c1 and c4 clean and pair them by one axis
+- cover large diffs by contract obligations, not file count
+- record severity axes and derive priority from harm, realism, and guard
+- schema-3 FIND misses stay in the denominator; rescore labels in their own mapping
+- treat all text blocks of one assistant message as one output
+- one rescore row per harness digest; tolerate non-UTF-8 transcripts
+- unterminated replacement blocks and unavailable rescore rows
+- reject non-string discarded ids as shape errors
+- undrained bundles, unknown raw outcomes, honest summary keys
+- show finding consequence to the judge for adjudicated truths
+- same-turn completion bundle, stage-separated recall, attempt links
+- clean unreadable reviewer dirs without losing rep metadata
+- remove read-only reviewer leftovers when cleaning a rep
+- bound gate-reader tracing and name both escalation sources
+- treat gate inputs as risk hunks and escalate depth before FIND
+- select depth by hunk behavior, not path
+- address Phase A review on reach, L7 fields and eval pairs
+- derive privileged-action preconditions and define realistic severity
+- make the s3/c3 pair single-variable and tidy detect-only records
+- gate the severity floor on cited reach and tighten controls
+- derive priority from consequence and repair eval controls
+- portable tmp guard test, HEAD/ref mutation check, malformed block safety
+- keep reviewer failures in the denominator and lock the scratch tree
+- isolate experiment roots and tighten eval scoring
+- refuse legacy worktree watch state, reconcile answers by newest touching reply
+- needs-human transitions, authoritative watch root, retired-grant floor
+- host-authorized merge, canonical merge state, needs-human never handled
+- refresh wiki evidence and format contract tests
+- strengthen evidence gates and review routing
+- missing-field check in L1a, new-exposure counts as introduced
+- severity floor, external-behavior proof, L5 egress pass, convergence guard
+- re-dispatch unreproduced candidates in trace-only mode
+- agent input adapters, final Herdr gate, fork Herdr route, code-debug trace-only mode
+
+### Improved
+- replace the .omb/archive stopgap with bounded transcript search
+- steer memory by purpose with one owner and recall where decisions happen
+- drop the memory frontmatter field and retire agent-memory plumbing
+- replace restated owner text on the goal path with pointers
+- hide Skill("omb") wrapper commands from the model catalog
+- one owner per repeated block, short omb-tdd core, explicit conditional reads
+- shrink the resident layer to triggers and split the rule index
+- state each record once in returns and reports and check the drain before printing
+- bound repeated attempts and rebuilt setup without dropping any obligation
+- cut preparation, duplicated context and report cost without dropping detections
+- cluster only same-fix candidates and checkpoint lens budgets
+
+### Documentation
+- reconcile Claims shifted by the EPERM narrowing
+- refresh the transport-redaction cite shifted by the EPERM narrowing
+- reconcile Claims shifted by the #433 worker fix
+- record the #433 flake fixes
+- correct timeouts topic budgets and refresh shifted cites
+- reconcile Claims shifted by the merge-gate fix
+- reconcile Claims after merging main (R1-R9); restore the R10 retention, init-cap and absolute OMB_HOOK_OMB statements
+- init refuses stores over the 1.7 caps; OMB_HOOK_OMB only as an absolute path
+- reconcile Claims shifted by the transcript fixes from main
+- reconcile Claims shifted by the R7 review P3s
+- reconcile Claims after merging main (R7)
+- reconcile Claims after merging R9 with the OMB_HOOK_OMB wrapper override; keep the retention command map entry
+- reconcile Claims for the OMB_HOOK_OMB hook wrapper override after merging R8
+- reconcile Claims for the OMB_HOOK_OMB hook wrapper override
+- reconcile Claims after merging main (R6)
+- reconcile Claims after merging R9 with the 1.7-compatible memory indexes; keep the retention command map entry
+- reconcile Claims after merging the 1.7-compatible on-disk memory indexes
+- reconcile Claims for the 1.7-compatible on-disk memory indexes
+- reconcile Claims shifted by the R10 review fixes
+- re-anchor transcript Claims after the checkpoint fixes
+- retention in the command map; reconcile Claims shifted by R10
+- re-anchor transcript Claims after the sidecar check
+- move standalone delegation into the Herdr page, history description, full-clause ticket-schema excerpt, reconcile Claims after the R8 merge
+- reconcile Claims after merging the R7 pyright fixes
+- reconcile Claims after merging the R6 pyright fixes
+- excerpt guidance limited to wording a decision depends on; CHANGELOG counts measured (147 -> 21, 126 recovered)
+- re-anchor transcript Claims after the pyright and vacuum fixes
+- reconcile Claims after the R8 re-review fixes
+- split the 83 KB development page into goal pipeline, verification, Herdr delegation, knowledge handoff and history pages; verbatim contract excerpts; reconcile Claims after R9
+- reconcile Claims after the R8 review fixes
+- record the R8 review fixes; wiki overlap note wording
+- record R9 wiki health, stale-sources, wiki-refresh dreaming and verbatim-excerpt guidance; test the wiki page ceiling and contract excerpts
+- omb-wiki and omb-doc require verbatim excerpts for contracts, identifiers, limits and ordering; one responsibility per page under 40 KiB; wiki orients, source confirms
+- reconcile Claims after the R8 memory layer budget and promotion/demotion
+- record the R8 memory layer budget, promotion/demotion candidates and meter chunk view
+- reconcile Claims after the R7 review fixes
+- record the R7 review fixes
+- reconcile Claims after merging the R6 fixes into R7 dreaming
+- reconcile Claims after the R7 dreaming pass
+- document the dreaming pass, its CLI and the eval option
+- reconcile Claims after the transcript re-review fixes
+- record the transcript re-review fixes
+- reconcile Claims after the R6 transcript security fixes
+- teardown indexing is best effort; transcript evidence is fenced untrusted history
+- reconcile Claims after the R6 transcript layer
+- record the R6 transcript layer
+- reconcile Claims after the R5 review fixes
+- correct the R5 hypothesis and learning-disposition entries
+- reconcile Claims after the R5 learning loop and hypothesis topics
+- record the R5 learning loop and hypothesis topics
+- refresh Claims metadata after the R4 review fixes
+- soften recall-before-act and record the R4 review fixes
+- reconcile Claims after the R4 memory steering changes
+- record the memory eval recall columns and drift sequence
+- reconcile Claims after the R3 review fixes
+- reconcile Claims after the memory R3 note-store changes
+- key feedback recurrence on operational memory and record single-incident rule evidence
+- reconcile Claims after the review follow-ups
+- reconcile Claims after the injected-layer diet
+- make AGENTS.md the single shared owner and fix commit language
+- describe the memory meter and eval review fixes
+- note the memory meter and memory eval harness
+- refresh evidence after removing review-agent memory
+- note unterminated-block and unavailable-row eval fixes
+- refresh pr-watch root evidence after legacy-state refusal
+- refresh pr-watch merge authority, state root and needs-human evidence
+
+### Maintenance
+- Merge pull request #441 from braincrew-lab/fix/ci-flaky-and-memory-followups
+- force the zombie-leader state with ps instead of os.waitid
+- give the cross-process apply a budget sized to its work
+- record only tab-close retry backoff, not subprocess polls
+- Merge pull request #440 from braincrew-lab/feat/memory-r10-retention
+- unit-test the wiki-boundary common-code-term cut
+- registry budget takes its fail-open exemptions from FAIL_OPEN_GROUPS
+- keep both transcript-index test additions; take main's fake-CLI counter comment and openwiki for reconcile
+- Merge pull request #439 from braincrew-lab/feat/memory-r9-wiki
+- transcript and registry-budget test fixes; openwiki taken from R9 for reconcile
+- Merge pull request #438 from braincrew-lab/feat/memory-r8-layers
+- exclude the fail-open Read|Grep recall group from the event-deadline minimum
+- lock the fake CLI's shared turn counter and log under --parallel
+- Merge remote-tracking branch 'origin/main' into feat/memory-r8-layers
+- Merge pull request #437 from braincrew-lab/feat/memory-r7-dreaming
+- OMB_HOOK_OMB wrapper override, eval keeps real HOME; openwiki taken from R9 for reconcile
+- OMB_HOOK_OMB wrapper override, eval keeps real HOME; openwiki taken from R9 for reconcile
+- Merge remote-tracking branch 'origin/main' into feat/memory-r7-dreaming
+- Merge pull request #436 from braincrew-lab/feat/memory-r6-transcripts
+- 1.7-compatible on-disk memory indexes; openwiki taken from R9 for reconcile
+- 1.7-compatible on-disk memory indexes; openwiki taken from R9 for reconcile
+- dream keeps R9 typed source narrowing with R8 readable-index guard; openwiki taken from R9 for reconcile
+- Merge branch 'feat/memory-r7-dreaming' into feat/memory-r8-layers
+- wiki boundary keeps R8 stats and heading-or-text rule marks with R9 code-term overlap and wiki-refresh
+- Merge branch 'feat/memory-r6-transcripts' into feat/memory-r7-dreaming
+- Merge remote-tracking branch 'origin/main' into feat/memory-r6-transcripts
+- Merge pull request #435 from braincrew-lab/feat/memory-r5-learning
+- Merge remote-tracking branch 'origin/main' into feat/memory-r5-learning
+- Merge pull request #434 from braincrew-lab/feat/memory-r4-steering
+- Merge remote-tracking branch 'origin/main' into feat/memory-r4-steering
+- Merge pull request #432 from braincrew-lab/feat/memory-r3-notes
+- Merge branch 'feat/memory-r6-transcripts' into feat/memory-r7-dreaming
+- Merge remote-tracking branch 'origin/main' into feat/memory-r3-notes
+- Merge pull request #431 from braincrew-lab/feat/memory-r2-injected
+- Merge remote-tracking branch 'origin/main' into feat/memory-r2-injected
+- Merge pull request #430 from braincrew-lab/feat/memory-r1-measurement
+- Merge branch 'feat/memory-r1-measurement' into feat/memory-r5-learning
+- drop core lines the purpose rule now owns
+- re-baseline injected budgets on the corrected meter
+- cap session-start project-owned and goal standard-path load
+- Merge pull request #429 from braincrew-lab/fix/ultra-review-round3
+- Merge remote-tracking branch 'origin/main' into fix/ultra-review-round3
+- Merge pull request #428 from braincrew-lab/fix/ultra-review-round2
+- record per-phase usage from host events and keep phase USD unknown
+- report raw, real-defect and non-defect control counts apart; repair round-2 control defects in new pairs
+- format field ledger test
+- add round-2 control revisions that fix the adjudicated real defects in both pair members
+- Merge pull request #427 from braincrew-lab/fix/ultra-review-round1
+- harden revised fixture pairs from review
+- make the h3/ch3 r2 pre-push check configurable with a passing default
+- add repaired control fixture revisions and an adjudication overlay
+- Merge pull request #426 from braincrew-lab/fix/ultra-review-severity-axes-contracts
+- add sealed holdout cases h1-h6/ch1/ch3/ch5 after freezing rules; limit merged fix scope by origin
+- Merge pull request #425 from braincrew-lab/fix/ultra-review-measurement-integrity
+- apply independent ground-truth adjudication
+- Merge pull request #424 from braincrew-lab/fix/ultra-review-depth-by-behavior
+- Merge pull request #423 from braincrew-lab/fix/ultra-review-severity-calibration
+- Merge pull request #422 from braincrew-lab/feat/ultra-review-eval-harness
+- Merge pull request #421 from braincrew-lab/fix/merge-gate-authority
+- Merge pull request #420 from braincrew-lab/chore/harness-assessment-improvements
+- remove obsolete verifier wording assertion
+- Merge pull request #419 from braincrew-lab/feat/ultra-review-lenses
+- sort ultra-review contract imports
+- Merge pull request #418 from braincrew-lab/feat/release-auto-approve
+
+
+
 ## [1.7.0] - 2026-11-05
 
 ### Fixed
