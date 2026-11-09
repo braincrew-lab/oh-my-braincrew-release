@@ -5,6 +5,61 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-11-09
+
+### Added
+- seed and remove omp outputs across the install lifecycle
+- add omp host adapter and host loop support
+- bridge omp tool events to OMB Claude hooks
+- generate omp agents, adapter rule and hook files
+
+### Fixed
+- host-reported plan mode for omp and Codex; doc close wording
+- keep pending isolated integrations open and bound observe-step under 50s
+- close Herdr tabs deterministically and address omp review findings
+- keep Herdr waits in the turn on Codex and omp hosts
+- keep omp ownership across an interrupted seed
+- give a subagent's advisor its parent's role in omp
+- carry interview and plan save candidates to RETRO; close ultra-review findings
+- close verify findings on memory save reachability and RETRO ownership
+
+### Improved
+- name the omp extension omb-hook-bridge
+- extract host-neutral compat_store helpers
+- add memory pointers and slim plan, run, verify, pr and pr-watch skills
+- add the RETRO phase, recall-driven interview batches and the storage criterion
+- add the recall-and-save owner, retro mode and learning return line
+
+### Documentation
+- refresh README with omp, memory workflow and Herdr diagrams
+- reflect pending-integration guard and 35s observe window
+- reflect Herdr finalize/sweep, omp and memory fixes
+- re-apply omp host content after merging main
+- document official OpenWiki features and their OMB routes
+- reconcile omp Claims after ultra-review fixes
+- correct omp bridge and compat details
+- add the omp integration guide
+- document omp host compatibility in CLI reference and wiki
+- reconcile Claims shifted by the ultra-review fixes
+- save reusable goal defaults and the meter pointer trap; refresh moved omb-pr cites
+- document the RETRO phase, recall-driven interview and memory storage criterion
+- keep only the latest release section
+
+### Maintenance
+- Merge pull request #447 from braincrew-lab/docs/readme-refresh
+- Merge pull request #446 from braincrew-lab/fix/omp-review-followups
+- Merge pull request #445 from braincrew-lab/docs/openwiki-official-features
+- Merge pull request #444 from braincrew-lab/feat/omp-host-compatibility
+- Merge remote-tracking branch 'origin/main' into feat/omp-host-compatibility
+- Merge pull request #443 from braincrew-lab/refactor/dreaming-aligned-workflow
+- run omp bridge suites on Node 24 and check omp release outputs
+- ruff lint and format the touched contract tests
+- allow two unverified user-decision topics in the note budget
+- pin the workflow skill size cap and memory pointers, retarget moved pins
+- Merge pull request #442 from braincrew-lab/docs/readme-memory-2-0
+
+
+
 ## [2.0.0] - 2026-11-08
 
 ### Added
