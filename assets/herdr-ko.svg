@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400" role="img" aria-labelledby="t d">
+  <title id="t">Herdr 위임 탭의 수명</title>
+  <desc id="d">위임은 새 Herdr 탭을 만들고 프롬프트를 한 번 제출한 뒤, 60초 안에 끝나는 tick으로 관찰하고, 보고서를 수집한 뒤 finalize 한 번으로 탭을 닫고 기록과 잠금을 정리합니다. 닫기를 놓친 세션은 진입·status의 sweep과 턴 끝 Stop hook이 닫으며, 격리 통합이 끝나지 않은 세션은 건너뜁니다.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker>
+    <marker id="v" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7c3aed"/></marker>
+    <filter id="sh" x="-5%" y="-5%" width="110%" height="125%"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.08"/></filter>
+  </defs>
+  <style>
+    .f { font-family: ui-sans-serif, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", Roboto, sans-serif; }
+    .m { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "D2Coding", "Noto Sans Mono CJK KR", monospace; }
+    .h { font-size: 13px; font-weight: 700; letter-spacing: 0.8px; fill: #64748b; }
+    .ct { font-size: 16px; font-weight: 700; fill: #0f172a; }
+    .cb { font-size: 12.5px; fill: #475569; }
+    .n { font-size: 12px; font-weight: 800; fill: #ffffff; }
+  </style>
+  <rect width="1200" height="400" rx="16" fill="#f8fafc"/>
+  <text x="40" y="44" class="f h">위임 한 번의 수명 · /omb:herdr · /omb:herdr-review · /omb:herdr-verify</text>
+
+  <g class="f" filter="url(#sh)">
+    <g transform="translate(40 66)"><rect width="196" height="132" rx="12" fill="#ffffff" stroke="#e2e8f0"/><circle cx="24" cy="26" r="12" fill="#334155"/><text x="24" y="30" text-anchor="middle" class="n">1</text><text x="44" y="31" class="ct">새 탭 생성</text><text x="16" y="62" class="cb">포커스를 옮기지 않는</text><text x="16" y="82" class="cb">탭 하나 · 세션 기록 먼저</text><text x="16" y="110" class="m" font-size="12" fill="#0f172a">Codex · Claude Code</text></g>
+    <g transform="translate(268 66)"><rect width="196" height="132" rx="12" fill="#ffffff" stroke="#e2e8f0"/><circle cx="24" cy="26" r="12" fill="#334155"/><text x="24" y="30" text-anchor="middle" class="n">2</text><text x="44" y="31" class="ct">프롬프트 제출</text><text x="16" y="62" class="cb">요청 패킷 · 보고서 marker ·</text><text x="16" y="82" class="cb">결과 파일 경로를 한 번에</text><text x="16" y="110" class="m" font-size="12" fill="#0f172a">request.md</text></g>
+    <g transform="translate(496 66)"><rect width="196" height="132" rx="12" fill="#eff6ff" stroke="#bfdbfe"/><circle cx="24" cy="26" r="12" fill="#2563eb"/><text x="24" y="30" text-anchor="middle" class="n">3</text><text x="44" y="31" class="ct">관찰 tick</text><text x="16" y="62" class="cb">wait 45초 · 화면 확인 35초,</text><text x="16" y="82" class="cb">한 번은 항상 60초 안에 끝남</text><text x="16" y="110" class="m" font-size="12" fill="#1d4ed8">상한 7200초 · 리셋 없음</text></g>
+    <g transform="translate(724 66)"><rect width="196" height="132" rx="12" fill="#ffffff" stroke="#e2e8f0"/><circle cx="24" cy="26" r="12" fill="#334155"/><text x="24" y="30" text-anchor="middle" class="n">4</text><text x="44" y="31" class="ct">보고서 수집</text><text x="16" y="62" class="cb">검증 뒤 completion=complete,</text><text x="16" y="82" class="cb">close_pending만 기록</text><text x="16" y="110" class="m" font-size="12" fill="#0f172a">result.md · report.md</text></g>
+    <g transform="translate(952 66)"><rect width="208" height="132" rx="12" fill="#ecfdf5" stroke="#6ee7b7"/><circle cx="24" cy="26" r="12" fill="#059669"/><text x="24" y="30" text-anchor="middle" class="n">5</text><text x="44" y="31" class="ct">finalize</text><text x="16" y="62" class="cb">탭 닫기 확인 · 세션·요청 기록 ·</text><text x="16" y="82" class="cb">cwd 잠금 해제를 한 호출로</text><text x="16" y="110" font-size="12" font-weight="700" fill="#047857">끝나기 전엔 보고하지 않음</text></g>
+  </g>
+  <path d="M236 132 H264" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M464 132 H492" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M692 132 H720" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M920 132 H948" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+
+  <g class="f">
+    <rect x="40" y="236" width="1120" height="132" rx="14" fill="#f5f3ff" stroke="#ddd6fe"/>
+    <text x="60" y="266" font-size="13" font-weight="700" letter-spacing="0.8" fill="#6d28d9">닫기를 놓쳐도 · sweep backstop</text>
+    <g transform="translate(60 284)"><rect width="300" height="64" rx="10" fill="#ffffff" stroke="#ddd6fe"/><text x="16" y="27" class="ct" font-size="15">위임 진입 · status</text><text x="16" y="48" class="cb">완료됐는데 열린 세션을 먼저 정리</text></g>
+    <g transform="translate(380 284)"><rect width="300" height="64" rx="10" fill="#ffffff" stroke="#ddd6fe"/><text x="16" y="27" class="ct" font-size="15">Stop hook · 매 턴 끝</text><text x="16" y="48" class="cb">Claude · Codex · omp 공통, 비차단</text></g>
+    <g transform="translate(700 284)"><rect width="440" height="64" rx="10" fill="#ffffff" stroke="#ddd6fe"/><text x="16" y="27" class="ct" font-size="15">고르는 기준</text><text x="16" y="48" class="cb">요청 모두 완료 · 에이전트 idle · 격리 통합(cherry-pick) 끝남</text></g>
+  </g>
+  <path d="M1056 232 V202" stroke="#7c3aed" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#v)"/>
+</svg>

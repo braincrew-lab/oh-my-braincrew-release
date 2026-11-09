@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="340" viewBox="0 0 1200 340" role="img" aria-labelledby="t d">
+  <title id="t">/omb:goal 자율 파이프라인</title>
+  <desc id="d">사람은 인터뷰와 진행 승인, 마지막 PR 리뷰만 합니다. 그 사이 plan, plan-review, run, verify, doc, retro, pr, ultra-review, pr-watch가 자동으로 이어지며 plan-review와 verify에서 P0/P1이 남으면 앞 단계로 돌아갑니다.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker>
+    <marker id="r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#e11d48"/></marker>
+    <linearGradient id="auto" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#eff6ff"/><stop offset="1" stop-color="#f5f3ff"/></linearGradient>
+  </defs>
+  <style>
+    .f { font-family: ui-sans-serif, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", Roboto, sans-serif; }
+    .m { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "D2Coding", "Noto Sans Mono CJK KR", monospace; }
+    .h { font-size: 13px; font-weight: 700; letter-spacing: 0.8px; }
+    .st { font-size: 15px; font-weight: 700; fill: #0f172a; }
+    .sb { font-size: 12px; fill: #64748b; }
+  </style>
+  <rect width="1200" height="340" rx="16" fill="#f8fafc"/>
+
+  <g class="f">
+    <rect x="24" y="40" width="168" height="250" rx="14" fill="#fff7ed" stroke="#fed7aa"/>
+    <text x="40" y="68" class="h" fill="#c2410c">사람</text>
+    <g transform="translate(40 86)"><rect width="136" height="70" rx="10" fill="#ffffff" stroke="#fdba74"/><text x="14" y="30" class="st">interview</text><text x="14" y="52" class="sb">범위 · 수용 기준</text></g>
+    <g transform="translate(40 172)"><rect width="136" height="70" rx="10" fill="#ffffff" stroke="#fdba74"/><text x="14" y="30" class="st">진행 승인</text><text x="14" y="52" class="sb">이후 질문 없음</text></g>
+    <path d="M108 156 V170" stroke="#fb923c" stroke-width="2" marker-end="url(#a)"/>
+
+    <rect x="212" y="40" width="800" height="250" rx="14" fill="url(#auto)" stroke="#c7d2fe"/>
+    <text x="228" y="68" class="h" fill="#4338ca">자동 · 새 worktree · 단계마다 재시도 최대 5회</text>
+
+    <g transform="translate(228 96)"><rect width="112" height="66" rx="10" fill="#ffffff" stroke="#bfdbfe"/><text x="14" y="29" class="st">plan</text><text x="14" y="50" class="sb">파일:줄 근거</text></g>
+    <g transform="translate(356 96)"><rect width="112" height="66" rx="10" fill="#ffffff" stroke="#bfdbfe"/><text x="14" y="29" class="st">plan-review</text><text x="14" y="50" class="sb">병렬 도메인 채점</text></g>
+    <g transform="translate(484 96)"><rect width="112" height="66" rx="10" fill="#ffffff" stroke="#bfdbfe"/><text x="14" y="29" class="st">run</text><text x="14" y="50" class="sb">TDD 에이전트</text></g>
+    <g transform="translate(612 96)"><rect width="112" height="66" rx="10" fill="#ffffff" stroke="#bfdbfe"/><text x="14" y="29" class="st">verify</text><text x="14" y="50" class="sb">실제 도구 실행</text></g>
+    <g transform="translate(740 96)"><rect width="112" height="66" rx="10" fill="#ffffff" stroke="#bfdbfe"/><text x="14" y="29" class="st">doc</text><text x="14" y="50" class="sb">docs/ + openwiki/</text></g>
+    <g transform="translate(868 96)"><rect width="128" height="66" rx="10" fill="#f0fdfa" stroke="#5eead4"/><text x="14" y="29" class="st">retro</text><text x="14" y="50" class="sb">메모리 · dreaming</text></g>
+
+    <g transform="translate(612 212)"><rect width="112" height="62" rx="10" fill="#ffffff" stroke="#c4b5fd"/><text x="14" y="27" class="st">pr</text><text x="14" y="47" class="sb">린트 게이트 · 푸시</text></g>
+    <g transform="translate(740 212)"><rect width="112" height="62" rx="10" fill="#ffffff" stroke="#c4b5fd"/><text x="14" y="27" class="st">ultra-review</text><text x="14" y="47" class="sb">PR 심층 리뷰</text></g>
+    <g transform="translate(868 212)"><rect width="128" height="62" rx="10" fill="#ffffff" stroke="#c4b5fd"/><text x="14" y="27" class="st">pr-watch</text><text x="14" y="47" class="sb">CI · Codex · Copilot</text></g>
+
+    <path d="M340 129 H352" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M468 129 H480" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M596 129 H608" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M724 129 H736" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M852 129 H864" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M932 162 V180 H668 V208" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#a)"/>
+    <path d="M724 243 H736" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M852 243 H864" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+
+    <path d="M412 96 V84 H284 V92" stroke="#e11d48" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#r)"/>
+    <text x="300" y="80" font-size="11.5" font-weight="600" fill="#e11d48">P0/P1 남음</text>
+    <path d="M668 96 V84 H540 V92" stroke="#e11d48" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#r)"/>
+    <text x="556" y="80" font-size="11.5" font-weight="600" fill="#e11d48">P0/P1 남음</text>
+
+    <path d="M192 165 H208" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+
+    <rect x="1032" y="40" width="144" height="250" rx="14" fill="#ecfdf5" stroke="#a7f3d0"/>
+    <text x="1048" y="68" class="h" fill="#047857">결과</text>
+    <g transform="translate(1048 86)"><rect width="112" height="88" rx="10" fill="#ffffff" stroke="#6ee7b7"/><text x="14" y="30" class="st">PR ready</text><text x="14" y="52" class="sb">자율 결정 기록</text><text x="14" y="70" class="sb">첨부</text></g>
+    <g transform="translate(1048 190)"><rect width="112" height="84" rx="10" fill="#ffffff" stroke="#fdba74"/><text x="14" y="30" class="st">merge</text><text x="14" y="52" class="sb">사람이 직접 또는</text><text x="14" y="70" class="sb m" font-size="10.5">--allow-merge</text></g>
+    <path d="M996 243 H1016 V130 H1044" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#a)"/>
+    <path d="M1104 174 V186" stroke="#64748b" stroke-width="2" marker-end="url(#a)"/>
+  </g>
+  <text x="24" y="320" class="f" font-size="12.5" fill="#64748b">--codex 또는 --claude를 붙이면 plan-review 뒤와 verify 뒤에 다른 CLI가 Herdr 탭(또는 분리된 프로세스)에서 한 번씩 독립 리뷰·검증합니다.</text>
+</svg>

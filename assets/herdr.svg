@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400" role="img" aria-labelledby="t d">
+  <title id="t">Lifetime of a Herdr delegation tab</title>
+  <desc id="d">A delegation opens a new Herdr tab, submits the prompt once, observes in ticks that each end within 60 seconds, collects the report, then one finalize call closes the tab and cleans up records and locks. Sessions whose close was missed are closed by the sweep on entry/status and by the end-of-turn Stop hook; sessions whose isolated integration hasn't finished are skipped.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#475569"/></marker>
+    <marker id="v" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#7c3aed"/></marker>
+    <filter id="sh" x="-5%" y="-5%" width="110%" height="125%"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.08"/></filter>
+  </defs>
+  <style>
+    .f { font-family: ui-sans-serif, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", Roboto, sans-serif; }
+    .m { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "D2Coding", "Noto Sans Mono CJK KR", monospace; }
+    .h { font-size: 13px; font-weight: 700; letter-spacing: 0.8px; fill: #64748b; }
+    .ct { font-size: 16px; font-weight: 700; fill: #0f172a; }
+    .cb { font-size: 12.5px; fill: #475569; }
+    .n { font-size: 12px; font-weight: 800; fill: #ffffff; }
+  </style>
+  <rect width="1200" height="400" rx="16" fill="#f8fafc"/>
+  <text x="40" y="44" class="f h">One delegation's lifetime · /omb:herdr · /omb:herdr-review · /omb:herdr-verify</text>
+
+  <g class="f" filter="url(#sh)">
+    <g transform="translate(40 66)"><rect width="196" height="132" rx="12" fill="#ffffff" stroke="#e2e8f0"/><circle cx="24" cy="26" r="12" fill="#334155"/><text x="24" y="30" text-anchor="middle" class="n">1</text><text x="44" y="31" class="ct">Open new tab</text><text x="16" y="62" class="cb">One tab that doesn't steal</text><text x="16" y="82" class="cb">focus · session logged first</text><text x="16" y="110" class="m" font-size="12" fill="#0f172a">Codex · Claude Code</text></g>
+    <g transform="translate(268 66)"><rect width="196" height="132" rx="12" fill="#ffffff" stroke="#e2e8f0"/><circle cx="24" cy="26" r="12" fill="#334155"/><text x="24" y="30" text-anchor="middle" class="n">2</text><text x="44" y="31" class="ct">Submit prompt</text><text x="16" y="62" class="cb">Request packet, report marker,</text><text x="16" y="82" class="cb">result file path, all at once</text><text x="16" y="110" class="m" font-size="12" fill="#0f172a">request.md</text></g>
+    <g transform="translate(496 66)"><rect width="196" height="132" rx="12" fill="#eff6ff" stroke="#bfdbfe"/><circle cx="24" cy="26" r="12" fill="#2563eb"/><text x="24" y="30" text-anchor="middle" class="n">3</text><text x="44" y="31" class="ct">Observe ticks</text><text x="16" y="62" class="cb">wait 45s · screen check 35s;</text><text x="16" y="82" class="cb">each tick ends within 60s</text><text x="16" y="110" class="m" font-size="12" fill="#1d4ed8">cap 7200s · no reset</text></g>
+    <g transform="translate(724 66)"><rect width="196" height="132" rx="12" fill="#ffffff" stroke="#e2e8f0"/><circle cx="24" cy="26" r="12" fill="#334155"/><text x="24" y="30" text-anchor="middle" class="n">4</text><text x="44" y="31" class="ct">Collect report</text><text x="16" y="62" class="cb">Records completion=complete,</text><text x="16" y="82" class="cb">close_pending only, after checks</text><text x="16" y="110" class="m" font-size="12" fill="#0f172a">result.md · report.md</text></g>
+    <g transform="translate(952 66)"><rect width="208" height="132" rx="12" fill="#ecfdf5" stroke="#6ee7b7"/><circle cx="24" cy="26" r="12" fill="#059669"/><text x="24" y="30" text-anchor="middle" class="n">5</text><text x="44" y="31" class="ct">finalize</text><text x="16" y="62" class="cb">Tab close check · records ·</text><text x="16" y="82" class="cb">cwd unlock, all in one call</text><text x="16" y="110" font-size="12" font-weight="700" fill="#047857">No report until it finishes</text></g>
+  </g>
+  <path d="M236 132 H264" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M464 132 H492" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M692 132 H720" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+  <path d="M920 132 H948" stroke="#475569" stroke-width="2" marker-end="url(#a)"/>
+
+  <g class="f">
+    <rect x="40" y="236" width="1120" height="132" rx="14" fill="#f5f3ff" stroke="#ddd6fe"/>
+    <text x="60" y="266" font-size="13" font-weight="700" letter-spacing="0.8" fill="#6d28d9">If a close is missed · sweep backstop</text>
+    <g transform="translate(60 284)"><rect width="300" height="64" rx="10" fill="#ffffff" stroke="#ddd6fe"/><text x="16" y="27" class="ct" font-size="15">Delegation entry · status</text><text x="16" y="48" class="cb">Cleans up finished-but-open sessions first</text></g>
+    <g transform="translate(380 284)"><rect width="300" height="64" rx="10" fill="#ffffff" stroke="#ddd6fe"/><text x="16" y="27" class="ct" font-size="15">Stop hook · end of every turn</text><text x="16" y="48" class="cb">Claude · Codex · omp alike, non-blocking</text></g>
+    <g transform="translate(700 284)"><rect width="440" height="64" rx="10" fill="#ffffff" stroke="#ddd6fe"/><text x="16" y="27" class="ct" font-size="15">Selection criteria</text><text x="16" y="48" class="cb">All requests done · agent idle · isolated integration (cherry-pick) done</text></g>
+  </g>
+  <path d="M1056 232 V202" stroke="#7c3aed" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#v)"/>
+</svg>

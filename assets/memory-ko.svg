@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560" role="img" aria-labelledby="t d">
+  <title id="t">프로젝트 운영 메모리의 순환</title>
+  <desc id="d">대화와 RETRO 단계에서 저장한 규칙이 Git으로 공유되는 .omb-memory에 쌓이고, 세션 시작에 4KB index로 주입되며, 결정 지점에서 다시 읽힙니다. dreaming은 바뀌기 쉬운 note만 골라 코드, Git, transcript와 대조해 교정을 제안합니다. openwiki는 코드 사실, transcript index는 과거 기록을 맡습니다.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0f766e"/></marker>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#94a3b8"/></marker>
+    <filter id="sh" x="-5%" y="-5%" width="110%" height="125%"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.08"/></filter>
+    <radialGradient id="core" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#ccfbf1"/><stop offset="1" stop-color="#99f6e4"/></radialGradient>
+  </defs>
+  <style>
+    .f { font-family: ui-sans-serif, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", Roboto, sans-serif; }
+    .m { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "D2Coding", "Noto Sans Mono CJK KR", monospace; }
+    .h { font-size: 13px; font-weight: 700; letter-spacing: 0.8px; fill: #64748b; }
+    .ct { font-size: 16px; font-weight: 700; fill: #0f172a; }
+    .cb { font-size: 13px; fill: #475569; }
+    .tag { font-size: 11.5px; font-weight: 700; }
+  </style>
+  <rect width="1200" height="560" rx="16" fill="#f8fafc"/>
+  <text x="40" y="46" class="f h">메모리 순환 · 환경이 알려 주지 않는 것만 남기고, 쓰기 전에 현재 코드로 확인</text>
+
+  <g class="f">
+    <g transform="translate(470 196)" filter="url(#sh)">
+      <ellipse cx="130" cy="78" rx="150" ry="92" fill="url(#core)" stroke="#2dd4bf" stroke-width="2"/>
+      <text x="130" y="58" text-anchor="middle" class="m" font-size="18" font-weight="800" fill="#0f766e">.omb-memory/</text>
+      <text x="130" y="84" text-anchor="middle" class="cb">core · index · topic note</text>
+      <text x="130" y="104" text-anchor="middle" class="cb">검증된 규칙 · 함정 · 사용자 교정</text>
+      <text x="130" y="128" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0f766e">Git으로 팀이 공유</text>
+    </g>
+
+    <g transform="translate(470 64)" filter="url(#sh)">
+      <rect width="260" height="96" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+      <rect x="14" y="14" width="64" height="20" rx="10" fill="#dbeafe"/><text x="46" y="28" text-anchor="middle" class="tag" fill="#1d4ed8">① 주입</text>
+      <text x="88" y="29" class="ct">세션 시작</text>
+      <text x="14" y="58" class="cb">4KB · 64줄 안의 index만 주입.</text>
+      <text x="14" y="78" class="cb">본문은 결정할 때 필요한 것만 읽음</text>
+    </g>
+
+    <g transform="translate(860 196)" filter="url(#sh)">
+      <rect width="300" height="112" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+      <rect x="14" y="14" width="64" height="20" rx="10" fill="#e0e7ff"/><text x="46" y="28" text-anchor="middle" class="tag" fill="#4338ca">② 회상</text>
+      <text x="88" y="29" class="ct">결정 지점</text>
+      <text x="14" y="58" class="cb">저장소에 의존하는 첫 결정 전에 읽고,</text>
+      <text x="14" y="78" class="cb">채택·거절을 결정 옆에 기록.</text>
+      <text x="14" y="98" class="cb">읽은 note는 recall 집계에 반영</text>
+    </g>
+
+    <g transform="translate(470 412)" filter="url(#sh)">
+      <rect width="260" height="112" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+      <rect x="14" y="14" width="64" height="20" rx="10" fill="#dcfce7"/><text x="46" y="28" text-anchor="middle" class="tag" fill="#15803d">③ 저장</text>
+      <text x="88" y="29" class="ct">기억해줘 · RETRO</text>
+      <text x="14" y="58" class="cb">대화 중 교정과 작업 끝의 배움을</text>
+      <text x="14" y="78" class="cb">병합 · 저장 · 다시 읽어 확인.</text>
+      <text x="14" y="98" class="cb">검증 전 가설은 날짜 붙은 draft</text>
+    </g>
+
+    <g transform="translate(40 196)" filter="url(#sh)">
+      <rect width="300" height="112" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+      <rect x="14" y="14" width="80" height="20" rx="10" fill="#fef3c7"/><text x="54" y="28" text-anchor="middle" class="tag" fill="#b45309">④ dreaming</text>
+      <text x="104" y="29" class="ct">/omb:memory update</text>
+      <text x="14" y="58" class="cb">인용이 바뀐 note · 오래된 가설 ·</text>
+      <text x="14" y="78" class="cb">반복 패턴만 골라 코드·Git·기록과</text>
+      <text x="14" y="98" class="cb">대조 → 승인한 교정만 반영</text>
+    </g>
+
+    <path d="M600 188 V164" stroke="#0f766e" stroke-width="2.2" marker-end="url(#a)"/>
+    <path d="M750 252 H852" stroke="#0f766e" stroke-width="2.2" marker-end="url(#a)"/>
+    <path d="M1010 308 V468 H738" stroke="#0f766e" stroke-width="2.2" fill="none" marker-end="url(#a)"/>
+    <path d="M600 410 V376" stroke="#0f766e" stroke-width="2.2" marker-end="url(#a)"/>
+    <path d="M462 468 H190 V316" stroke="#0f766e" stroke-width="2.2" fill="none" marker-end="url(#a)"/>
+    <path d="M340 252 H462" stroke="#0f766e" stroke-width="2.2" marker-end="url(#a)"/>
+    <text x="350" y="242" font-size="12" font-weight="600" fill="#0f766e">교정</text>
+    <text x="1018" y="392" font-size="12" font-weight="600" fill="#0f766e">배움</text>
+
+    <g transform="translate(860 64)">
+      <rect width="300" height="96" rx="12" fill="#eef2ff" stroke="#c7d2fe"/>
+      <text x="16" y="30" class="m" font-size="14.5" font-weight="700" fill="#4338ca">openwiki/</text>
+      <text x="16" y="54" class="cb">코드 사실과 근거(Claim). 결정할 때</text>
+      <text x="16" y="74" class="cb">메모리와 함께 omb context로 검색</text>
+    </g>
+    <g transform="translate(40 64)">
+      <rect width="300" height="96" rx="12" fill="#f1f5f9" stroke="#e2e8f0"/>
+      <text x="16" y="30" class="m" font-size="14.5" font-weight="700" fill="#0f172a">omb transcript</text>
+      <text x="16" y="54" class="cb">과거 세션·.omb 기록을 PR·commit·</text>
+      <text x="16" y="74" class="cb">test id로 찾는 로컬 읽기 전용 색인</text>
+    </g>
+    <path d="M190 160 V188" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#g)"/>
+    <path d="M1010 160 V188" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#g)"/>
+  </g>
+</svg>

@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560" role="img" aria-labelledby="t d">
+  <title id="t">The project operating-memory loop</title>
+  <desc id="d">Rules saved during conversation and the RETRO stage accumulate in .omb-memory, shared via Git; they are injected at session start as a 4KB index and re-read at decision points. dreaming picks only notes likely to drift, checks them against code, Git, and transcripts, and proposes corrections. openwiki holds code facts; the transcript index holds past records.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0f766e"/></marker>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#94a3b8"/></marker>
+    <filter id="sh" x="-5%" y="-5%" width="110%" height="125%"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.08"/></filter>
+    <radialGradient id="core" cx="0.5" cy="0.4" r="0.7"><stop offset="0" stop-color="#ccfbf1"/><stop offset="1" stop-color="#99f6e4"/></radialGradient>
+  </defs>
+  <style>
+    .f { font-family: ui-sans-serif, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", Roboto, sans-serif; }
+    .m { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "D2Coding", "Noto Sans Mono CJK KR", monospace; }
+    .h { font-size: 13px; font-weight: 700; letter-spacing: 0.8px; fill: #64748b; }
+    .ct { font-size: 16px; font-weight: 700; fill: #0f172a; }
+    .cb { font-size: 13px; fill: #475569; }
+    .tag { font-size: 11.5px; font-weight: 700; }
+  </style>
+  <rect width="1200" height="560" rx="16" fill="#f8fafc"/>
+  <text x="40" y="46" class="f h">Memory loop · keep only what the environment can't tell you, and check current code before writing</text>
+
+  <g class="f">
+    <g transform="translate(470 196)" filter="url(#sh)">
+      <ellipse cx="130" cy="78" rx="150" ry="92" fill="url(#core)" stroke="#2dd4bf" stroke-width="2"/>
+      <text x="130" y="58" text-anchor="middle" class="m" font-size="18" font-weight="800" fill="#0f766e">.omb-memory/</text>
+      <text x="130" y="84" text-anchor="middle" class="cb">core · index · topic note</text>
+      <text x="130" y="104" text-anchor="middle" class="cb">verified rules · pitfalls · user corrections</text>
+      <text x="130" y="128" text-anchor="middle" font-size="12.5" font-weight="700" fill="#0f766e">Shared with the team via Git</text>
+    </g>
+
+    <g transform="translate(470 64)" filter="url(#sh)">
+      <rect width="260" height="96" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+      <rect x="14" y="14" width="64" height="20" rx="10" fill="#dbeafe"/><text x="46" y="28" text-anchor="middle" class="tag" fill="#1d4ed8">① Inject</text>
+      <text x="88" y="29" class="ct">Session start</text>
+      <text x="14" y="58" class="cb">Injects only the index (4KB · 64 lines).</text>
+      <text x="14" y="78" class="cb">Note bodies read only when needed</text>
+    </g>
+
+    <g transform="translate(860 196)" filter="url(#sh)">
+      <rect width="300" height="112" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+      <rect x="14" y="14" width="64" height="20" rx="10" fill="#e0e7ff"/><text x="46" y="28" text-anchor="middle" class="tag" fill="#4338ca">② Recall</text>
+      <text x="88" y="29" class="ct">Decision point</text>
+      <text x="14" y="58" class="cb">Read before the first repo-specific decision;</text>
+      <text x="14" y="78" class="cb">log adopt/reject next to the decision.</text>
+      <text x="14" y="98" class="cb">Notes read count toward recall stats</text>
+    </g>
+
+    <g transform="translate(470 412)" filter="url(#sh)">
+      <rect width="260" height="112" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+      <rect x="14" y="14" width="64" height="20" rx="10" fill="#dcfce7"/><text x="46" y="28" text-anchor="middle" class="tag" fill="#15803d">③ Save</text>
+      <text x="88" y="29" class="ct">remember · RETRO</text>
+      <text x="14" y="58" class="cb">Chat corrections and end-of-task lessons:</text>
+      <text x="14" y="78" class="cb">merge · save · re-read to confirm.</text>
+      <text x="14" y="98" class="cb">Unverified hypotheses: dated drafts</text>
+    </g>
+
+    <g transform="translate(40 196)" filter="url(#sh)">
+      <rect width="300" height="112" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+      <rect x="14" y="14" width="80" height="20" rx="10" fill="#fef3c7"/><text x="54" y="28" text-anchor="middle" class="tag" fill="#b45309">④ dreaming</text>
+      <text x="104" y="29" class="ct">/omb:memory update</text>
+      <text x="14" y="58" class="cb">Only notes with changed citations, stale</text>
+      <text x="14" y="78" class="cb">hypotheses, repeated patterns; checked vs</text>
+      <text x="14" y="98" class="cb">code·Git·history → apply approved fixes</text>
+    </g>
+
+    <path d="M600 188 V164" stroke="#0f766e" stroke-width="2.2" marker-end="url(#a)"/>
+    <path d="M750 252 H852" stroke="#0f766e" stroke-width="2.2" marker-end="url(#a)"/>
+    <path d="M1010 308 V468 H738" stroke="#0f766e" stroke-width="2.2" fill="none" marker-end="url(#a)"/>
+    <path d="M600 410 V376" stroke="#0f766e" stroke-width="2.2" marker-end="url(#a)"/>
+    <path d="M462 468 H190 V316" stroke="#0f766e" stroke-width="2.2" fill="none" marker-end="url(#a)"/>
+    <path d="M340 252 H462" stroke="#0f766e" stroke-width="2.2" marker-end="url(#a)"/>
+    <text x="350" y="242" font-size="12" font-weight="600" fill="#0f766e">corrections</text>
+    <text x="1018" y="392" font-size="12" font-weight="600" fill="#0f766e">lessons</text>
+
+    <g transform="translate(860 64)">
+      <rect width="300" height="96" rx="12" fill="#eef2ff" stroke="#c7d2fe"/>
+      <text x="16" y="30" class="m" font-size="14.5" font-weight="700" fill="#4338ca">openwiki/</text>
+      <text x="16" y="54" class="cb">Code facts and evidence (Claims), searched</text>
+      <text x="16" y="74" class="cb">with memory via omb context at decisions</text>
+    </g>
+    <g transform="translate(40 64)">
+      <rect width="300" height="96" rx="12" fill="#f1f5f9" stroke="#e2e8f0"/>
+      <text x="16" y="30" class="m" font-size="14.5" font-weight="700" fill="#0f172a">omb transcript</text>
+      <text x="16" y="54" class="cb">Local read-only index of past sessions and</text>
+      <text x="16" y="74" class="cb">.omb records, by PR · commit · test id</text>
+    </g>
+    <path d="M190 160 V188" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#g)"/>
+    <path d="M1010 160 V188" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#g)"/>
+  </g>
+</svg>

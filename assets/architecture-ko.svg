@@ -1,65 +1,78 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" role="img" aria-labelledby="t d">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="680" viewBox="0 0 1200 680" role="img" aria-labelledby="t d">
   <title id="t">oh-my-braincrew 동작 방식</title>
-  <desc id="d">Claude Code나 Codex에서 워크플로우를 호출하면 omb install이 설치한 하네스가 스킬, 전문 에이전트, 경로별 규칙, 라이프사이클 훅을 거쳐 격리된 worktree, 리뷰된 계획, 검증된 diff, PR을 만듭니다.</desc>
-  <defs><marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker></defs>
+  <desc id="d">Claude Code, Codex, omp에서 워크플로우를 호출하면 하네스의 스킬, 전문 에이전트, 필요할 때 읽는 규칙, 라이프사이클 훅이 격리된 worktree, 리뷰된 계획, 검증된 diff, PR을 만듭니다. 운영 메모리, OpenWiki, .omb 상태를 계획 전에 읽고 검증 뒤에 갱신합니다.</desc>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#64748b"/></marker>
+    <filter id="sh" x="-5%" y="-5%" width="110%" height="120%"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0f172a" flood-opacity="0.08"/></filter>
+  </defs>
   <style>
     .f { font-family: ui-sans-serif, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", "Segoe UI", Roboto, sans-serif; }
     .m { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "D2Coding", "Noto Sans Mono CJK KR", monospace; }
-    .h { font-size: 13px; font-weight: 700; letter-spacing: 0.6px; fill: #64748b; }
-    .ct { font-size: 18px; font-weight: 700; fill: #0f172a; }
-    .cb { font-size: 14px; fill: #475569; }
-    .num { font-size: 26px; font-weight: 800; }
+    .h { font-size: 13px; font-weight: 700; letter-spacing: 0.8px; fill: #64748b; }
+    .ct { font-size: 17px; font-weight: 700; fill: #0f172a; }
+    .cb { font-size: 13.5px; fill: #475569; }
+    .num { font-size: 28px; font-weight: 800; }
   </style>
-  <rect width="1200" height="600" rx="16" fill="#f8fafc"/>
-  <text x="40" y="52" class="f h">사용자</text>
-  <text x="330" y="52" class="f h">하네스 · .claude/ · omb install로 설치</text>
-  <text x="900" y="52" class="f h">결과물</text>
-  <g transform="translate(40 72)">
-    <rect width="250" height="200" rx="12" fill="#0f172a"/>
-    <g class="m" font-size="13">
-      <text x="16" y="34" fill="#94a3b8">Claude Code</text>
-      <text x="16" y="58" fill="#e2e8f0">/omb:goal 결제 웹훅에</text>
-      <text x="16" y="76" fill="#e2e8f0">재시도 로직 추가</text>
-      <line x1="16" y1="100" x2="234" y2="100" stroke="#1e293b"/>
-      <text x="16" y="128" fill="#94a3b8">Codex</text>
-      <text x="16" y="152" fill="#e2e8f0">$omb-goal 결제 웹훅에</text>
-      <text x="16" y="170" fill="#e2e8f0">재시도 로직 추가</text>
+  <rect width="1200" height="680" rx="16" fill="#f8fafc"/>
+  <text x="40" y="48" class="f h">호스트 · 같은 워크플로우를 호출</text>
+  <text x="330" y="48" class="f h">하네스 · .claude/ 원본 · omb install로 설치</text>
+  <text x="900" y="48" class="f h">결과물</text>
+
+  <g class="f" filter="url(#sh)">
+    <g transform="translate(40 64)">
+      <rect width="250" height="112" rx="12" fill="#0f172a"/>
+      <circle cx="20" cy="24" r="6" fill="#f97316"/><text x="34" y="29" font-size="15" font-weight="700" fill="#f8fafc">Claude Code</text>
+      <text x="18" y="58" class="m" font-size="13.5" fill="#e2e8f0">/omb:goal 결제 웹훅 재시도</text>
+      <text x="18" y="84" font-size="12.5" fill="#94a3b8">settings.json 훅 · ScheduleWakeup</text>
+      <text x="18" y="102" font-size="12.5" fill="#94a3b8">Claude Code 세션 로그 색인</text>
+    </g>
+    <g transform="translate(40 188)">
+      <rect width="250" height="112" rx="12" fill="#0f172a"/>
+      <circle cx="20" cy="24" r="6" fill="#22d3ee"/><text x="34" y="29" font-size="15" font-weight="700" fill="#f8fafc">Codex</text>
+      <text x="18" y="58" class="m" font-size="13.5" fill="#e2e8f0">$omb-goal 결제 웹훅 재시도</text>
+      <text x="18" y="84" font-size="12.5" fill="#94a3b8">.agents/skills · .Codex · hooks.json</text>
+      <text x="18" y="102" font-size="12.5" fill="#94a3b8">Codex 호스트 어댑터 규칙</text>
+    </g>
+    <g transform="translate(40 312)">
+      <rect width="250" height="112" rx="12" fill="#0f172a"/>
+      <circle cx="20" cy="24" r="6" fill="#a78bfa"/><text x="34" y="29" font-size="15" font-weight="700" fill="#f8fafc">omp</text>
+      <text x="18" y="58" class="m" font-size="13.5" fill="#e2e8f0">/omb:goal 결제 웹훅 재시도</text>
+      <text x="18" y="84" font-size="12.5" fill="#94a3b8">.claude 직접 읽기 · .omp/agents</text>
+      <text x="18" y="102" font-size="12.5" fill="#94a3b8">omb-hook-bridge 확장 · 어댑터</text>
     </g>
   </g>
-  <g transform="translate(40 296)" class="f">
-    <rect width="250" height="128" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
-    <text x="16" y="32" class="ct">승인은 한 번, 이후는 자동</text>
-    <text x="16" y="58" class="cb">인터뷰에 답하고 한 번 승인하면</text>
-    <text x="16" y="78" class="cb">PR이 열릴 때까지 파이프라인이</text>
-    <text x="16" y="98" class="cb">이어서 진행합니다.</text>
-    <text x="16" y="118" class="cb">merge는 직접 하지 않습니다.</text>
-  </g>
-  <rect x="330" y="72" width="520" height="352" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-dasharray="6 5"/>
+
+  <rect x="330" y="64" width="530" height="360" rx="14" fill="#ffffff" stroke="#cbd5e1" stroke-dasharray="6 5"/>
   <g class="f">
-<g transform="translate(350 92)"><rect width="230" height="150" rx="10" fill="#ecfdf5" stroke="#a7f3d0"/><text x="16" y="38" class="num" fill="#047857">77</text><text x="62" y="36" class="ct">스킬</text><text x="16" y="66" class="cb">직접 호출하는 워크플로우</text><text x="16" y="88" class="cb m" font-size="13">goal · plan · run</text><text x="16" y="108" class="cb m" font-size="13">verify · fix · pr</text><text x="16" y="128" class="cb m" font-size="13">refactoring · pr-watch</text></g>
-<g transform="translate(600 92)"><rect width="230" height="150" rx="10" fill="#eff6ff" stroke="#bfdbfe"/><text x="16" y="38" class="num" fill="#1d4ed8">59</text><text x="62" y="36" class="ct">에이전트</text><text x="16" y="66" class="cb">설계 · 구현 · 검증 전문가를</text><text x="16" y="86" class="cb">도메인별로 분리</text><text x="16" y="108" class="cb">API · DB · UI · AI · Electron</text><text x="16" y="128" class="cb">Infra · Security · Harness</text></g>
-<g transform="translate(350 256)"><rect width="230" height="150" rx="10" fill="#fefce8" stroke="#fde68a"/><text x="16" y="38" class="num" fill="#a16207">135</text><text x="76" y="36" class="ct">규칙</text><text x="16" y="66" class="cb">파일 경로에 맞는 규칙만 로드.</text><text x="16" y="86" class="cb">FastAPI를 고치면 FastAPI</text><text x="16" y="106" class="cb">규칙만 읽습니다.</text><text x="16" y="128" class="cb">React · LangGraph · Postgres…</text></g>
-<g transform="translate(600 256)"><rect width="230" height="150" rx="10" fill="#fef2f2" stroke="#fecaca"/><text x="16" y="36" class="ct">라이프사이클 훅</text><text x="16" y="66" class="cb">세션과 도구 호출을 감시:</text><text x="16" y="88" class="cb">· 범위 밖 파일 쓰기</text><text x="16" y="108" class="cb">· raw SQL, 타임아웃 없는 pytest</text><text x="16" y="128" class="cb">· 서브 에이전트 출력 계약</text></g>
+    <g transform="translate(350 84)"><rect width="235" height="156" rx="10" fill="#ecfdf5" stroke="#a7f3d0"/><text x="16" y="40" class="num" fill="#047857">48</text><text x="62" y="38" class="ct">스킬</text><text x="16" y="68" class="cb">직접 호출하는 워크플로우와</text><text x="16" y="88" class="cb">필요할 때 읽는 루브릭</text><text x="16" y="114" class="m" font-size="12.5" fill="#047857">goal · plan · run · verify</text><text x="16" y="134" class="m" font-size="12.5" fill="#047857">memory · herdr · pr-watch</text></g>
+    <g transform="translate(605 84)"><rect width="235" height="156" rx="10" fill="#eff6ff" stroke="#bfdbfe"/><text x="16" y="40" class="num" fill="#1d4ed8">37</text><text x="62" y="38" class="ct">전문 에이전트</text><text x="16" y="68" class="cb">설계 · 구현 · 검증 역할을</text><text x="16" y="88" class="cb">도메인별로 분리</text><text x="16" y="114" class="cb">API · DB · UI · AI · Infra</text><text x="16" y="134" class="cb">Security · Code · Harness</text></g>
+    <g transform="translate(350 252)"><rect width="235" height="156" rx="10" fill="#fefce8" stroke="#fde68a"/><text x="16" y="40" class="num" fill="#a16207">2</text><text x="44" y="38" class="ct">상주 규칙 + 소유 문서</text><text x="16" y="68" class="cb">trigger와 운영 메모리만</text><text x="16" y="88" class="cb">항상 로드. 나머지 규칙은</text><text x="16" y="108" class="cb">INDEX.md가 경로·스킬·역할로</text><text x="16" y="128" class="cb">필요할 때만 안내합니다.</text></g>
+    <g transform="translate(605 252)"><rect width="235" height="156" rx="10" fill="#fef2f2" stroke="#fecaca"/><text x="16" y="38" class="ct">라이프사이클 훅</text><text x="16" y="66" class="m" font-size="12.5" fill="#b91c1c">SessionStart</text><text x="124" y="66" class="cb" font-size="12.5">메모리 주입</text><text x="16" y="88" class="m" font-size="12.5" fill="#b91c1c">PreToolUse</text><text x="124" y="88" class="cb" font-size="12.5">위험 명령 가드</text><text x="16" y="110" class="m" font-size="12.5" fill="#b91c1c">PostToolUse</text><text x="124" y="110" class="cb" font-size="12.5">린트 · recall 집계</text><text x="16" y="132" class="m" font-size="12.5" fill="#b91c1c">Stop</text><text x="124" y="132" class="cb" font-size="12.5">Herdr 탭 정리</text></g>
   </g>
-  <g class="f">
-<g transform="translate(900 72)"><rect width="260" height="64" rx="10" fill="#ffffff" stroke="#e2e8f0"/><text x="16" y="28" class="ct" font-size="16">격리된 git worktree</text><text x="16" y="50" class="cb" font-size="13">작업 중인 checkout은 그대로</text></g>
-<g transform="translate(900 144)"><rect width="260" height="64" rx="10" fill="#ffffff" stroke="#e2e8f0"/><text x="16" y="28" class="ct" font-size="16">리뷰된 계획</text><text x="16" y="50" class="cb" font-size="13">실제 파일 근거, P0–P3 채점</text></g>
-<g transform="translate(900 216)"><rect width="260" height="64" rx="10" fill="#ffffff" stroke="#e2e8f0"/><text x="16" y="28" class="ct" font-size="16">검증된 diff</text><text x="16" y="50" class="cb" font-size="13">테스트·린트·타입 검사 실제 실행</text></g>
-<g transform="translate(900 288)"><rect width="260" height="64" rx="10" fill="#ffffff" stroke="#e2e8f0"/><text x="16" y="28" class="ct" font-size="16">Pull request</text><text x="16" y="50" class="cb" font-size="13">자율 결정 기록 첨부</text></g>
-<g transform="translate(900 360)"><rect width="260" height="64" rx="10" fill="#ecfdf5" stroke="#a7f3d0"/><text x="16" y="28" class="ct" font-size="16">/omb:pr-watch</text><text x="16" y="50" class="cb" font-size="13">CI 수정, 리뷰 스레드 답변</text></g>
+
+  <g class="f" filter="url(#sh)">
+    <g transform="translate(900 64)"><rect width="260" height="62" rx="10" fill="#ffffff" stroke="#e2e8f0"/><text x="16" y="27" class="ct" font-size="15.5">격리된 git worktree</text><text x="16" y="48" class="cb" font-size="12.5">작업 중인 checkout은 그대로</text></g>
+    <g transform="translate(900 136)"><rect width="260" height="62" rx="10" fill="#ffffff" stroke="#e2e8f0"/><text x="16" y="27" class="ct" font-size="15.5">리뷰된 계획</text><text x="16" y="48" class="cb" font-size="12.5">파일:줄 근거, P0–P3 합의 채점</text></g>
+    <g transform="translate(900 208)"><rect width="260" height="62" rx="10" fill="#ffffff" stroke="#e2e8f0"/><text x="16" y="27" class="ct" font-size="15.5">검증된 diff</text><text x="16" y="48" class="cb" font-size="12.5">테스트 · 린트 · 타입 검사를 실제 실행</text></g>
+    <g transform="translate(900 280)"><rect width="260" height="62" rx="10" fill="#ffffff" stroke="#e2e8f0"/><text x="16" y="27" class="ct" font-size="15.5">Pull request</text><text x="16" y="48" class="cb" font-size="12.5">자율 결정 기록 · docs(memory) 커밋</text></g>
+    <g transform="translate(900 352)"><rect width="260" height="62" rx="10" fill="#ecfdf5" stroke="#a7f3d0"/><text x="16" y="27" class="ct" font-size="15.5">/omb:pr-watch</text><text x="16" y="48" class="cb" font-size="12.5">CI 수정 · 리뷰 스레드 답변 · ready</text></g>
   </g>
-  <path d="M290 172 H326" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#a)"/>
-  <path d="M850 248 H880 V104 H896" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#a)"/>
-  <path d="M880 176 H896" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#a)"/>
-  <path d="M880 248 H896" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#a)"/>
-  <path d="M880 320 H896" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#a)"/>
-  <path d="M880 248 V392 H896" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#a)"/>
-  <g class="f" transform="translate(40 448)">
-    <rect width="1120" height="120" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
-    <text x="20" y="34" class="h">공유 프로젝트 상태 · 계획 전에 읽고, 검증 후에 갱신</text>
-    <g transform="translate(20 52)"><rect width="344" height="52" rx="8" fill="#f1f5f9"/><text x="14" y="22" class="m" font-size="14" font-weight="700" fill="#0f172a">.omb-memory/</text><text x="14" y="42" class="cb" font-size="13">팀 컨벤션과 교정 사항, Git으로 공유</text></g>
-    <g transform="translate(388 52)"><rect width="344" height="52" rx="8" fill="#f1f5f9"/><text x="14" y="22" class="m" font-size="14" font-weight="700" fill="#0f172a">openwiki/</text><text x="14" y="42" class="cb" font-size="13">소스 근거가 있는 코드 지식</text></g>
-    <g transform="translate(756 52)"><rect width="344" height="52" rx="8" fill="#f1f5f9"/><text x="14" y="22" class="m" font-size="14" font-weight="700" fill="#0f172a">.omb/</text><text x="14" y="42" class="cb" font-size="13">계획, todo, 인터뷰, worktree 상태</text></g>
+
+  <path d="M290 120 H312 V244 H326" stroke="#64748b" stroke-width="2" fill="none"/>
+  <path d="M290 244 H326" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <path d="M290 368 H312 V244" stroke="#64748b" stroke-width="2" fill="none"/>
+  <path d="M860 244 H880 V95 H896" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <path d="M880 167 H896" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <path d="M880 239 H896" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <path d="M880 311 H896" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <path d="M880 239 V383 H896" stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#a)"/>
+
+  <g class="f" transform="translate(40 456)" filter="url(#sh)">
+    <rect width="1120" height="190" rx="12" fill="#ffffff" stroke="#e2e8f0"/>
+    <text x="20" y="34" class="h">공유 프로젝트 상태 · 계획 전에 읽고, 검증 뒤에 갱신</text>
+    <g transform="translate(20 52)"><rect width="344" height="118" rx="10" fill="#f0fdfa" stroke="#99f6e4"/><text x="16" y="28" class="m" font-size="15" font-weight="700" fill="#0f766e">.omb-memory/</text><text x="16" y="54" class="cb">팀 컨벤션 · 교정 · 함정 · 검증된 규칙</text><text x="16" y="76" class="cb">세션 시작에 4KB index만 주입</text><text x="16" y="98" class="cb">dreaming이 코드와 대조해 교정 제안</text></g>
+    <g transform="translate(388 52)"><rect width="344" height="118" rx="10" fill="#eef2ff" stroke="#c7d2fe"/><text x="16" y="28" class="m" font-size="15" font-weight="700" fill="#4338ca">openwiki/</text><text x="16" y="54" class="cb">소스 근거(Claim)가 붙은 코드 지식</text><text x="16" y="76" class="cb">공식 OpenWiki lifecycle로 갱신</text><text x="16" y="98" class="cb">omb context로 메모리와 함께 검색</text></g>
+    <g transform="translate(756 52)"><rect width="344" height="118" rx="10" fill="#f8fafc" stroke="#e2e8f0"/><text x="16" y="28" class="m" font-size="15" font-weight="700" fill="#0f172a">.omb/</text><text x="16" y="54" class="cb">계획 · todo · 인터뷰 · worktree DB</text><text x="16" y="76" class="cb">Herdr 세션 기록과 보고서</text><text x="16" y="98" class="cb">transcript index(로컬, Git 제외)</text></g>
   </g>
-  <path d="M590 444 V428" stroke="#94a3b8" stroke-width="2" fill="none" marker-end="url(#a)"/>
+  <path d="M595 452 V428" stroke="#94a3b8" stroke-width="2" fill="none" marker-end="url(#a)"/>
 </svg>
