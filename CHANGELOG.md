@@ -5,6 +5,40 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-11-16
+
+### Added
+- launch omp delegates with model and thinking selection
+
+### Fixed
+- flag merge-capable resume prompts in the cron check
+- correct cron merge rule, align goal no-go, land wiki prose
+- realign the wiki evidence the interview review fixes moved
+- tighten context acceptance and record publication rules
+
+### Documentation
+- refresh cron claim
+- refresh claims for review fixes
+- save follow-up review lessons and refresh drifted notes
+- record the context-acceptance opt-in flag and the cron prompt check
+- extend the OpenWiki note to fix pushes made after DOC
+- align the pages with the acceptance review fixes
+- correct the OpenWiki note on stale locators outside the plan
+- repair the stale Herdr delegation locator on the architecture overview
+- record what was checked for the five notes saved in this run
+- save this run's review and workflow lessons and recheck six drifted notes
+- document context acceptance and publish the interview record policy and ADR
+
+### Maintenance
+- Merge pull request #450 from braincrew-lab/fix/pr-449-review-followups
+- wrap cron contract needle under line limit
+- checkpoint before Herdr Verify
+- Merge pull request #449 from braincrew-lab/feat/interview-context-acceptance
+- checkpoint before Herdr Verify
+- Merge pull request #448 from braincrew-lab/docs/readme-2-1-0
+
+
+
 ## [2.1.0] - 2026-11-09
 
 ### Added

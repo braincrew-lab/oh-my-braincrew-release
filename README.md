@@ -304,9 +304,9 @@ Keep secrets out of shared instructions and memory.
 
 | Platform | Binary |
 |---|---|
-| macOS (Apple Silicon) | [`oh-my-braincrew-v2.1.0-darwin-arm64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
-| Linux (x86_64) | [`oh-my-braincrew-v2.1.0-linux-amd64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
-| Windows (x86_64) | [`oh-my-braincrew-v2.1.0-windows-amd64.exe`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
+| macOS (Apple Silicon) | [`oh-my-braincrew-v2.2.0-darwin-arm64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
+| Linux (x86_64) | [`oh-my-braincrew-v2.2.0-linux-amd64`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
+| Windows (x86_64) | [`oh-my-braincrew-v2.2.0-windows-amd64.exe`](https://github.com/braincrew-lab/oh-my-braincrew-release/releases/latest) |
 
 Each release also ships `harness-vX.Y.Z.tar.gz` (the harness that `omb install` lays down), its `.sha256` sidecar, and `checksums-sha256.txt`. Verify a manual download before running it:
 
